@@ -13,6 +13,7 @@ from mathutils import Vector
 import brain
 import hardware as hw
 import lib
+import paper
 from lib import Frame, UPF, circle, rrect
 
 CABLE = ['#2F6F70', '#1F4B4D', '#D4473A', '#E59A3A', '#EAC04A', '#3F6A86', '#2F6F70', '#D4473A']
@@ -160,71 +161,6 @@ def _torus(r_outer, height, frame, seg=28, ring=12):
             bm.faces.new([grid[i][j], grid[(i + 1) % seg][j], grid[(i + 1) % seg][(j + 1) % ring], grid[i][(j + 1) % ring]])
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     return bm
-
-
-# --- paper -------------------------------------------------------------------------------------------
-
-def notes(parent):
-    g = lib.empty('Notes', (0, 1.2, -0.5), parent)
-    wall = [
-        ('Polaroid', [(72, 56), (250, 52), (265, 220), (85, 235)]),
-        ('PolaroidTape', [(135, 22), (185, 8), (207, 70), (157, 82)]),
-        ('YouGotThis', [(20, 230), (145, 212), (180, 350), (57, 372)]),
-        ('ItsFine', [(1360, 97), (1467, 77), (1480, 177), (1372, 192)]),
-        ('Chaos', [(1542, 112), (1642, 80), (1652, 275), (1552, 295)]),
-        ('MopFloor', [(1495, 345), (1622, 352), (1600, 487), (1468, 478)]),
-    ]
-    for name, pts in wall:
-        cx, cy = sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
-        lib.decal(name, pts, wall_plane(cx, cy, 0.32), g)
-    # Items stuck to the main frame follow its corners for the chosen layout (concept frame: 1.12 x 0.49).
-    spec = hw.LAYOUT['FrontScreen']
-    w, h = spec['size']
-    cx, cy, _ = spec['pos']
-    d_tl = Vector((-(w - 1.12) / 2, cy + h / 2 - (1.33 + 0.245), 0))
-    d_tr = Vector(((w - 1.12) / 2, cy + h / 2 - (1.33 + 0.245), 0))
-    d_r = Vector(((w - 1.12) / 2, cy - 1.33, 0))
-    moved(lib.decal('SameBrain', [(487, 47), (633, 30), (636, 140), (500, 152)], lib.zplane(-0.5), g), d_tl)
-    moved(lib.decal('HeartSticky', [(1135, 280), (1190, 279), (1191, 357), (1136, 358)], lib.zplane(-0.53), g), d_r)
-    moved(lib.decal('Smiley', circle_px(547, 187, 16), lib.zplane(-0.555), g), d_tl)
-    heart = [(432, 92), (442, 84), (458, 81), (472, 88), (478, 103), (474, 122), (458, 143), (433, 166), (408, 143),
-             (391, 122), (387, 103), (393, 88), (407, 81), (423, 84)]
-    lib.decal('SmallStepsHeart', heart, lib.facing(min(1.5, wall_depth(432, 120, 0.22))), g)
-    lib.decal('DoTheThing', [(810, 702), (935, 685), (952, 752), (817, 770)], console_plane(0.004), g)
-    # The list lies across the console lip onto the tray.
-    top = lib.unproject(1050, 728, console_plane(0.004))
-    bottom = lib.unproject(1065, 885, ground(0.9))
-    lib.decal('TodoList', [(972, 722), (1132, 733), (1152, 892), (985, 882)],
-              plane3(top, bottom, bottom + Vector((1, 0, 0))), g)
-    # Task note: blank paper; gameplay writes the task on it.
-    task_plane = (Vector((-0.74, 1.0, -0.12)), lib.rot((-10, 25, 0)) @ Vector((0, 0, 1)))
-    o = lib.decal('TaskNote', [(267, 520), (420, 492), (447, 582), (295, 612)], task_plane, g,
-                  material=lib.mat('TaskPaper', '#F7D77E', 0.85))
-    o['gameplay'] = 'TaskNote paper: game Label goes on top, same transform as game TaskNote'
-    return g
-
-
-def circle_px(cx, cy, r, n=20):
-    return [(cx + r * math.cos(2 * math.pi * i / n), cy + r * math.sin(2 * math.pi * i / n)) for i in range(n)]
-
-
-def notebook(parent):
-    g = lib.empty('Notebook', (-0.1, 0.9, 0.3), parent)
-    y = 0.905
-    page = [(615, 795), (900, 772), (962, 941), (600, 941)]
-    world = [lib.unproject(x, yy, ground(y)) for x, yy in page]
-    lo = Vector([min(p[i] for p in world) for i in range(3)])
-    hi = Vector([max(p[i] for p in world) for i in range(3)])
-    centre = (lo + hi) / 2
-    ext = 0.08     # the page runs past the concept's bottom edge
-    lib.slab('Cover', rrect(hi.x - lo.x + 0.03, hi.z - lo.z + 0.03 + ext, 0.012, 3), 0.018, 0.004,
-             lib.mat('NotebookCover', '#C9786A', 0.7), Frame((centre.x, 0.887, centre.z + ext / 2), UPF), g)
-    lib.decal('Page', page, ground(y + 0.002), g)
-    a, b = world[3], world[2]
-    lib.mesh_object('PageRest', [a + Vector((0, 0.001, 0)), b + Vector((0, 0.001, 0)),
-                                 b + Vector((0.01, 0.001, ext)), a + Vector((-0.005, 0.001, ext))],
-                    [(0, 3, 2, 1)], lib.mat('PagePlain', '#E9DCC6', 0.85), g)
-    return g
 
 
 # --- cables and lights ----------------------------------------------------------------------------
@@ -490,8 +426,8 @@ def frame_tape(parent):
 
 def build(root, shelf_top):
     dressing = lib.empty('Dressing', (0, 1.2, -0.3), root)
-    notes(dressing)
-    notebook(dressing)
+    paper.notes(dressing)
+    paper.notebook(dressing)
     cables(dressing)
     _, bulbs = fairy_lights(dressing)
     _, books_top = books(dressing)

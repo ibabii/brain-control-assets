@@ -1,0 +1,33 @@
+{
+  "YouGotThis": "YOU\nGOT THIS\n(probably)",
+  "ItsFine": "IT'S FINE",
+  "Chaos": "CHAOS\n=\nCREATIVITY\n?",
+  "MopFloor": "MOP\nFLOOR\n=\nADULTING",
+  "SameBrain": "SAME\nBRAIN\nDIFFERENT\nDAY...",
+  "HeartSticky": "",
+  "SmallSteps": "SMALL\nSTEPS",
+  "DoTheThing": "DO\nTHE THING\n(please)",
+  "TodoList": "1. MOP\n2. EXIST\n3. SNACK\n4. MAYBE TIDY?\n5. BE PROUD\n     (for real)",
+  "Polaroid": "Good Boy",
+  "Today": {
+    "title": "TODAY:",
+    "items": [
+      {
+        "text": "Mop kitchen floor",
+        "done": true
+      },
+      {
+        "text": "Be a functional human",
+        "done": false
+      },
+      {
+        "text": "Pet the cat/kind of",
+        "done": false
+      },
+      {
+        "text": "It's okay. :)",
+        "done": false
+      }
+    ]
+  }
+}

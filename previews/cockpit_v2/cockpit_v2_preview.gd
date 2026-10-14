@@ -2,6 +2,7 @@ extends Node3D
 ## Cockpit v2 look-dev: game camera, art, lighting, and the approved concept as an overlay.
 ## O cycles overlay (off / 50% / 100%), S toggles preview screen content, T toggles the task label.
 ## Capture: godot --path . res://previews/cockpit_v2/cockpit_v2_preview.tscn -- --capture <name> [--size 1672x941] [--fit adaptive|height]
+##   [--eye x,y,z --look x,y,z]  inspect from another point (no overlay).
 ## Fit "adaptive" (recommended for the game): keep the 16:9 framing whole; narrower windows reveal more top/bottom,
 ## wider ones more sides. "height" is Godot's default (narrow windows crop the sides).
 
@@ -72,9 +73,17 @@ func _ready() -> void:
 		fit = args[f + 1]
 	get_viewport().size_changed.connect(_apply_fit)
 	_apply_fit()
+	var e := args.find('--eye')
+	if e >= 0:
+		camera.position = _vec(args[e + 1])
+		camera.look_at(_vec(args[args.find('--look') + 1]))
 	var i := args.find('--capture')
 	if i >= 0:
 		_capture.call_deferred(args[i + 1] if i + 1 < args.size() else 'look')
+
+func _vec(s: String) -> Vector3:
+	var p := s.split(',')
+	return Vector3(float(p[0]), float(p[1]), float(p[2]))
 
 func _apply_fit() -> void:
 	var size := get_viewport().get_visible_rect().size
@@ -120,7 +129,7 @@ func _capture(name: String) -> void:
 	for n in 10:
 		await get_tree().process_frame
 	await _shot(dir + name + '.png')
-	if size == Vector2i(1672, 941):
+	if size == Vector2i(1672, 941) and not '--eye' in args:
 		_set_overlay(1)
 		await _shot(dir + name + '-overlay.png')
 	get_tree().quit()

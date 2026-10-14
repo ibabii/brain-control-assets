@@ -6,10 +6,13 @@
     "model": "cockpit/art/cockpit_art.glb",
     "lighting": "cockpit/art/cockpit_lighting.tscn",
     "print_material": "cockpit/art/materials/concept_print.tres",
-    "layout": "cockpit/art/layout.json"
+    "layout": "cockpit/art/layout.json",
+    "note_text": "cockpit/art/notes/cockpit_notes.tscn (instanced as NoteText in cockpit_art.tscn)",
+    "note_defaults": "cockpit/art/notes/notes_text.json",
+    "font": "cockpit/art/notes/fonts/PatrickHand-Regular.ttf (SIL OFL 1.1, OFL.txt alongside)"
   },
-  "model_sha256": "a9462a0ce2f8a9c07de33d79fb9906e2fbd37c52e96cded971ed89217a14d82b",
-  "triangles": 266720,
+  "model_sha256": "c3f8faf94d47c8984921b1108a52cef3f511089f963004e21feaf9e623e65c13",
+  "triangles": 277092,
   "source": "source/cockpit/cockpit_v2.blend",
   "rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build.py",
   "gameplay_hooks": {
@@ -17,9 +20,11 @@
     "GaugeLabels (tscn)": "Label3D per gauge on taped paper",
     "Dressing/Notes/TaskNote": "blank paper at the game TaskNote transform; gameplay writes the text",
     "ScreenHousings/*": "frames only; live screens render at layout.json anchors",
-    "Controls": "moved out of cockpit_art.glb into cockpit/art/controls/*.glb (see coordination/interfaces.md)"
+    "Controls": "moved out of cockpit_art.glb into cockpit/art/controls/*.glb (see coordination/interfaces.md)",
+    "NoteText/<Id> (Label3D)": "sticky-note wording; set .text at runtime. Ids: YouGotThis, ItsFine, Chaos, MopFloor, SameBrain, HeartSticky, SmallSteps, DoTheThing, TodoList, Polaroid",
+    "NoteText/Today": "notebook TODAY list: Page/List/Title.text; Page/List/Item0..5 (.visible, Text.text BBCode, Box/Tick.visible)"
   },
-  "printed_from_concept": "notes, labels, book spines, can, mug, donut, lever box, trinkets: concept image projected from the game camera onto real geometry",
+  "printed_from_concept": "being removed (user: no concept cut-outs). Paper notes done as real textured sheets; still projected: book spines, can, mug, donut, lever box, trinkets, crumpled paper",
   "proposed_game_changes": {
     "FrontScreen": {
       "position": [

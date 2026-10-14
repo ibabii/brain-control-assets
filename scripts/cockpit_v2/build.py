@@ -15,6 +15,8 @@ import brain  # noqa: E402
 import dressing  # noqa: E402
 import hardware  # noqa: E402
 import lib  # noqa: E402
+import notes_scene  # noqa: E402
+import paper  # noqa: E402
 
 t0 = time.time()
 lib.reset()
@@ -48,9 +50,11 @@ layout = {
     'dials': {'position': list(hardware.DIALS.o), 'x': hardware.DIAL_X, 'names': hardware.GAUGES},
     'shelf_top_y': shelf_top,
     'fairy_bulbs': [list(p) for p in bulbs],
+    'notes': paper.SLOTS,
 }
 with open(lib.ROOT + '/cockpit/art/layout.json', 'w') as f:
     json.dump(layout, f, indent=2, default=float)
+notes_scene.write(paper.SLOTS)
 import hashlib  # noqa: E402
 manifest_path = lib.ROOT + '/cockpit/art/manifest.json'
 if os.path.exists(manifest_path):

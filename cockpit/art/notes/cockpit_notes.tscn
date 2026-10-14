@@ -1,0 +1,403 @@
+[gd_scene format=3]
+
+[ext_resource type="FontFile" path="res://cockpit/art/notes/fonts/PatrickHand-Regular.ttf" id="font"]
+[ext_resource type="Texture2D" path="res://cockpit/art/notes/check_box.png" id="box"]
+[ext_resource type="Texture2D" path="res://cockpit/art/notes/check_tick.png" id="tick"]
+
+[sub_resource type="Theme" id="theme_Today"]
+default_font = ExtResource("font")
+default_font_size = 47
+Label/colors/font_color = Color(0.149, 0.251, 0.369, 1)
+RichTextLabel/colors/default_color = Color(0.149, 0.251, 0.369, 1)
+
+[sub_resource type="ViewportTexture" id="vt_Today"]
+resource_local_to_scene = true
+viewport_path = NodePath("Today/Page")
+
+[sub_resource type="StandardMaterial3D" id="ink_Today"]
+resource_local_to_scene = true
+transparency = 1
+albedo_texture = SubResource("vt_Today")
+roughness = 0.8
+texture_filter = 1
+
+[sub_resource type="QuadMesh" id="quad_Today"]
+size = Vector2(0.18775, 0.20224)
+
+[node name="CockpitNotes" type="Node3D"]
+
+[node name="YouGotThis" type="Label3D" parent="."]
+transform = Transform3D(0.837845, -0.131156, 0.529919, 0.154656, 0.987968, 0, -0.523543, 0.0819552, 0.848048, -1.02651, 1.39278, -0.202139)
+cast_shadow = 0
+pixel_size = 0.000485739
+shaded = true
+double_sided = false
+modulate = Color(0.478, 0.141, 0.188, 1)
+text = "YOU\nGOT THIS\n(probably)"
+font = ExtResource("font")
+font_size = 64
+outline_size = 0
+horizontal_alignment = 1
+line_spacing = -6.0
+autowrap_mode = 3
+width = 244.8
+
+[node name="ItsFine" type="Label3D" parent="."]
+transform = Transform3D(0.926031, -0.0338337, -0.375928, 0.0893431, 0.987319, 0.131221, 0.366721, -0.155102, 0.917311, 1.00681, 1.72711, -0.442467)
+cast_shadow = 0
+pixel_size = 0.000439872
+shaded = true
+double_sided = false
+modulate = Color(0.290, 0.180, 0.133, 1)
+text = "IT'S FINE"
+font = ExtResource("font")
+font_size = 64
+outline_size = 0
+horizontal_alignment = 1
+line_spacing = -6.0
+autowrap_mode = 3
+width = 252.7
+
+[node name="Chaos" type="Label3D" parent="."]
+transform = Transform3D(0.881878, -0.197012, -0.428343, 0.277808, 0.951179, 0.134469, 0.380939, -0.237583, 0.893555, 1.1227, 1.54652, -0.315035)
+cast_shadow = 0
+pixel_size = 0.000320908
+shaded = true
+double_sided = false
+modulate = Color(0.478, 0.141, 0.188, 1)
+text = "CHAOS\n=\nCREATIVITY\n?"
+font = ExtResource("font")
+font_size = 64
+outline_size = 0
+horizontal_alignment = 1
+line_spacing = -6.0
+autowrap_mode = 3
+width = 291.3
+
+[node name="MopFloor" type="Label3D" parent="."]
+transform = Transform3D(0.848035, -0.00469859, -0.529919, 0.00554048, 0.999985, 0, 0.529911, -0.002936, 0.848048, 1.03486, 1.20944, -0.196927)
+cast_shadow = 0
+pixel_size = 0.000375904
+shaded = true
+double_sided = false
+modulate = Color(0.290, 0.180, 0.133, 1)
+text = "MOP\nFLOOR\n=\nADULTING"
+font = ExtResource("font")
+font_size = 64
+outline_size = 0
+horizontal_alignment = 1
+line_spacing = -6.0
+autowrap_mode = 3
+width = 312.3
+
+[node name="SameBrain" type="Label3D" parent="."]
+transform = Transform3D(0.998734, -0.0502994, 0, 0.0502994, 0.998734, 0, 0, 0, 1, -0.476431, 1.74939, -0.4692)
+cast_shadow = 0
+pixel_size = 0.000369823
+shaded = true
+double_sided = false
+modulate = Color(0.290, 0.180, 0.133, 1)
+text = "SAME\nBRAIN\nDIFFERENT\nDAY..."
+font = ExtResource("font")
+font_size = 64
+outline_size = 0
+horizontal_alignment = 1
+line_spacing = -6.0
+autowrap_mode = 3
+width = 539.2
+
+[node name="HeartSticky" type="Label3D" parent="."]
+transform = Transform3D(0.999841, -0.0178121, 0, 0.0178121, 0.999841, 0, 0, 0, 1, 0.610438, 1.32579, -0.5292)
+cast_shadow = 0
+pixel_size = 0.000294433
+shaded = true
+double_sided = false
+modulate = Color(0.478, 0.141, 0.188, 1)
+text = ""
+font = ExtResource("font")
+font_size = 64
+outline_size = 0
+horizontal_alignment = 1
+line_spacing = -6.0
+autowrap_mode = 3
+width = 283.2
+
+[node name="SmallSteps" type="Label3D" parent="."]
+transform = Transform3D(0.958062, 0.107865, -0.265484, -0.076365, 0.989052, 0.126268, 0.276197, -0.100699, 0.955811, 0.734705, 1.77108, -0.656032)
+cast_shadow = 0
+pixel_size = 0.000424816
+shaded = true
+double_sided = false
+modulate = Color(1.000, 0.965, 0.925, 1)
+text = "SMALL\nSTEPS"
+font = ExtResource("font")
+font_size = 64
+outline_size = 0
+horizontal_alignment = 1
+line_spacing = -6.0
+autowrap_mode = 3
+width = 245.4
+
+[node name="DoTheThing" type="Label3D" parent="."]
+transform = Transform3D(0.987568, -0.157194, 0, 0.0485755, 0.305175, 0.951057, -0.1495, -0.939233, 0.309017, 0.0440399, 0.93334, 0.166808)
+cast_shadow = 0
+pixel_size = 0.000234002
+shaded = true
+double_sided = false
+modulate = Color(0.290, 0.180, 0.133, 1)
+text = "DO\nTHE THING\n(please)"
+font = ExtResource("font")
+font_size = 64
+outline_size = 0
+horizontal_alignment = 1
+line_spacing = -6.0
+autowrap_mode = 3
+width = 496.7
+
+[node name="TodoList" type="Label3D" parent="."]
+transform = Transform3D(0.999388, 0.034986, 0, 0, 0, 1, 0.034986, -0.999388, 0, 0.191234, 0.9073, 0.3101)
+cast_shadow = 0
+pixel_size = 0.000257255
+shaded = true
+double_sided = false
+modulate = Color(0.290, 0.180, 0.133, 1)
+text = "1. MOP\n2. EXIST\n3. SNACK\n4. MAYBE TIDY?\n5. BE PROUD\n     (for real)"
+font = ExtResource("font")
+font_size = 64
+outline_size = 0
+horizontal_alignment = 0
+line_spacing = -6.0
+autowrap_mode = 3
+width = 421.9
+
+[node name="Polaroid" type="Label3D" parent="."]
+transform = Transform3D(0.885056, -0.214076, 0.413337, 0.173672, 0.975717, 0.13347, -0.431873, -0.0463434, 0.900743, -1.09702, 1.57596, -0.338144)
+cast_shadow = 0
+pixel_size = 0.000350375
+shaded = true
+double_sided = false
+modulate = Color(0.169, 0.133, 0.125, 1)
+text = "Good Boy"
+font = ExtResource("font")
+font_size = 64
+outline_size = 0
+horizontal_alignment = 1
+line_spacing = -6.0
+autowrap_mode = 3
+width = 309.4
+
+[node name="Today" type="Node3D" parent="."]
+transform = Transform3D(0.998131, -0.0611081, 0, 0, 0, 1, -0.0611081, -0.998131, 0, -0.0871284, 0.9058, 0.327223)
+
+[node name="Page" type="SubViewport" parent="Today"]
+disable_3d = true
+transparent_bg = true
+gui_disable_input = true
+size = Vector2i(512, 551)
+render_target_update_mode = 4
+
+[node name="List" type="VBoxContainer" parent="Today/Page"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 4.0
+offset_right = -6.0
+offset_bottom = -4.0
+theme = SubResource("theme_Today")
+theme_override_constants/separation = 0
+
+[node name="Title" type="Label" parent="Today/Page/List"]
+text = "TODAY:"
+
+[node name="Item0" type="HBoxContainer" parent="Today/Page/List"]
+theme_override_constants/separation = 11
+
+[node name="Box" type="TextureRect" parent="Today/Page/List/Item0"]
+custom_minimum_size = Vector2(39, 39)
+size_flags_vertical = 4
+texture = ExtResource("box")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Tick" type="TextureRect" parent="Today/Page/List/Item0/Box"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -6.0
+offset_right = 8.0
+offset_bottom = 0.0
+texture = ExtResource("tick")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Text" type="RichTextLabel" parent="Today/Page/List/Item0"]
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+text = "Mop kitchen floor"
+
+[node name="Item1" type="HBoxContainer" parent="Today/Page/List"]
+theme_override_constants/separation = 11
+
+[node name="Box" type="TextureRect" parent="Today/Page/List/Item1"]
+custom_minimum_size = Vector2(39, 39)
+size_flags_vertical = 4
+texture = ExtResource("box")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Tick" type="TextureRect" parent="Today/Page/List/Item1/Box"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -6.0
+offset_right = 8.0
+offset_bottom = 0.0
+texture = ExtResource("tick")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Text" type="RichTextLabel" parent="Today/Page/List/Item1"]
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+text = "Be a functional human"
+
+[node name="Item2" type="HBoxContainer" parent="Today/Page/List"]
+theme_override_constants/separation = 11
+
+[node name="Box" type="TextureRect" parent="Today/Page/List/Item2"]
+custom_minimum_size = Vector2(39, 39)
+size_flags_vertical = 4
+texture = ExtResource("box")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Tick" type="TextureRect" parent="Today/Page/List/Item2/Box"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -6.0
+offset_right = 8.0
+offset_bottom = 0.0
+texture = ExtResource("tick")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Text" type="RichTextLabel" parent="Today/Page/List/Item2"]
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+text = "Pet the cat/kind of"
+
+[node name="Item3" type="HBoxContainer" parent="Today/Page/List"]
+theme_override_constants/separation = 11
+
+[node name="Box" type="TextureRect" parent="Today/Page/List/Item3"]
+custom_minimum_size = Vector2(39, 39)
+size_flags_vertical = 4
+texture = ExtResource("box")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Tick" type="TextureRect" parent="Today/Page/List/Item3/Box"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -6.0
+offset_right = 8.0
+offset_bottom = 0.0
+texture = ExtResource("tick")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Text" type="RichTextLabel" parent="Today/Page/List/Item3"]
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+text = "It's okay. :)"
+
+[node name="Item4" type="HBoxContainer" parent="Today/Page/List"]
+visible = false
+theme_override_constants/separation = 11
+
+[node name="Box" type="TextureRect" parent="Today/Page/List/Item4"]
+custom_minimum_size = Vector2(39, 39)
+size_flags_vertical = 4
+texture = ExtResource("box")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Tick" type="TextureRect" parent="Today/Page/List/Item4/Box"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -6.0
+offset_right = 8.0
+offset_bottom = 0.0
+texture = ExtResource("tick")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Text" type="RichTextLabel" parent="Today/Page/List/Item4"]
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+text = ""
+
+[node name="Item5" type="HBoxContainer" parent="Today/Page/List"]
+visible = false
+theme_override_constants/separation = 11
+
+[node name="Box" type="TextureRect" parent="Today/Page/List/Item5"]
+custom_minimum_size = Vector2(39, 39)
+size_flags_vertical = 4
+texture = ExtResource("box")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Tick" type="TextureRect" parent="Today/Page/List/Item5/Box"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -6.0
+offset_right = 8.0
+offset_bottom = 0.0
+texture = ExtResource("tick")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Text" type="RichTextLabel" parent="Today/Page/List/Item5"]
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+text = ""
+
+[node name="Ink" type="MeshInstance3D" parent="Today"]
+cast_shadow = 0
+mesh = SubResource("quad_Today")
+material_override = SubResource("ink_Today")
