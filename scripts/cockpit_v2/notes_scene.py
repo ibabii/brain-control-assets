@@ -103,6 +103,7 @@ def write(slots):
                     nodes.append('visible = false')
                 nodes += ['anchors_preset = 15', 'anchor_right = 1.0', 'anchor_bottom = 1.0',
                           'offset_left = 2.0', 'offset_top = -6.0', 'offset_right = 8.0', 'offset_bottom = 0.0',
+                          'pivot_offset = Vector2(%g, %g)' % ((box + 6) / 2, (box + 6) / 2),  # centre: gameplay pops it on tick
                           'texture = ExtResource("tick")', 'expand_mode = 1', 'stretch_mode = 5', '',
                           '[node name="Text" type="RichTextLabel" parent="%s"]' % p,
                           'size_flags_horizontal = 3', 'bbcode_enabled = true', 'fit_content = true',
