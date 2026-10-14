@@ -31,7 +31,7 @@ The complete modelling → `.blend` save → GLB export → Godot import pipelin
 
 ## Coordination
 
-Read `../coordination/README.md`, `plan.md`, and the other agent's status before work or handoffs. Codex owns asset production; Claude owns integration into the game. Do not automatically sync files or control the other editor.
+A Claude assets session owns this repo; a Claude gameplay session owns integration. They talk by session message and record agreed contracts in `../coordination/interfaces.md`.
 
 ## Third-party addon
 

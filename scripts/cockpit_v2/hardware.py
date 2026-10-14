@@ -189,21 +189,21 @@ def console(root):
     # Front skirt down to the tray.
     lib.box('ConsoleSkirt', (1.30, 0.12, 0.05), M('beige', 0.62), CONSOLE.child((0, -0.09, 0.115)), group, bevel=0.012)
     # Left inset holding the keys.
-    lib.slab('KeyInset', rrect(0.44, 0.17, 0.025, 4), 0.012, 0.004, M('inset', 0.6), top.child((-0.29, -0.005, -0.004)), group)
-    lib.slab('KeyWell', rrect(0.37, 0.10, 0.02, 4), 0.016, 0.004, M('rubber', 0.8), top.child((-0.287, -0.02, 0.0)), group)
+    lib.slab('KeyInset', rrect(0.44, 0.17, 0.025, 4), 0.012, 0.004, M('inset', 0.6), top.child((-0.27, 0.0, -0.004)), group)
+    lib.slab('KeyWell', rrect(0.37, 0.10, 0.02, 4), 0.016, 0.004, M('rubber', 0.8), top.child((-0.27, 0.0, 0.0)), group)
     # SPACE ring base.
-    lib.slab('SpaceRing', circle(0.088, 48), 0.03, 0.012, M('ring', 0.45), top.child((0.028, 0.053, 0.0)), group,
+    lib.slab('SpaceRing', circle(0.088, 48), 0.03, 0.012, M('ring', 0.45), top.child((0.02, 0.06, 0.0)), group,
              holes=[list(reversed(circle(0.067, 48)))])
-    lib.slab('SpaceWell', circle(0.072, 40), 0.012, 0.004, M('rubber', 0.8), top.child((0.028, 0.053, 0.0)), group)
+    lib.slab('SpaceWell', circle(0.072, 40), 0.012, 0.004, M('rubber', 0.8), top.child((0.02, 0.06, 0.0)), group)
     # Right inset where the swappable slot lives (game slot at x 0.30).
     lib.slab('SlotInset', rrect(0.30, 0.25, 0.03, 4), 0.012, 0.004, M('inset', 0.6), top.child((0.30, 0.01, -0.004)), group)
     rim = [(x, y) for x, y in rrect(0.30, 0.25, 0.03, 4)]
     lib.slab('SlotRim', rim, 0.016, 0.005, M('housing_dark', 0.6), top.child((0.30, 0.01, 0.0)), group,
              holes=[list(reversed(rrect(0.26, 0.21, 0.02, 4)))])
     # Right plate for UNDO / DISTRACT (positions read from the concept on the console plane).
-    lib.slab('ButtonPlate', _round_poly([(0.38, 0.16), (0.62, 0.16), (0.66, -0.13), (0.38, -0.13)], 0.03), 0.014, 0.005,
+    lib.slab('ButtonPlate', _round_poly([(0.4, 0.16), (0.64, 0.16), (0.68, -0.13), (0.4, -0.13)], 0.03), 0.014, 0.005,
              M('inset', 0.6), top.child((0, 0, -0.004)), group)
-    for name, x, z, col in (('UndoButton', 0.459, -0.053, 'undo'), ('DistractButton', 0.468, 0.084, 'distract')):
+    for name, x, z, col in (('UndoButton', 0.485, -0.053, 'undo'), ('DistractButton', 0.49, 0.084, 'distract')):
         f = top.child((x, -z, 0.006))
         lib.slab(name + 'Rim', circle(0.056, 32), 0.016, 0.006, M('rubber', 0.8), f, group)
         lib.slab(name, circle(0.047, 32), 0.028, 0.012, M(col, 0.4), f.child((0, 0, 0.008)), group)
@@ -234,19 +234,19 @@ def _round_poly(pts, r, seg=4):
 
 
 def controls(root):
-    """Preview versions of the gameplay controls, at the game's local anchors. Gameplay decides whether to adopt."""
+    """Art for the gameplay controls, on the game's Console anchors (LeftKeys, PanicButton, RightSlot/Joystick)."""
     group = lib.empty('Controls', CONSOLE.o, root)
     top = CONSOLE.child((0, 0, 0), UPF)
-    keys = lib.empty('LeftKeys', CONSOLE.at((-0.287, 0, 0.018)), group)
+    keys = lib.empty('LeftKeys', CONSOLE.at((-0.27, 0, 0)), group)
     for i, (letter, col) in enumerate(zip('ASDF', C['keys'])):
-        f = top.child((-0.414 + i * 0.085, -0.018, 0.0))
+        f = top.child((-0.3975 + i * 0.085, 0.0, 0.0))
         k = lib.slab('Key' + letter, rrect(0.074, 0.072, 0.014, 4), 0.032, 0.008,
                      lib.mat('Key' + letter, col, 0.45), f, keys, pivot=f.o)
-    btn = lib.empty('PanicButton', CONSOLE.at((0.028, 0, -0.053)), group)
-    f = top.child((0.028, 0.053, 0.012))
+    btn = lib.empty('PanicButton', CONSOLE.at((0.02, 0, -0.06)), group)
+    f = top.child((0.02, 0.06, 0.012))
     lib.slab('SpaceCap', circle(0.064, 40), 0.042, 0.02, M('space', 0.38), f, btn, pivot=f.o)
-    joy = lib.empty('Joystick', CONSOLE.at((0.277, 0, 0.021)), group)
-    jf = top.child((0.277, -0.021, 0.0))
+    joy = lib.empty('Joystick', CONSOLE.at((0.3, 0, 0)), group)
+    jf = top.child((0.3, 0.0, 0.0))
     lib.slab('JoyBase', circle(0.065, 36), 0.025, 0.01, M('rubber', 0.75), jf, joy)
     lib.slab('JoyBoot', circle(0.035, 24), 0.03, 0.014, M('rubber', 0.85), jf.child((0, 0, 0.02)), joy)
     stick = lib.empty('Stick', jf.o, joy)

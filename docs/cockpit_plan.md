@@ -1,3 +1,5 @@
+> Superseded 2026-10-14 by cockpit v2 (`previews/cockpit_v2/README.md`, `../coordination/interfaces.md`). Kept for history.
+
 # Cockpit modelling plan — approved production sequence
 
 2026-10-14. User approved this plan and authorized starting after checking Claude's messages. Claude confirmed toothbrush integration and both smoke tests passed. Pass 1 cockpit composition blockout is complete; see `../previews/cockpit/README.md`. Core detailing awaits the planned composition review and final gameplay interfaces (CODEX-006).

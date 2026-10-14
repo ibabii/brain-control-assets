@@ -1,6 +1,6 @@
 # Brain Control Assets — Claude (assets session)
 
-Since 2026-10-14 a Claude session owns this repo (took over from Codex). Another Claude session owns gameplay in `../brain-control-simulator/`. `AGENTS.md` still applies; "Codex" there means this session.
+Since 2026-10-14 a Claude session owns this repo (took over from Codex). Another Claude session ("game-mechanics") owns gameplay in `../brain-control-simulator/`. Talk to it by SendMessage; record agreed contracts in `../coordination/interfaces.md`; keep `../coordination/codex.md` to a short status. `AGENTS.md` still applies; "Codex" there means this session.
 
 ## Style
 Read `docs/style-guide.md` and `materials/warm_ceramic_v1/palette.json` before any model or material. Use palette IDs; record deviations in the asset manifest.
@@ -17,6 +17,6 @@ Blender source in `source/<asset>/*.blend` → GLB export to `<asset>/art/` → 
 
 ## Status
 - Toothbrush v1: done and integrated in game (`defee4e`).
-- Cockpit v2: scripted build `scripts/cockpit_v2/` matched to the concept from the game camera; preview + overlay in `previews/cockpit_v2/` (README there). Proposed screen layout change and hooks in `cockpit/art/manifest.json`; not yet sent to gameplay.
+- Cockpit v2: scripted build `scripts/cockpit_v2/` matched to the concept from the game camera; preview + overlay in `previews/cockpit_v2/` (README there). Middle-ground layout agreed and applied in game `eeb819c`; art controls sit on the game anchors. Next: agree hooks (controls, needles, hands), then hand off.
 - Blender builds run headless (`Blender -b --factory-startup --python ...`); import by rescanning the assets editor via MCP, then capture with a separate Godot process.
 - Initial commit 8629283 pushed to origin/main.
