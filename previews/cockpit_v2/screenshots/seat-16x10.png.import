@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cqqu4u4wnaxou"
-path="res://.godot/imported/layout-game.png-9845f570a0b288c04a78d32fc94147d4.ctex"
+uid="uid://qqocnf1cr4ls"
+path="res://.godot/imported/seat-16x10.png-094ca38c9d703e7a70c802a803dbc4e7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://previews/cockpit_v2/screenshots/layout-game.png"
-dest_files=["res://.godot/imported/layout-game.png-9845f570a0b288c04a78d32fc94147d4.ctex"]
+source_file="res://previews/cockpit_v2/screenshots/seat-16x10.png"
+dest_files=["res://.godot/imported/seat-16x10.png-094ca38c9d703e7a70c802a803dbc4e7.ctex"]
 
 [params]
 

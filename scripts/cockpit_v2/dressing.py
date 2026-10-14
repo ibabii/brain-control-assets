@@ -111,6 +111,19 @@ def proxy(name, kind, bbox, parent, depth=None, ground_y=None, deep=None, body='
     return moved(o, shift)
 
 
+def place(o, base, scale=1.0, yaw=0.0):
+    """Re-seat a printed item: its base centre goes to `base` (Godot), scaled and turned about it. Keeps its artwork."""
+    me, mw = o.data, o.matrix_world
+    pts = [lib.G(mw @ v.co) for v in me.vertices]
+    old = Vector(((min(p.x for p in pts) + max(p.x for p in pts)) / 2, min(p.y for p in pts),
+                  (min(p.z for p in pts) + max(p.z for p in pts)) / 2))
+    r = lib.rot((0, yaw, 0))
+    inv = mw.inverted()
+    for v, p in zip(me.vertices, pts):
+        v.co = inv @ lib.B(Vector(base) + r @ ((p - old) * scale))
+    return o
+
+
 def moved(o, shift):
     """Move a printed item after its UVs are baked (it keeps its concept artwork)."""
     if shift is not None:
@@ -186,9 +199,14 @@ def notebook(parent):
     lo = Vector([min(p[i] for p in world) for i in range(3)])
     hi = Vector([max(p[i] for p in world) for i in range(3)])
     centre = (lo + hi) / 2
-    lib.slab('Cover', rrect(hi.x - lo.x + 0.03, hi.z - lo.z + 0.03, 0.012, 3), 0.018, 0.004,
-             lib.mat('NotebookCover', '#C9786A', 0.7), Frame((centre.x, 0.887, centre.z), UPF), g)
+    ext = 0.08     # the page runs past the concept's bottom edge
+    lib.slab('Cover', rrect(hi.x - lo.x + 0.03, hi.z - lo.z + 0.03 + ext, 0.012, 3), 0.018, 0.004,
+             lib.mat('NotebookCover', '#C9786A', 0.7), Frame((centre.x, 0.887, centre.z + ext / 2), UPF), g)
     lib.decal('Page', page, ground(y + 0.002), g)
+    a, b = world[3], world[2]
+    lib.mesh_object('PageRest', [a + Vector((0, 0.001, 0)), b + Vector((0, 0.001, 0)),
+                                 b + Vector((0.01, 0.001, ext)), a + Vector((-0.005, 0.001, ext))],
+                    [(0, 3, 2, 1)], lib.mat('PagePlain', '#E9DCC6', 0.85), g)
     return g
 
 
@@ -235,7 +253,10 @@ BUNDLES = [
     (8, 0.06, [(1178, -40, 1.75), (1182, 200, 1.58), (1170, 420, 1.48), (1160, 650, 1.2)]),
     (9, 0.11, [(250, -40, 1.8), (232, 200, 1.62), (200, 400, 1.5), (170, 620, 1.3)]),
     (7, 0.09, [(1470, 200, 1.55), (1520, 350, 1.55), (1565, 500, 1.5), (1600, 660, 1.4)]),
-    (6, 0.14, [(-40, 70, 2.0), (400, 40, 1.98), (800, 25, 2.05), (1200, 40, 1.98), (1720, 70, 2.0)]),
+    (6, 0.14, [(-450, 160, 2.0), (-40, 70, 2.0), (400, 40, 1.98), (800, 25, 2.05), (1200, 40, 1.98), (1720, 70, 2.0),
+               (2120, 160, 2.0)]),
+    (6, 0.12, [(-420, -60, 2.0), (-300, 300, 1.9), (-350, 650, 1.8)]),
+    (6, 0.12, [(2090, -60, 2.0), (1980, 300, 1.9), (2040, 650, 1.8)]),
     (5, 0.08, [(555, 420, 1.42), (545, 520, 1.4), (560, 620, 1.25)]),
     (5, 0.08, [(1135, 420, 1.42), (1150, 520, 1.4), (1140, 620, 1.25)]),
 ]
@@ -267,7 +288,7 @@ def cables(parent):
                      mats[rb.randrange(len(mats))], g)
     # Tangles on the desk, left and right of the console.
     rnd = random.Random(4)
-    for side, x0, x1 in ((-1, -1.0, -0.62), (1, 0.66, 1.05)):
+    for side, x0, x1 in ((-1, -1.55, -0.62), (1, 0.66, 1.55)):
         for k in range(12):
             pts = []
             x = rnd.uniform(x0, x1)
@@ -280,7 +301,7 @@ def cables(parent):
     return g
 
 
-BULBS = [(18, 170), (358, 33), (538, 8), (873, 35), (1068, 12), (1408, 37), (1622, 7), (1652, 380), (1640, 560)]
+BULBS = [(-380, 420), (-250, 230), (18, 170), (358, 33), (538, 8), (873, 35), (1068, 12), (1408, 37), (1622, 7), (1652, 380), (1640, 560), (1880, 420), (2030, 250)]
 
 
 def fairy_lights(parent):
@@ -305,13 +326,16 @@ def fairy_lights(parent):
 # --- props -----------------------------------------------------------------------------------------
 
 def books(parent):
+    """Book stack: spines printed from the concept; the stack continues as plain books past the concept's left edge
+    (seen on ultrawide screens). Returns the point on top of the stack."""
     g = lib.empty('Books', (-0.95, 1.0, -0.2), parent)
     spines = [
-        ((-20, 372, 192, 405), '#D9A04C'), ((-20, 405, 212, 445), '#2F6470'), ((-20, 445, 215, 482), '#D86E73'),
-        ((-20, 467, 218, 518), '#C9473D'), ((-20, 518, 215, 563), '#7EA04A'), ((-20, 535, 240, 610), '#3A63A8'),
-        ((-20, 610, 200, 660), '#C9A464'), ((-20, 660, 190, 710), '#B85B4E'),
+        ((0, 372, 192, 405), '#D9A04C'), ((0, 405, 212, 445), '#2F6470'), ((0, 445, 215, 482), '#D86E73'),
+        ((0, 467, 218, 518), '#C9473D'), ((0, 518, 215, 563), '#7EA04A'), ((0, 535, 240, 610), '#3A63A8'),
+        ((0, 610, 200, 660), '#C9A464'), ((0, 660, 190, 710), '#B85B4E'),
     ]
     depth = 1.12
+    top = None
     for i, (bbox, col) in enumerate(spines):
         x0, y0, x1, y1 = bbox
         a, b = at_depth(x0, y0, depth), at_depth(x1, y1, depth)
@@ -320,22 +344,36 @@ def books(parent):
         bm = lib.box_bm((w * 1.02, h, 0.2), Frame(c + Vector((0, 0, -0.1))))
         o = lib.from_bmesh('Book%d' % i, bm, lib.print_mat(), g, None, smooth=False)
         print_faces(o, lib.mat('Book%d' % i, col, 0.7), -0.2)
-    return g
+        ext = 0.28 + 0.05 * (i % 3)
+        lib.box('BookEnd%d' % i, (ext, h * 0.99, 0.2), lib.mat('Book%d' % i, col, 0.7),
+                Frame(Vector((a.x - ext / 2, c.y, c.z - 0.1))), g, bevel=0.006)
+        if top is None:
+            top = Vector((a.x + 0.075, c.y + h / 2, c.z - 0.03))   # clear left end, in front of the wall notes
+    return g, top
 
 
-def trinkets(parent, shelf_top):
-    """Shelf items are fitted to the concept shelf, then lifted with the shelf for the chosen layout."""
+def monitor_top(name, along=0.0, back=0.06):
+    """Point on top of a side monitor's casing: `along` metres across its width (from centre), `back` behind the bezel."""
+    spec = hw.LAYOUT[name]
+    f = Frame(spec['pos'], spec['deg'])
+    return f.at((along, hw.frame_top(name) - spec['pos'][1], -back))
+
+
+def trinkets(parent, shelf_top, books_top):
+    """Shelf items are fitted to the concept shelf, then lifted with the shelf for the chosen layout.
+    Tall items that would leave a 16:9 frame sit on the side monitors and the book stack instead."""
     g = lib.empty('Trinkets', (0, shelf_top, -0.62), parent)
     s = hw.CONCEPT_SHELF_TOP
     up = Vector((0, shelf_top - s, 0))
-    proxy('MentalBandwidth', 'box', (854, 47, 1082, 142), g, ground_y=s, deep=0.12, body='#E6DCC6', threshold=0.3, shift=up)
     proxy('Radio', 'box', (657, 110, 732, 146), g, ground_y=s, deep=0.08, body='#D9A04C', threshold=0.3, shift=up)
     proxy('Alien', 'ball', (768, 66, 830, 146), g, ground_y=s, deep=0.05, shrink=0.9, shift=up)
     proxy('Valve', 'cyl', (1080, 86, 1116, 146), g, ground_y=s, body='#C9473D', shift=up)
-    proxy('CatTV', 'box', (1107, -10, 1316, 148), g, ground_y=s + 0.02, deep=0.22, body='#E6DCC6', threshold=0.3, shift=up)
-    side_up = Vector((0, hw.frame_top('LeftPanel') - 1.509, 0))
-    proxy('Banana', 'ball', (285, 18, 405, 188), g, depth=min(1.45, wall_depth(345, 100, 0.22)), deep=0.07, shrink=0.88,
-          shift=side_up)
+    place(proxy('MentalBandwidth', 'box', (854, 47, 1082, 142), g, ground_y=s, deep=0.12, body='#E6DCC6', threshold=0.3),
+          monitor_top('LeftPanel', 0.02), 0.62, 32)
+    place(proxy('CatTV', 'box', (1107, -10, 1316, 148), g, ground_y=s + 0.02, deep=0.22, body='#E6DCC6', threshold=0.3),
+          monitor_top('RightPanel', -0.03), 0.6, -32)
+    place(proxy('Banana', 'ball', (285, 18, 405, 188), g, depth=min(1.45, wall_depth(345, 100, 0.22)), deep=0.07,
+                shrink=0.88), books_top, 0.8, 20)
     proxy('Speaker', 'disc', (618, -10, 702, 62), g, depth=wall_depth(660, 26, 0.12), deep=0.03, body='#3B3A36')
     dd = min(1.6, wall_depth(746, 76, 0.25))
     c = at_depth(746, 76, dd) + up
@@ -362,9 +400,58 @@ def desk_props(parent):
     proxy('PixelPal', 'box', (1302, 497, 1378, 612), g, ground_y=0.95, deep=0.05, shrink=0.95)
     proxy('ProgressPaper', 'ball', (1352, 795, 1486, 925), g, ground_y=y, deep=0.12, shrink=0.97)
     proxy('SmileyBadge', 'disc', (1140, 897, 1193, 941), g, ground_y=0.89, deep=0.01)
-    proxy('Pencil', 'cyl', (900, 875, 1060, 941), g, ground_y=0.91, shrink=0.9)
     for i, bbox in enumerate([(100, 580, 197, 676), (1372, 715, 1480, 830)]):
         proxy('Crumple%d' % i, 'ball', bbox, g, ground_y=y, deep=0.1, shrink=0.97)
+    return g
+
+
+def edge_dressing(parent):
+    """Modelled clutter for what 21:9 (sides) and 4:3 (desk front) show beyond the concept frame."""
+    g = lib.empty('EdgeDressing', (0, 0.9, 0), parent)
+    rnd = random.Random(21)
+    y = 0.86
+    books = ['#D9A04C', '#2F6470', '#D86E73', '#7EA04A', '#3A63A8', '#C9473D']
+    # Right-hand book pile and a plant-less pot of pens.
+    h0 = y
+    for i in range(5):
+        h = rnd.uniform(0.035, 0.055)
+        lib.box('PileBook%d' % i, (rnd.uniform(0.22, 0.28), h, rnd.uniform(0.16, 0.2)), lib.mat('Book%d' % (i + 10), books[i], 0.7),
+                Frame((1.32 + rnd.uniform(-0.02, 0.02), h0 + h / 2, -0.05), (0, rnd.uniform(-12, 12), 0)), g, bevel=0.006)
+        h0 += h
+    cup = Frame((1.25, y, 0.25))
+    lib.slab('PenCup', circle(0.045, 24), 0.11, 0.006, lib.mat('PenCup', '#2F6470', 0.55), cup.child((0, 0, 0), (-90, 0, 0)), g,
+             holes=[list(reversed(circle(0.038, 24)))])
+    for k, col in enumerate(['#E8487F', '#2F80DD', '#F2A332', '#4CC04F']):
+        a = k * 1.6
+        tip = cup.at((0.02 * math.cos(a), 0.17, 0.02 * math.sin(a)))
+        lib.tube('Pen%d' % k, [cup.at((0.015 * math.cos(a), 0.01, 0.015 * math.sin(a))), tip], 0.006,
+                 lib.mat('Pen%d' % k, col, 0.45), g, res=2)
+    # Left: a second crumpled pile and a snack wrapper.
+    crumple = lib.mat('Crumple', '#F2EEE6', 0.85)
+    for i, (x, z, r) in enumerate([(-1.35, 0.1, 0.06), (-1.42, -0.12, 0.05), (1.45, 0.42, 0.05), (-1.2, 0.42, 0.045)]):
+        bm = bmesh.new()
+        bmesh.ops.create_icosphere(bm, subdivisions=2, radius=r)
+        for v in bm.verts:
+            v.co *= 1 + rnd.uniform(-0.25, 0.15)
+        lib.transform_bm(bm, Frame((x, y + r * 0.7, z)))
+        lib.from_bmesh('EdgeCrumple%d' % i, bm, crumple, g, None, smooth=False)
+    # Desk front (4:3): pencils, a ruler, an eraser, a sticky pad, crumbs and coffee rings, on the tray top.
+    y = 0.89
+    for k, (x, z, yaw, col) in enumerate([(-0.52, 0.42, 70, '#F2C94C'), (-0.42, 0.47, 100, '#9A58C6'), (0.4, 0.45, 60, '#D4473A'),
+                                          (0.55, 0.4, 115, '#2F80DD')]):
+        f = Frame((x, y + 0.008, z), (0, yaw, 0))
+        lib.tube("Pencil%d" % k, [f.at((-0.06, 0, 0)), f.at((0.06, 0, 0))], 0.006, lib.mat('Pencil%d' % k, col, 0.5), g, res=2)
+    lib.box('Ruler', (0.3, 0.004, 0.035), lib.mat('Ruler', '#E9D9A6', 0.6), Frame((0.2, y + 0.002, 0.49), (0, -8, 0)), g)
+    lib.box('Eraser', (0.05, 0.018, 0.025), lib.mat('Eraser', '#F29684', 0.8), Frame((-0.3, y + 0.009, 0.47), (0, 25, 0)), g, bevel=0.004)
+    lib.box('StickyPad', (0.09, 0.02, 0.09), lib.mat('StickyPad', '#FECF82', 0.85), Frame((0.85, 0.87, 0.48), (0, -15, 0)), g, bevel=0.003)
+    stain = lib.mat('CoffeeRing', '#8A5A3A', 0.6)
+    for k, (x, z, r) in enumerate([(0.32, 0.33, 0.04), (-0.6, 0.48, 0.035)]):
+        lib.slab('CoffeeRing%d' % k, circle(r, 28), 0.001, 0.0, stain, Frame((x, y + 0.0005, z), (-90, 0, 0)), g,
+                 holes=[list(reversed(circle(r - 0.006, 28)))])
+    crumb = lib.mat('Crumb', '#B9773F', 0.8)
+    for k in range(14):
+        p = Vector((rnd.uniform(-0.62, -0.35), y + 0.004, rnd.uniform(0.3, 0.5)))
+        lib.sphere('Crumb%d' % k, rnd.uniform(0.004, 0.008), crumb, Frame(p), g, seg=6, rings=4, smooth=False)
     return g
 
 
@@ -390,8 +477,9 @@ def build(root, shelf_top):
     notebook(dressing)
     cables(dressing)
     _, bulbs = fairy_lights(dressing)
-    books(dressing)
-    trinkets(dressing, shelf_top)
+    _, books_top = books(dressing)
+    trinkets(dressing, shelf_top, books_top)
+    edge_dressing(dressing)
     desk_props(dressing)
     frame_tape(dressing)
     return bulbs

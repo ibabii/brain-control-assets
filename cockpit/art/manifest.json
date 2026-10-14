@@ -24,52 +24,25 @@
     "FrontScreen": {
       "position": [
         0,
-        1.33,
+        1.385,
         -0.58
       ],
       "size": [
         1.12,
-        0.49
+        0.63
       ],
+      "pixels_per_meter": 1715,
       "was": "1.28 x 0.72 at y 1.43"
     },
-    "LeftPanel": {
-      "position": [
-        -0.77,
-        1.265,
-        -0.38
-      ],
-      "rotation_deg": [
-        0,
-        25,
-        -4
-      ],
-      "size": [
-        0.33,
-        0.42
-      ]
-    },
-    "RightPanel": {
-      "position": [
-        0.79,
-        1.262,
-        -0.38
-      ],
-      "rotation_deg": [
-        0,
-        -27,
-        3
-      ],
-      "size": [
-        0.33,
-        0.4
-      ]
-    },
-    "Lighting/Environment": "use cockpit_lighting.tscn instead of the greybox WorldEnvironment and lights"
+    "Camera3D": "adaptive fit: aspect < 16:9 -> KEEP_WIDTH, fov 100.3; else KEEP_HEIGHT, fov 68",
+    "Lighting/Environment": "use cockpit_lighting.tscn instead of the greybox WorldEnvironment and lights",
+    "status": "screen + camera sent to gameplay session (ASSETS-001)"
   },
   "not_included": [
     "brain hands and sleeves (gameplay rig)",
     "screen content (gameplay)"
   ],
-  "style_id": "warm_ceramic_v1"
+  "style_id": "warm_ceramic_v1",
+  "layout": "middle (user-approved 2026-10-14)",
+  "aspect_support": "16:9 reference; 16:10 and 4:3 show extra wall/desk (adaptive camera); 21:9 shows dressed sides"
 }

@@ -260,7 +260,7 @@ def controls(root):
 
 def desk(root):
     group = lib.empty('Desk', (0, 0.86, 0.1), root)
-    lib.slab('DeskTop', rrect(2.6, 0.9, 0.08, 5), 0.06, 0.016, M('desk', 0.75), Frame((0, 0.80, 0.0), UPF), group)
+    lib.slab('DeskTop', rrect(3.6, 1.1, 0.08, 5), 0.06, 0.016, M('desk', 0.75), Frame((0, 0.80, 0.08), UPF), group)
     # Dark tray in front of the console where the notebook and list lie.
     lib.slab('Tray', rrect(1.35, 0.34, 0.04, 4), 0.03, 0.01, M('tray', 0.65), Frame((0.0, 0.86, 0.36), UPF), group)
     # Deck connecting the console back to the gauge panel (hidden from the seat, seen in the reveal).
