@@ -41,6 +41,7 @@ bpy.ops.export_scene.gltf(filepath=lib.ROOT + '/previews/cockpit_v2/preview_scre
 for o in [*screens.children_recursive, screens]:
     bpy.data.objects.remove(o)
 layout = {
+    'layout': hardware.LAYOUT_NAME,
     'camera': {'position': list(lib.CAM), 'pitch_deg': -14, 'fov_deg': 68},
     'screens': hardware.LAYOUT,
     'console': {'position': list(hardware.CONSOLE.o), 'rotation_deg': [18, 0, 0]},

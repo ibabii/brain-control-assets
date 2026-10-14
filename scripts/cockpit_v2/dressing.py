@@ -88,7 +88,7 @@ def wall_depth(px, py, gap):
 
 
 def proxy(name, kind, bbox, parent, depth=None, ground_y=None, deep=None, body='#ffffff', yaw=0.0, threshold=-1.0,
-          shrink=0.94):
+          shrink=0.94, shift=None):
     c, w, h = _fit(bbox, depth, ground_y, shrink)
     d = deep if deep is not None else w
     f = Frame(c, (0, yaw, 0))
@@ -107,7 +107,15 @@ def proxy(name, kind, bbox, parent, depth=None, ground_y=None, deep=None, body='
         bmesh.ops.create_cone(bm, cap_ends=True, segments=28, radius1=w / 2, radius2=w / 2, depth=d)
         lib.transform_bm(bm, f)
     o = lib.from_bmesh(name, bm, lib.print_mat(), parent, None, smooth=kind in ('cyl', 'ball', 'torus'))
-    return print_faces(o, lib.mat('Body_' + name, body, 0.6), threshold)
+    print_faces(o, lib.mat('Body_' + name, body, 0.6), threshold)
+    return moved(o, shift)
+
+
+def moved(o, shift):
+    """Move a printed item after its UVs are baked (it keeps its concept artwork)."""
+    if shift is not None:
+        o.location += lib.B(shift)
+    return o
 
 
 def _torus(r_outer, height, frame, seg=28, ring=12):
@@ -139,9 +147,16 @@ def notes(parent):
     for name, pts in wall:
         cx, cy = sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
         lib.decal(name, pts, wall_plane(cx, cy, 0.32), g)
-    lib.decal('SameBrain', [(487, 47), (633, 30), (636, 140), (500, 152)], lib.zplane(-0.5), g)
-    lib.decal('HeartSticky', [(1135, 280), (1190, 279), (1191, 357), (1136, 358)], lib.zplane(-0.53), g)
-    lib.decal('Smiley', circle_px(547, 187, 16), lib.zplane(-0.555), g)
+    # Items stuck to the main frame follow its corners for the chosen layout (concept frame: 1.12 x 0.49).
+    spec = hw.LAYOUT['FrontScreen']
+    w, h = spec['size']
+    cx, cy, _ = spec['pos']
+    d_tl = Vector((-(w - 1.12) / 2, cy + h / 2 - (1.33 + 0.245), 0))
+    d_tr = Vector(((w - 1.12) / 2, cy + h / 2 - (1.33 + 0.245), 0))
+    d_r = Vector(((w - 1.12) / 2, cy - 1.33, 0))
+    moved(lib.decal('SameBrain', [(487, 47), (633, 30), (636, 140), (500, 152)], lib.zplane(-0.5), g), d_tl)
+    moved(lib.decal('HeartSticky', [(1135, 280), (1190, 279), (1191, 357), (1136, 358)], lib.zplane(-0.53), g), d_r)
+    moved(lib.decal('Smiley', circle_px(547, 187, 16), lib.zplane(-0.555), g), d_tl)
     heart = [(432, 92), (442, 84), (458, 81), (472, 88), (478, 103), (474, 122), (458, 143), (433, 166), (408, 143),
              (391, 122), (387, 103), (393, 88), (407, 81), (423, 84)]
     lib.decal('SmallStepsHeart', heart, lib.facing(min(1.5, wall_depth(432, 120, 0.22))), g)
@@ -309,19 +324,23 @@ def books(parent):
 
 
 def trinkets(parent, shelf_top):
+    """Shelf items are fitted to the concept shelf, then lifted with the shelf for the chosen layout."""
     g = lib.empty('Trinkets', (0, shelf_top, -0.62), parent)
-    s = shelf_top
-    proxy('MentalBandwidth', 'box', (854, 47, 1082, 142), g, ground_y=s, deep=0.12, body='#E6DCC6', threshold=0.3)
-    proxy('Radio', 'box', (657, 110, 732, 146), g, ground_y=s, deep=0.08, body='#D9A04C', threshold=0.3)
-    proxy('Alien', 'ball', (768, 66, 830, 146), g, ground_y=s, deep=0.05, shrink=0.9)
-    proxy('Valve', 'cyl', (1080, 86, 1116, 146), g, ground_y=s, body='#C9473D')
-    proxy('CatTV', 'box', (1107, -10, 1316, 148), g, ground_y=s + 0.02, deep=0.22, body='#E6DCC6', threshold=0.3)
-    proxy('Banana', 'ball', (285, 18, 405, 188), g, depth=min(1.45, wall_depth(345, 100, 0.22)), deep=0.07, shrink=0.88)
+    s = hw.CONCEPT_SHELF_TOP
+    up = Vector((0, shelf_top - s, 0))
+    proxy('MentalBandwidth', 'box', (854, 47, 1082, 142), g, ground_y=s, deep=0.12, body='#E6DCC6', threshold=0.3, shift=up)
+    proxy('Radio', 'box', (657, 110, 732, 146), g, ground_y=s, deep=0.08, body='#D9A04C', threshold=0.3, shift=up)
+    proxy('Alien', 'ball', (768, 66, 830, 146), g, ground_y=s, deep=0.05, shrink=0.9, shift=up)
+    proxy('Valve', 'cyl', (1080, 86, 1116, 146), g, ground_y=s, body='#C9473D', shift=up)
+    proxy('CatTV', 'box', (1107, -10, 1316, 148), g, ground_y=s + 0.02, deep=0.22, body='#E6DCC6', threshold=0.3, shift=up)
+    side_up = Vector((0, hw.frame_top('LeftPanel') - 1.509, 0))
+    proxy('Banana', 'ball', (285, 18, 405, 188), g, depth=min(1.45, wall_depth(345, 100, 0.22)), deep=0.07, shrink=0.88,
+          shift=side_up)
     proxy('Speaker', 'disc', (618, -10, 702, 62), g, depth=wall_depth(660, 26, 0.12), deep=0.03, body='#3B3A36')
     dd = min(1.6, wall_depth(746, 76, 0.25))
-    c = at_depth(746, 76, dd)
+    c = at_depth(746, 76, dd) + up
     r = 40 * m_per_px(dd)
-    proxy('DiscoBall', 'ball', (706, 36, 786, 116), g, depth=dd, shrink=0.97)
+    proxy('DiscoBall', 'ball', (706, 36, 786, 116), g, depth=dd, shrink=0.97, shift=up)
     lib.tube('DiscoString', [c + Vector((0, r, 0)), c + Vector((0, r + 0.25, -0.05))], 0.002,
              lib.mat('FairyWire', '#3B3A36'), g)
     return g
@@ -351,14 +370,15 @@ def desk_props(parent):
 
 def frame_tape(parent):
     g = lib.empty('Tape', (0, 1.3, -0.55), parent)
-    for name, spots in (('FrontScreen', [(-0.58, 0.27, 20), (0.58, 0.27, -25), (-0.6, -0.24, -15), (0.55, -0.25, 30),
-                                         (-0.2, 0.3, 5)]),
-                        ('LeftPanel', [(0.18, 0.2, -30), (0.17, -0.05, 10), (-0.16, -0.2, 20)]),
-                        ('RightPanel', [(-0.17, 0.21, 25), (0.16, 0.22, -20), (-0.18, -0.15, 0)])):
+    for name, border, spots in (
+            ('FrontScreen', (0.0375, 0.03), [(-1, 1, 20), (1, 1, -25), (-1, -1, -15), (1, -1, 30), (-0.35, 1, 5)]),
+            ('LeftPanel', (0.017, 0.017), [(1, 0.9, -30), (1, -0.2, 10), (-1, -0.9, 20)]),
+            ('RightPanel', (0.017, 0.017), [(-1, 1, 25), (1, 1, -20), (-1, -0.7, 0)])):
         spec = hw.LAYOUT[name]
+        w, h = spec['size']
         f = Frame(spec['pos'], spec['deg'])
-        for x, y, a in spots:
-            hw.tape(g, f, (x, y, 0.024), (0.06, 0.04), a)
+        for fx, fy, a in spots:
+            hw.tape(g, f, (fx * (w / 2 + border[0]), fy * (h / 2 + border[1]), 0.024), (0.06, 0.04), a)
     for x in (-0.36, -0.12, 0.12, 0.36):
         hw.tape(g, hw.DIALS, (x, -0.09, 0.006), (0.045, 0.03), random.Random(int(x * 100)).uniform(-20, 20))
     return g

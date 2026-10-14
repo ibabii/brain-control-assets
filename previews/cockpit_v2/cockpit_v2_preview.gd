@@ -1,7 +1,9 @@
 extends Node3D
 ## Cockpit v2 look-dev: game camera, art, lighting, and the approved concept as an overlay.
 ## O cycles overlay (off / 50% / 100%), S toggles preview screen content, T toggles the task label.
-## Capture: godot --path . res://previews/cockpit_v2/cockpit_v2_preview.tscn -- --capture <name>
+## Capture: godot --path . res://previews/cockpit_v2/cockpit_v2_preview.tscn -- --capture <name> [--size 1672x941] [--fit adaptive|height]
+## Fit "adaptive" (recommended for the game): keep the 16:9 framing whole; narrower windows reveal more top/bottom,
+## wider ones more sides. "height" is Godot's default (narrow windows crop the sides).
 
 const ART := preload('res://cockpit/art/cockpit_art.tscn')
 const LIGHTING := preload('res://cockpit/art/cockpit_lighting.tscn')
@@ -13,6 +15,10 @@ var screens: Node3D
 var task: Label3D
 var alphas := [0.0, 0.5, 1.0]
 var alpha_i := 0
+var camera: Camera3D
+var fit := 'adaptive'
+const FOV_V := 68.0
+const FOV_H := 100.3   # horizontal FOV of 68 deg vertical at 16:9
 
 func _ready() -> void:
 	get_window().content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
@@ -20,7 +26,7 @@ func _ready() -> void:
 	add_child(ART.instantiate())
 	screens = SCREENS.instantiate()
 	add_child(screens)
-	var camera := Camera3D.new()
+	camera = Camera3D.new()
 	camera.position = Vector3(0, 1.36, 0.8)
 	camera.rotation_degrees = Vector3(-14, 0, 0)
 	camera.fov = 68
@@ -47,9 +53,26 @@ func _ready() -> void:
 	ui.add_child(overlay)
 	_set_overlay(0)
 	var args := OS.get_cmdline_user_args()
+	var f := args.find('--fit')
+	if f >= 0:
+		fit = args[f + 1]
+	get_viewport().size_changed.connect(_apply_fit)
+	_apply_fit()
 	var i := args.find('--capture')
 	if i >= 0:
 		_capture.call_deferred(args[i + 1] if i + 1 < args.size() else 'look')
+
+func _apply_fit() -> void:
+	var size := get_viewport().get_visible_rect().size
+	var narrow := size.x / size.y < 16.0 / 9.0
+	if fit == 'adaptive' and narrow:
+		camera.keep_aspect = Camera3D.KEEP_WIDTH
+		camera.fov = FOV_H
+	else:
+		camera.keep_aspect = Camera3D.KEEP_HEIGHT
+		camera.fov = FOV_V
+	# The overlay only lines up at 16:9.
+	overlay.visible = alphas[alpha_i] > 0.0 and absf(size.x / size.y - 16.0 / 9.0) < 0.02
 
 func _set_overlay(i: int) -> void:
 	alpha_i = i
@@ -71,12 +94,19 @@ func _shot(path: String) -> void:
 	print('COCKPIT_V2_CAPTURE ', path)
 
 func _capture(name: String) -> void:
-	get_window().size = Vector2i(1672, 941)
+	var args := OS.get_cmdline_user_args()
+	var size := Vector2i(1672, 941)
+	var si := args.find('--size')
+	if si >= 0:
+		var p := args[si + 1].split('x')
+		size = Vector2i(int(p[0]), int(p[1]))
+	get_window().size = size
 	var dir := 'res://previews/cockpit_v2/screenshots/'
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 	for n in 10:
 		await get_tree().process_frame
 	await _shot(dir + name + '.png')
-	_set_overlay(1)
-	await _shot(dir + name + '-overlay.png')
+	if size == Vector2i(1672, 941):
+		_set_overlay(1)
+		await _shot(dir + name + '-overlay.png')
 	get_tree().quit()

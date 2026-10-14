@@ -1,5 +1,6 @@
 """Screens, gauge panel, console and desk. Anchors follow the concept layout (see LAYOUT)."""
 import math
+import os
 
 import bmesh
 import numpy as np
@@ -8,12 +9,36 @@ from mathutils import Vector
 import lib
 from lib import UPF, Frame, rrect, circle
 
-# Screen anchors fitted to the concept from the game camera (centre, size, rotation degrees).
-LAYOUT = {
-    'FrontScreen': {'pos': (0.0, 1.33, -0.58), 'size': (1.12, 0.49), 'deg': (0, 0, 0)},
-    'LeftPanel': {'pos': (-0.77, 1.265, -0.38), 'size': (0.33, 0.42), 'deg': (0, 25, -4)},
-    'RightPanel': {'pos': (0.79, 1.262, -0.38), 'size': (0.33, 0.40), 'deg': (0, -27, 3)},
+# Screen layouts (centre, size, rotation degrees). COCKPIT_LAYOUT picks one; default keeps the game's 16:9 screens.
+_GAME_SIDES = {
+    'LeftPanel': {'pos': (-0.8, 1.3, -0.38), 'size': (0.34, 0.46), 'deg': (0, 32, 0)},
+    'RightPanel': {'pos': (0.8, 1.3, -0.38), 'size': (0.34, 0.46), 'deg': (0, -32, 0)},
 }
+LAYOUTS = {
+    # Exactly the current game anchors (src/cockpit/cockpit.tscn).
+    'game': {'FrontScreen': {'pos': (0.0, 1.43, -0.58), 'size': (1.28, 0.72), 'deg': (0, 0, 0)}, **_GAME_SIDES},
+    # 16:9 like the game, a bit smaller, bottom edge unchanged: leaves room for the trinket shelf.
+    'middle': {'FrontScreen': {'pos': (0.0, 1.385, -0.58), 'size': (1.12, 0.63), 'deg': (0, 0, 0)}, **_GAME_SIDES},
+    # Fitted to the concept render (2.3:1 main screen).
+    'concept': {
+        'FrontScreen': {'pos': (0.0, 1.33, -0.58), 'size': (1.12, 0.49), 'deg': (0, 0, 0)},
+        'LeftPanel': {'pos': (-0.77, 1.265, -0.38), 'size': (0.33, 0.42), 'deg': (0, 25, -4)},
+        'RightPanel': {'pos': (0.79, 1.262, -0.38), 'size': (0.33, 0.40), 'deg': (0, -27, 3)},
+    },
+}
+LAYOUT_NAME = os.environ.get('COCKPIT_LAYOUT', 'middle')
+LAYOUT = LAYOUTS[LAYOUT_NAME]
+# Where each screen's content sits in the concept image (px), for the preview stand-in.
+CONCEPT_SCREEN_PX = {'FrontScreen': (552, 177, 1135, 440), 'LeftPanel': (262, 215, 502, 484),
+                     'RightPanel': (1205, 235, 1458, 482)}
+CONCEPT_SHELF_TOP = 1.33 + 0.245 + 0.06 + 0.035
+
+
+def frame_top(name):
+    spec = LAYOUT[name]
+    return spec['pos'][1] + spec['size'][1] / 2 + (0.06 if name == 'FrontScreen' else 0.034)
+
+
 CONSOLE = Frame((0, 0.95, 0.1), (18, 0, 0))     # game Console node
 DIALS = Frame((0, 0.955, -0.59))                  # game GaugeDials node
 DIAL_X = [-0.48, -0.24, 0.0, 0.24, 0.48]
@@ -82,7 +107,7 @@ def shelf(root):
     spec = LAYOUT['FrontScreen']
     y = spec['pos'][1] + spec['size'][1] / 2 + 0.06
     f = Frame((0, y, -0.66), UPF)
-    return lib.slab('Shelf', rrect(1.30, 0.26, 0.04, 5), 0.035, 0.012, M('housing', 0.5), f, root), y + 0.035
+    return lib.slab('Shelf', rrect(spec['size'][0] + 0.18, 0.26, 0.04, 5), 0.035, 0.012, M('housing', 0.5), f, root), y + 0.035
 
 
 # --- gauges --------------------------------------------------------------------------------------
@@ -244,15 +269,28 @@ def desk(root):
 
 
 def preview_screens():
-    """Preview-only screen quads showing the concept's screen content (game renders live content here)."""
+    """Preview-only screen quads showing the concept's screen content, centre-cropped to each screen's aspect."""
     g = lib.empty('PreviewScreens')
     m = lib.mat('ScreenPrint', '#000000', 0.4, emit_image=lib.concept_image(), strength=1.0)
     for name, spec in LAYOUT.items():
         w, h = spec['size']
         f = Frame(spec['pos'], spec['deg'])
-        corners = [f.at((sx * w / 2, sy * h / 2, 0)) for sx, sy in ((-1, 1), (1, 1), (1, -1), (-1, -1))]
-        px = [lib.project(c) for c in corners]
-        lib.decal(name + 'Preview', px, (f.o, f.dir((0, 0, 1))), g, material=m)
+        x0, y0, x1, y1 = CONCEPT_SCREEN_PX[name]
+        cw, ch = x1 - x0, y1 - y0
+        if cw / ch > w / h:
+            x0, x1 = (x0 + x1) / 2 - ch * w / h / 2, (x0 + x1) / 2 + ch * w / h / 2
+        else:
+            y0, y1 = (y0 + y1) / 2 - cw * h / w / 2, (y0 + y1) / 2 + cw * h / w / 2
+        bm = bmesh.new()
+        uv = bm.loops.layers.uv.new('UVMap')
+        corners = [(-1, 1), (1, 1), (1, -1), (-1, -1)]
+        vs = [bm.verts.new(f.at((sx * w / 2, sy * h / 2, 0))) for sx, sy in corners]
+        face = bm.faces.new(vs)
+        for loop, (sx, sy) in zip(face.loops, corners):
+            px = x0 + (sx + 1) / 2 * (x1 - x0)
+            py = y0 + (1 - sy) / 2 * (y1 - y0)
+            loop[uv].uv = (px / lib.CW, 1 - py / lib.CH)
+        lib.from_bmesh(name + 'Preview', bm, m, g, None, smooth=False)
     return g
 
 
