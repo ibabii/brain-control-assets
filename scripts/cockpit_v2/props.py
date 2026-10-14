@@ -18,6 +18,20 @@ PX = 1600
 SPRINKLES = ['#F2D35A', '#5AA2E0', '#7CC46A', '#FFFFFF', '#9A7BD0', '#E8615A']
 
 
+def prop(fn):
+    """Builders put their parts under one empty named after the prop (one node per prop; one assembly in audit.py)."""
+    import functools
+    import inspect
+    sig = inspect.signature(fn)
+
+    @functools.wraps(fn)
+    def wrap(*a, **kw):
+        b = sig.bind(*a, **kw)
+        b.arguments['parent'] = lib.empty(b.arguments['name'], (0, 0, 0), b.arguments['parent'])
+        return fn(*b.args, **b.kwargs)
+    return wrap
+
+
 def face_cam(base, extra=0.0):
     """Frame at `base`, turned about Y so local +Z points at the camera (plus `extra` degrees)."""
     d = lib.CAM - Vector(base)
@@ -115,7 +129,8 @@ def uv_sphere(r, scale=(1, 1, 1), seg=32, rings=18, centre=(0, 0, 0)):
 
 
 def rounded_box(size, r, centre=(0, 0, 0), res=2):
-    bm = lib.slab_bm(lib.rrect(size[0], size[1], r, res + 2), size[2], r, bevel_res=res)
+    # Bevel at half the corner radius keeps the inset corners round, so the box comes out at exactly `size`.
+    bm = lib.slab_bm(lib.rrect(size[0], size[1], r, res + 2), size[2], r * 0.5, bevel_res=res)
     for v in bm.verts:
         v.co = Vector((v.co.x, v.co.y, v.co.z - size[2] / 2)) + Vector(centre)
     return bm
@@ -148,6 +163,7 @@ def screw(name, f, pos, parent, r=0.006):
 
 # --- desk ----------------------------------------------------------------------------------------------
 
+@prop
 def can(name, base, h, parent):
     """Brain Fuel: red can, scuffed white paint, label with the brain doodle."""
     r = h * 0.34
@@ -175,6 +191,7 @@ def can(name, base, h, parent):
     return f
 
 
+@prop
 def mug(name, base, h, parent, handle_side=1):
     """Big cream mug with coffee drips and lettering; handle on the camera's right."""
     r = h * 0.36
@@ -204,6 +221,7 @@ def mug(name, base, h, parent, handle_side=1):
     return f
 
 
+@prop
 def donut(name, base, d, parent, seed=3):
     R, r = 0.3 * d, 0.2 * d
     f = face_cam(base)
@@ -265,6 +283,7 @@ def donut(name, base, d, parent, seed=3):
     return f
 
 
+@prop
 def crumple(name, base, r, parent, seed):
     rng = np.random.default_rng(seed)
     bm = bmesh.new()
@@ -286,6 +305,7 @@ def crumple(name, base, r, parent, seed):
                smooth=False)
 
 
+@prop
 def folded_note(name, f, w, h, body, parent, seed, ink_col='#3B2A1E'):
     """Creased paper sheet with lettering (Progress > Perfection)."""
     rng = np.random.default_rng(seed)
@@ -310,6 +330,7 @@ def folded_note(name, f, w, h, body, parent, seed, ink_col='#3B2A1E'):
     return obj(name, bm, [tex(name, c, 0.85)], f, parent, smooth=False)
 
 
+@prop
 def badge(name, base, d, parent):
     R = d / 2
     bm = lathe([(0, 0, 0.5), (R, 0, 0.5), (R, 0.12 * R, 0.5), (0.97 * R, 0.22 * R, 0.5), (0.8 * R, 0.3 * R, 0.5),
@@ -322,6 +343,7 @@ def badge(name, base, d, parent):
     return obj(name, bm, [tex(name, c, 0.35)], f2, parent)
 
 
+@prop
 def lever_box(name, base, w, h, parent):
     """Chunky beige box with two pull levers and taped paper labels."""
     f = face_cam(base, -6)
@@ -355,8 +377,21 @@ def lever_box(name, base, w, h, parent):
     return f
 
 
+@prop
+def crate(name, base, w, d, h, parent):
+    """Cardboard box the desk toys sit on."""
+    f = Frame(base)
+    c = ink.paper(256, 128, '#C79A62', 60, grain=0.08)
+    c.stroke([(0, 0.5), (1, 0.5)], 10, '#D9C08F', 0.9)          # packing tape
+    ink.text(c, 'FRAGILE', (0.3, 0.25), 0.18, '#8A3A2A', weight=1)
+    obj(name, rounded_box((w, h, d), 0.006, (0, h / 2, 0)), [M('Cardboard', '#C79A62', 0.85)], f, parent)
+    face_card(name + 'Label', w * 0.9, h * 0.8, c, f.child((0, h / 2, d / 2 + 0.0005)), parent, rough=0.85, thick=0.0005)
+    return f
+
+
 # --- shelf and trinkets --------------------------------------------------------------------------------
 
+@prop
 def radio(name, base, w, parent):
     f = face_cam(base)
     h, d = w * 0.48, w * 0.42
@@ -366,8 +401,8 @@ def radio(name, base, w, parent):
         for j in range(5):
             c.ellipse(((i + 0.5) / 9, (j + 0.5) / 5), 0.06, 0.06, '#3B2A1E')
     face_card(name + 'Grille', w * 0.55, h * 0.7, c, f.child((-w * 0.17, h * 0.5, d / 2)), parent, r=0.006)
-    for k, x in enumerate((0.27, 0.4)):
-        kb = lathe([(0, 0, 0), (h * 0.14, 0, 0), (h * 0.14, h * 0.1, 0), (0, h * 0.1, 0)], 16)
+    for k, x in enumerate((0.24, 0.41)):
+        kb = lathe([(0, 0, 0), (h * 0.11, 0, 0), (h * 0.11, h * 0.1, 0), (0, h * 0.1, 0)], 16)
         for v in kb.verts:
             v.co = Vector((v.co.x, -v.co.z, v.co.y))
         obj(name + 'Knob%d' % k, kb, [M('RadioKnob', '#F1E4CF', 0.4)], f.child((w * x, h * 0.5, d / 2)), parent)
@@ -376,6 +411,7 @@ def radio(name, base, w, parent):
     return f
 
 
+@prop
 def alien(name, base, h, parent):
     f = face_cam(base)
     g = M('Alien', '#7BC24A', 0.4)
@@ -397,6 +433,7 @@ def alien(name, base, h, parent):
     return f
 
 
+@prop
 def valve(name, base, h, parent):
     f = face_cam(base)
     r = h * 0.28
@@ -408,6 +445,7 @@ def valve(name, base, h, parent):
     return f
 
 
+@prop
 def disco_ball(name, centre, r, parent):
     f = Frame(centre, (0, 20, 0))
     bm = uv_sphere(r, seg=22, rings=14)
@@ -424,6 +462,7 @@ def disco_ball(name, centre, r, parent):
     return f
 
 
+@prop
 def speaker(name, centre, r, parent):
     f = face_cam(centre)
     f = f.child((0, 0, 0), (90, 0, 0))                     # disc faces the camera
@@ -437,6 +476,7 @@ def speaker(name, centre, r, parent):
     return obj(name, bm, [tex(name, c, 0.6)], f, parent)
 
 
+@prop
 def meter_box(name, base, w, parent, yaw=0.0):
     """Mental Bandwidth: beige gadget with a label and a nearly empty meter."""
     f = Frame(base, (0, yaw, 0))
@@ -454,6 +494,7 @@ def meter_box(name, base, w, parent, yaw=0.0):
     return f
 
 
+@prop
 def cat_tv(name, base, w, parent, yaw=0.0):
     """Little CRT: FEED THE CAT ??? in chalky white on a glowing screen."""
     f = Frame(base, (0, yaw, 0))
@@ -482,6 +523,7 @@ def cat_tv(name, base, w, parent, yaw=0.0):
     return f
 
 
+@prop
 def banana(name, base, h, parent, yaw=0.0):
     """Banana buddy: thumbs up, little blue hat."""
     f = Frame(base, (0, yaw, 0)).child((0, 0, 0), (0, 0, -8))
@@ -522,6 +564,7 @@ def banana(name, base, h, parent, yaw=0.0):
     return f
 
 
+@prop
 def octopus(name, base, w, parent):
     f = face_cam(base)
     rng = np.random.default_rng(12)
@@ -562,6 +605,7 @@ PIXEL_PAL = [
 ]
 
 
+@prop
 def pixel_pal(name, base, h, parent):
     f = face_cam(base)
     v = h / 19
@@ -578,6 +622,7 @@ def pixel_pal(name, base, h, parent):
 
 # --- books ---------------------------------------------------------------------------------------------
 
+@prop
 def book(name, x0, x1, y, h, z_front, depth, color, title, parent, seed, label_x0=None):
     """Hardback lying flat, spine toward the camera, from x0 (left) to x1. Page block shows at the ends and back."""
     L = x1 - x0

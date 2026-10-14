@@ -269,6 +269,28 @@ def circle(r, n=32, cx=0, cy=0):
     return [(cx + r * math.cos(2 * math.pi * i / n), cy + r * math.sin(2 * math.pi * i / n)) for i in range(n)]
 
 
+def _area(loop):
+    return sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(loop, loop[1:] + loop[:1])) / 2
+
+
+def _inset(loop, d, sign):
+    """Move each point `d` to the left of the loop direction (into the solid for CCW outlines and CW holes)."""
+    if d <= 0:
+        return list(loop)
+    n = len(loop)
+    out = []
+    for i in range(n):
+        p0, p1, p2 = Vector(loop[i - 1]), Vector(loop[i]), Vector(loop[(i + 1) % n])
+        e0, e1 = (p1 - p0).normalized(), (p2 - p1).normalized()
+        n0, n1 = Vector((-e0.y, e0.x)) * sign, Vector((-e1.y, e1.x)) * sign
+        m = n0 + n1
+        m = m.normalized() if m.length > 1e-9 else n1
+        out.append(tuple(p1 + m * (d / max(m.dot(n1), 0.3))))
+    # Corner arcs no wider than the inset collapse onto one point: drop the duplicates.
+    clean = [q for i, q in enumerate(out) if (Vector(q) - Vector(out[i - 1])).length > 1e-5]
+    return clean if len(clean) >= 3 else out
+
+
 def slab_bm(outline, thickness, bevel, holes=(), bevel_res=3):
     """Extruded 2D outline with rounded (pillowed) edges. Local: outline in XY, thickness along +Z (0..t)."""
     cu = bpy.data.curves.new('tmp_slab', 'CURVE')
@@ -279,6 +301,10 @@ def slab_bm(outline, thickness, bevel, holes=(), bevel_res=3):
     cu.bevel_depth = bevel
     cu.bevel_resolution = bevel_res
     cu.offset = 0
+    # The bevel grows the outline by `bevel`; inset first so the finished slab matches the outline exactly.
+    outline = list(outline)
+    sign = 1 if _area(outline) > 0 else -1
+    outline, holes = _inset(outline, bevel, sign), [_inset(h, bevel, sign) for h in holes]
     for loop in [outline, *holes]:
         sp = cu.splines.new('POLY')
         sp.points.add(len(loop) - 1)

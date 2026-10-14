@@ -107,9 +107,9 @@ autowrap_mode = 3
 width = 539.2
 
 [node name="HeartSticky" type="Label3D" parent="."]
-transform = Transform3D(0.999841, -0.0178121, 0, 0.0178121, 0.999841, 0, 0, 0, 1, 0.610438, 1.32579, -0.5292)
+transform = Transform3D(0.999841, -0.017811, 0, 0.017811, 0.999841, 0, 0, 0, 1, 0.568659, 1.32983, -0.4692)
 cast_shadow = 0
-pixel_size = 0.000294433
+pixel_size = 0.000281054
 shaded = true
 double_sided = false
 modulate = Color(0.478, 0.141, 0.188, 1)
@@ -120,7 +120,7 @@ outline_size = 0
 horizontal_alignment = 1
 line_spacing = -6.0
 autowrap_mode = 3
-width = 283.2
+width = 283.3
 
 [node name="SmallSteps" type="Label3D" parent="."]
 transform = Transform3D(0.958062, 0.107865, -0.265484, -0.076365, 0.989052, 0.126268, 0.276197, -0.100699, 0.955811, 0.734705, 1.77108, -0.656032)
@@ -139,9 +139,9 @@ autowrap_mode = 3
 width = 245.4
 
 [node name="DoTheThing" type="Label3D" parent="."]
-transform = Transform3D(0.987568, -0.157194, 0, 0.0485755, 0.305175, 0.951057, -0.1495, -0.939233, 0.309017, 0.0440399, 0.93334, 0.166808)
+transform = Transform3D(0.988034, -0.154236, 0, 0.0476614, 0.305319, 0.951057, -0.146687, -0.939676, 0.309017, 0.0554077, 0.928855, 0.180609)
 cast_shadow = 0
-pixel_size = 0.000234002
+pixel_size = 0.000225829
 shaded = true
 double_sided = false
 modulate = Color(0.290, 0.180, 0.133, 1)
@@ -152,12 +152,12 @@ outline_size = 0
 horizontal_alignment = 1
 line_spacing = -6.0
 autowrap_mode = 3
-width = 496.7
+width = 506.8
 
 [node name="TodoList" type="Label3D" parent="."]
-transform = Transform3D(0.999388, 0.034986, 0, 0, 0, 1, 0.034986, -0.999388, 0, 0.191234, 0.9073, 0.3101)
+transform = Transform3D(0.999388, 0.0349862, 0, 0, 0, 1, 0.0349862, -0.999388, 0, 0.197981, 0.8913, 0.337816)
 cast_shadow = 0
-pixel_size = 0.000257255
+pixel_size = 0.000221943
 shaded = true
 double_sided = false
 modulate = Color(0.290, 0.180, 0.133, 1)
@@ -168,12 +168,12 @@ outline_size = 0
 horizontal_alignment = 0
 line_spacing = -6.0
 autowrap_mode = 3
-width = 421.9
+width = 506.2
 
 [node name="Polaroid" type="Label3D" parent="."]
-transform = Transform3D(0.885056, -0.214076, 0.413337, 0.173672, 0.975717, 0.13347, -0.431873, -0.0463434, 0.900743, -1.09702, 1.57596, -0.338144)
+transform = Transform3D(0.884254, -0.213448, 0.415374, 0.1728, 0.975854, 0.133602, -0.433861, -0.0463618, 0.899786, -1.10169, 1.58851, -0.332816)
 cast_shadow = 0
-pixel_size = 0.000350375
+pixel_size = 0.000328464
 shaded = true
 double_sided = false
 modulate = Color(0.169, 0.133, 0.125, 1)
@@ -184,10 +184,10 @@ outline_size = 0
 horizontal_alignment = 1
 line_spacing = -6.0
 autowrap_mode = 3
-width = 309.4
+width = 314.7
 
 [node name="Today" type="Node3D" parent="."]
-transform = Transform3D(0.998131, -0.0611081, 0, 0, 0, 1, -0.0611081, -0.998131, 0, -0.0858926, 0.9058, 0.347409)
+transform = Transform3D(0.998131, -0.0611081, 0, 0, 0, 1, -0.0611081, -0.998131, 0, -0.0858926, 0.9058, 0.402409)
 
 [node name="Page" type="SubViewport" parent="Today"]
 disable_3d = true

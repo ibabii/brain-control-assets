@@ -46,7 +46,7 @@ layout = {
     'layout': hardware.LAYOUT_NAME,
     'camera': {'position': list(lib.CAM), 'pitch_deg': -14, 'fov_deg': 68},
     'screens': hardware.LAYOUT,
-    'console': {'position': list(hardware.CONSOLE.o), 'rotation_deg': [18, 0, 0]},
+    'console': {'position': list(hardware.CONSOLE.o), 'rotation_deg': [18, 0, 0], 'anchors': hardware.ANCHORS},
     'dials': {'position': list(hardware.DIALS.o), 'x': hardware.DIAL_X, 'names': hardware.GAUGES},
     'shelf_top_y': shelf_top,
     'fairy_bulbs': [list(p) for p in bulbs],

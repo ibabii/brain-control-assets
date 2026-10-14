@@ -203,25 +203,52 @@ def books(parent):
         x0, y0, x1, y1 = bbox
         a, b = at_depth(x0, y0, depth), at_depth(x1, y1, depth)
         boxes.append((a, b, abs(a.y - b.y) * 0.97))
-    y = boxes[-1][1].y                                       # stack from the bottom up, no overlaps
+    y = DESK_TOP + 0.0005                                    # stack from the desk up, no overlaps
     top = None
     for i in reversed(range(len(spines))):
         a, b, h = boxes[i]
         ext = 0.28 + 0.05 * (i % 3)
         jog = 0.012 * ((i * 7) % 3 - 1)
-        props.book('Book%d' % i, a.x - ext + jog, b.x + 0.01 + jog, y + h / 2, h, a.z + jog * 0.5,
-                   0.2 + 0.015 * (i % 2), spines[i][1], spines[i][2], g, i, label_x0=a.x + 0.01)
+        d = 0.16 + 0.012 * (i % 2)
+        zf = a.z + jog * 0.5
+        x0, x1 = _book_span(a.x - ext + jog, b.x + 0.01 + jog, y, h, zf, d)
+        props.book('Book%d' % i, x0, x1, y + h / 2, h, zf, d, spines[i][1], spines[i][2], g, i,
+                   label_x0=a.x + 0.01)
         y += h
         if i == 0:
             top = Vector((a.x + 0.075, y, a.z - 0.03))   # clear left end, in front of the wall notes
     return g, top
 
 
+def _book_span(x0, x1, y, h, zf, d):
+    """Trim a book so its left end stays clear of the brain folds and its right end clear of the left monitor."""
+    corners = [(yy, zz) for yy in (y + 0.002, y + h - 0.002) for zz in (zf, zf - d)]
+    while x1 - x0 > 0.14 and not all(brain.inside(Vector((x0 - brain.DEPTH - 0.02, yy, zz))) for yy, zz in corners):
+        x0 += 0.01
+    box = hw.casing_box('LeftPanel', 0.012)
+    while x1 - x0 > 0.14 and any(box(Vector((x1, yy, zz))) for yy, zz in corners):
+        x1 -= 0.01
+    return x0, x1
+
+
 def monitor_top(name, along=0.0, back=0.06):
     """Point on top of a side monitor's casing: `along` metres across its width (from centre), `back` behind the bezel."""
     spec = hw.LAYOUT[name]
     f = Frame(spec['pos'], spec['deg'])
-    return f.at((along, hw.frame_top(name) - spec['pos'][1], -back))
+    return f.at((along, hw.casing_top(name) + 0.001, -back))
+
+
+DESK_TOP, TRAY_TOP = 0.86, 0.89
+
+
+def support(x, z):
+    """Height of the surface under (x, z): the tray in front of the console, else the desk."""
+    return TRAY_TOP if abs(x) < 0.675 and 0.19 < z < 0.53 else DESK_TOP
+
+
+def seat(p, lift=0.0005):
+    """Put a base point on the surface below it."""
+    return Vector((p.x, support(p.x, p.z) + lift, p.z))
 
 
 def on_ground(bbox, y, shrink=0.94):
@@ -263,24 +290,30 @@ def desk_props(parent):
     g = lib.empty('DeskProps', (0, 0.9, 0), parent)
     y = 0.865
     base, w, h = on_ground((182, 586, 332, 818), y, 0.95)
-    props.can('BrainFuel', base, h, g)
+    props.can('BrainFuel', seat(Vector((-0.81, 0, 0.17))), h, g)
     base, w, h = on_ground((22, 766, 246, 900), y, 0.86)
-    props.donut('Donut', base, w, g)
+    props.donut('Donut', seat(base + Vector((-0.03, 0, 0.06))), w, g)
     base, w, h = on_ground((1472, 702, 1615, 905), y, 0.95)
-    props.mug('Mug', base + Vector((0.02, 0, -0.02)), h * 0.88, g)
+    props.mug('Mug', seat(Vector((0.6, 0, 0.3))), h * 0.8, g)
     base, w, h = on_ground((1352, 600, 1662, 735), 0.93)
-    props.lever_box('LeverBox', base + Vector((0, 0, 0.05)), w * 0.9, h, g)
-    base, w, h = on_ground((1140, 458, 1312, 590), 0.95, 0.95)
-    props.octopus('Octopus', base, w, g)
-    base, w, h = on_ground((1302, 497, 1378, 612), 0.95, 0.95)
-    props.pixel_pal('PixelPal', base, h, g)
+    props.lever_box('LeverBox', seat(base + Vector((0.205, 0, -0.08))), w * 0.85, h, g)
+    # Octopus and voxel pal sit on a crate behind the console's right end.
+    ob, ow, oh = on_ground((1140, 458, 1312, 590), 0.95, 0.95)
+    pb, pw, ph = on_ground((1302, 497, 1378, 612), 0.95, 0.95)
+    ob, pb = ob + Vector((0.05, 0, -0.08)), pb + Vector((0.11, 0, -0.08))
+    props.crate('Crate', Vector(((ob.x + pb.x) / 2, DESK_TOP + 0.0005, (ob.z + pb.z) / 2 - 0.015)),
+                abs(pb.x - ob.x) + 0.22, 0.2, ob.y - DESK_TOP - 0.0005, g)
+    props.octopus('Octopus', ob, ow * 0.88, g)
+    props.pixel_pal('PixelPal', pb, ph, g)
     base, w, h = on_ground((1140, 897, 1193, 941), 0.89)
-    props.badge('SmileyBadge', base, w, g)
-    for i, (bbox, seed) in enumerate([((100, 580, 197, 676), 1), ((1372, 715, 1480, 830), 2)]):
+    props.badge('SmileyBadge', seat(Vector((0.55, 0, 0.47)), w * 0.42), w, g)
+    for i, (bbox, seed, shift) in enumerate([((100, 580, 197, 676), 1, (0, 0, 0)), ((1372, 715, 1480, 830), 2, (0.19, 0, 0.22))]):
         base, w, h = on_ground(bbox, y, 0.97)
-        props.crumple('Crumple%d' % i, base, w / 2, g, seed)
+        props.crumple('Crumple%d' % i, seat(base + Vector(shift)), w / 2, g, seed)
     base, w, h = on_ground((1352, 795, 1486, 925), y, 0.97)
-    f = props.face_cam(base + Vector((-0.05, h * 0.22, 0.05)), 12).child((0, 0, 0), (-62, 0, 10))
+    lean = math.radians(62)
+    f = props.face_cam(seat(base + Vector((-0.05, 0, 0.05)), h * 0.95 / 2 * math.cos(lean) + 0.012), 12).child(
+        (0, 0, 0), (-62, 0, 10))
     props.folded_note('ProgressPaper', f, w * 0.95, h * 0.95, 'PROGRESS\n>\nPERFECTION', g, 7)
     return g
 
@@ -307,25 +340,19 @@ def edge_dressing(parent):
         lib.tube('Pen%d' % k, [cup.at((0.015 * math.cos(a), 0.01, 0.015 * math.sin(a))), tip], 0.006,
                  lib.mat('Pen%d' % k, col, 0.45), g, res=2)
     # Left: a second crumpled pile and a snack wrapper.
-    crumple = lib.mat('Crumple', '#F2EEE6', 0.85)
     for i, (x, z, r) in enumerate([(-1.35, 0.1, 0.06), (-1.42, -0.12, 0.05), (1.45, 0.42, 0.05), (-1.2, 0.42, 0.045)]):
-        bm = bmesh.new()
-        bmesh.ops.create_icosphere(bm, subdivisions=2, radius=r)
-        for v in bm.verts:
-            v.co *= 1 + rnd.uniform(-0.25, 0.15)
-        lib.transform_bm(bm, Frame((x, y + r * 0.7, z)))
-        lib.from_bmesh('EdgeCrumple%d' % i, bm, crumple, g, None, smooth=False)
+        props.crumple('EdgeCrumple%d' % i, seat(Vector((x, 0, z))), r, g, 10 + i)
     # Desk front (4:3): pencils, a ruler, an eraser, a sticky pad, crumbs and coffee rings, on the tray top.
     y = 0.89
     for k, (x, z, yaw, col) in enumerate([(-0.52, 0.42, 70, '#F2C94C'), (-0.42, 0.47, 100, '#9A58C6'), (0.4, 0.45, 60, '#D4473A'),
-                                          (0.55, 0.4, 115, '#2F80DD')]):
+                                          (1.12, 0.32, 115, '#2F80DD')]):
         f = Frame((x, y + 0.008, z), (0, yaw, 0))
         lib.tube("Pencil%d" % k, [f.at((-0.06, 0, 0)), f.at((0.06, 0, 0))], 0.006, lib.mat('Pencil%d' % k, col, 0.5), g, res=2)
-    lib.box('Ruler', (0.3, 0.004, 0.035), lib.mat('Ruler', '#E9D9A6', 0.6), Frame((0.2, y + 0.002, 0.49), (0, -8, 0)), g)
+    lib.box('Ruler', (0.3, 0.004, 0.035), lib.mat('Ruler', '#E9D9A6', 0.6), Frame((0.32, y + 0.002, 0.5), (0, -8, 0)), g)
     lib.box('Eraser', (0.05, 0.018, 0.025), lib.mat('Eraser', '#F29684', 0.8), Frame((-0.3, y + 0.009, 0.47), (0, 25, 0)), g, bevel=0.004)
     lib.box('StickyPad', (0.09, 0.02, 0.09), lib.mat('StickyPad', '#FECF82', 0.85), Frame((0.85, 0.87, 0.48), (0, -15, 0)), g, bevel=0.003)
     stain = lib.mat('CoffeeRing', '#8A5A3A', 0.6)
-    for k, (x, z, r) in enumerate([(0.32, 0.33, 0.04), (-0.6, 0.48, 0.035)]):
+    for k, (x, z, r) in enumerate([(0.5, 0.24, 0.04), (-0.6, 0.48, 0.035)]):
         lib.slab('CoffeeRing%d' % k, circle(r, 28), 0.001, 0.0, stain, Frame((x, y + 0.0005, z), (-90, 0, 0)), g,
                  holes=[list(reversed(circle(r - 0.006, 28)))])
     crumb = lib.mat('Crumb', '#B9773F', 0.8)

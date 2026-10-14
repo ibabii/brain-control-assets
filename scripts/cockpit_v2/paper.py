@@ -215,13 +215,13 @@ def notes(parent):
     tape('SameBrainTape', f, (w * 0.32, h * 0.47, 0.0003), (0.045, 0.018), -30, g, 1)
     slot('SameBrain', f, w, h, (0.06, 0.2, 0.94, 0.95), 'SAME\nBRAIN\nDIFFERENT\nDAY...', brown, 0.2)
 
-    f, w, h = frame_from([(1135, 280), (1190, 279), (1191, 357), (1136, 358)], lib.zplane(-0.53), d_r)
+    f, w, h = frame_from([(1127, 280), (1182, 279), (1183, 357), (1128, 358)], lib.zplane(-0.47), d_r)
     sticky('HeartSticky', f, w, h, YELLOW, g, 6, [(ink.heart, (0.5, 0.45), 0.42, red, None, '#E8615A')])
     tape('HeartStickyTape', f, (0, h * 0.48, 0.0003), (0.035, 0.014), 4, g, 2)
     slot('HeartSticky', f, w, h, (0.08, 0.06, 0.92, 0.24), '', red, 0.16)
 
     # Smiley sticker on the frame corner.
-    f, w, h = on_monitor([(488, 436), (518, 436), (518, 466), (488, 466)], 'FrontScreen', 0.026)
+    f, w, h = on_monitor([(772, 66), (800, 66), (800, 94), (772, 94)], 'FrontScreen', 0.026)
     c = ink.Canvas(96, 96, '#F2C94C')
     c.ellipse((0.5, 0.5), 0.48, 0.48, '#F5D25A', soft=10)
     ink.smiley(c, (0.5, 0.5), 0.8, '#3B2A1E', w=4, ring=False)
@@ -242,14 +242,15 @@ def notes(parent):
     slot('SmallSteps', f, w, h, (0.16, 0.32, 0.84, 0.78), 'SMALL\nSTEPS', INK['white'], 0.2)
 
     # Console notes, taped down.
-    f, w, h = frame_from([(810, 702), (935, 685), (952, 752), (817, 770)], (hw.CONSOLE.at((0, 0.004, 0)),
+    f, w, h = frame_from([(822, 714), (947, 697), (964, 764), (829, 782)], (hw.CONSOLE.at((0, 0.004, 0)),
                                                                              hw.CONSOLE.dir((0, 1, 0))))
     sticky('DoTheThing', f, w, h, YELLOW, g, 8, [(ink.heart, (0.8, 0.2), 0.16, '#D4473A')], curl=0.002)
     tape('DoTheThingTape', f, (-w * 0.42, h * 0.3, 0.0003), (0.04, 0.016), 60, g, 3)
     slot('DoTheThing', f, w, h, (0.06, 0.08, 0.94, 0.95), 'DO\nTHE THING\n(please)', brown, 0.22)
 
     # Lies flat on the tray, right of the notebook.
-    f, w, h = frame_from([(978, 788), (1140, 792), (1154, 945), (985, 940)], (Vector((0, 0.9065, 0)), Vector((0, 1, 0))))
+    f, w, h = frame_from([(978, 788), (1140, 792), (1154, 945), (985, 940)], (Vector((0, 0.8905, 0)), Vector((0, 1, 0))))
+    f.o += Vector((0, 0, 0.045))                       # clear of the console lip
     c = ink.paper(*tex_size(w, h), PARCHMENT, 9, grain=0.05, vignette=0.12)
     ink.stain(c, (0.72, 0.18), 0.14)
     ink.heart(c, (0.8, 0.1), 0.06, '#D4473A')
@@ -257,10 +258,10 @@ def notes(parent):
     tape('TodoListTapeL', f, (-w * 0.45, -h * 0.42, 0.0003), (0.05, 0.02), 35, g, 4)
     tape('TodoListTapeR', f, (w * 0.42, -h * 0.4, 0.0003), (0.05, 0.02), -30, g, 5)
     slot('TodoList', f, w, h, (0.1, 0.08, 0.92, 0.95),
-         '1. MOP\n2. EXIST\n3. SNACK\n4. MAYBE TIDY?\n5. BE PROUD\n     (for real)', brown, 0.12, align='left')
+         '1. MOP\n2. EXIST\n3. SNACK\n4. MAYBE TIDY?\n5. BE PROUD\n     (for real)', brown, 0.1, align='left')
 
     # Polaroid: white card, printed photo, caption slot.
-    f, w, h, gap = wall_note('Polaroid', [(8, 12), (178, 8), (192, 162), (20, 176)], g)
+    f, w, h, gap = wall_note('Polaroid', [(4, 10), (168, 6), (180, 152), (14, 164)], g)
     c = ink.paper(*tex_size(w, h, 2), '#F4F0E6', 10, grain=0.02)
     photo = ink.dog_photo(int(c.w * 0.86), int(c.h * 0.7))
     x0, y0 = int(c.w * 0.07), int(c.h * 0.05)
@@ -292,11 +293,12 @@ def notebook(parent):
     y = 0.905
     ground = (Vector((0, y, 0)), Vector((0, 1, 0)))
     f, w, h = frame_from([(615, 795), (900, 772), (962, 941), (600, 941)], ground, shrink=1.0)
+    f.o += Vector((0, 0, 0.055))                       # clear of the console lip
     ext = 0.08                     # the page runs past the concept's bottom edge
     h += ext
     f.o = f.at((0, -ext / 2, 0))
     cover = lib.mat('NotebookCover', '#C9786A', 0.7)
-    lib.slab('Cover', lib.rrect(w + 0.05, h + 0.025, 0.01, 3), 0.014, 0.003, cover, f.child((-0.01, 0, -0.016)), g)
+    lib.slab('Cover', lib.rrect(w + 0.05, h + 0.025, 0.01, 3), 0.014, 0.003, cover, f.child((-0.01, 0, -0.0145)), g)
     lib.slab('PageBlock', lib.rrect(w, h, 0.004, 2), 0.0035, 0.001, lib.mat('PageBlock', '#E9DCC6', 0.85),
              f.child((0, 0, -0.0045)), g)
     c = ink.paper(*tex_size(w, h, 1.6), '#F6EEDD', 12, grain=0.025)

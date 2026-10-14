@@ -40,8 +40,13 @@ def frame_top(name):
 
 
 CONSOLE = Frame((0, 0.95, 0.1), (18, 0, 0))     # game Console node
+# Control module anchors in Console space (game src/cockpit/cockpit.tscn).
+# Spread out 2026-10-14 (user: controls too close); proposed to gameplay, was LeftKeys -0.27, Panic (0.02, 0, -0.06), RightSlot 0.3.
+ANCHORS = {'LeftKeys': (-0.38, 0, 0), 'PanicButton': (0.0, 0, -0.05), 'RightSlot': (0.33, 0, 0)}
+SLOT_X = ANCHORS['RightSlot'][0]
 DIALS = Frame((0, 0.955, -0.59))                  # game GaugeDials node
 DIAL_X = [-0.48, -0.24, 0.0, 0.24, 0.48]
+LABEL_Y = -0.093                                 # label paper centre, below the dial (r 0.07)
 GAUGES = ['Coordination', 'Confidence', 'Balance', 'Focus', 'Embarrassment']
 
 C = {
@@ -110,6 +115,26 @@ def shelf(root):
     return lib.slab('Shelf', rrect(spec['size'][0] + 0.18, 0.26, 0.04, 5), 0.035, 0.012, M('housing', 0.5), f, root), y + 0.035
 
 
+def casing_top(name):
+    """Local y of the highest point of a side monitor's casing (frame or back shell)."""
+    h = LAYOUT[name]['size'][1]
+    return (h + 0.083) / 2
+
+
+def casing_box(name, margin=0.0):
+    """Inside-test for a side monitor's casing (frame + back shell), in Godot world space."""
+    spec = LAYOUT[name]
+    w, h = spec['size']
+    inv = Frame(spec['pos'], spec['deg']).m.inverted()
+    o = Vector(spec['pos'])
+
+    def inside(p):
+        q = inv @ (Vector(p) - o)
+        return abs(q.x) < (w + 0.083) / 2 + margin and abs(q.y) < (h + 0.083) / 2 + margin and \
+            -0.207 - margin < q.z < 0.022 + margin
+    return inside
+
+
 # --- gauges --------------------------------------------------------------------------------------
 
 def dial_face_image(danger_high):
@@ -130,16 +155,17 @@ def dial_face_image(danger_high):
 
 def gauges(root):
     group = lib.empty('GaugeHousing', DIALS.o, root)
-    lib.slab('GaugePanel', rrect(1.26, 0.22, 0.03, 4), 0.05, 0.012, M('panel', 0.55), DIALS.child((0, 0, -0.05)), group)
+    # Panel stops 1 cm under the main screen frame; paper labels sit below the dials.
+    lib.slab('GaugePanel', rrect(1.24, 0.19, 0.03, 4), 0.05, 0.012, M('panel', 0.55), DIALS.child((0, -0.025, -0.05)), group)
     faces = {hi: lib.mat('DialFace' + str(hi), C['face'], 0.45, image=dial_face_image(hi)) for hi in (False, True)}
     needles = lib.empty('Needles', DIALS.o, group)
     for i, (x, name) in enumerate(zip(DIAL_X, GAUGES)):
         f = DIALS.child((x, 0, 0))
-        lib.slab(name + 'Bezel', circle(0.078, 40), 0.03, 0.01, M('steel', 0.32, 0.65), f.child((0, 0, -0.012)), group,
-                 holes=[list(reversed(circle(0.064, 40)))])
-        face = lib.slab(name + 'Face', circle(0.066, 40), 0.004, 0.0, faces[name == 'Embarrassment'],
+        lib.slab(name + 'Bezel', circle(0.07, 48), 0.02, 0.003, M('steel', 0.32, 0.65), f.child((0, 0, -0.008)), group,
+                 holes=[list(reversed(circle(0.061, 48)))])
+        face = lib.slab(name + 'Face', circle(0.0625, 48), 0.004, 0.0, faces[name == 'Embarrassment'],
                         f.child((0, 0, 0.0)), group)
-        _planar_uvs(face, f, 0.066)
+        _planar_uvs(face, f, 0.0625)
         pivot = f.at((0, 0, 0.008))
         nf = Frame(pivot)
         bm = bmesh.new()
@@ -151,15 +177,15 @@ def gauges(root):
         needle['rotation_axis'] = 'local +Z (Godot)'
         lib.slab(name + 'Cap', circle(0.009, 16), 0.008, 0.004, M('needle', 0.4), Frame(pivot), needle, bevel_res=2)
         # Taped paper label across the lower face; gameplay/art scene writes the full name on it.
-        paper = f.child((0, -0.05, 0.021), (0, 0, (-3, 2, -2, 3, -1)[i]))
+        paper = f.child((0, LABEL_Y, 0.004), (0, 0, (-3, 2, -2, 3, -1)[i]))
         lib.box(name + 'Paper', (0.215, 0.034, 0.002), lib.mat('LabelPaper', '#F4ECDC', 0.85), paper, group)
         for sx in (-1, 1):
             hw_tape = paper.child((sx * 0.104, 0.007, 0.002), (0, 0, sx * 12))
             lib.box('LabelTape', (0.028, 0.022, 0.0015), M('tape', 0.55), hw_tape, group)
         # Copper rivets between dials, like the concept.
         if i < 4:
-            screw(group, DIALS, (x + 0.12, 0.08, 0.0), 0.007, M('copper', 0.35, 0.6))
-            screw(group, DIALS, (x + 0.12, -0.08, 0.0), 0.007, M('copper', 0.35, 0.6))
+            screw(group, DIALS, (x + 0.12, 0.045, 0.0), 0.007, M('copper', 0.35, 0.6))
+            screw(group, DIALS, (x + 0.12, -0.045, 0.0), 0.007, M('copper', 0.35, 0.6))
     return group
 
 
@@ -183,40 +209,40 @@ def console(root):
     lib.slab('ConsoleSlab', outline, 0.07, 0.018, M('beige', 0.62), top.child((0, 0, -0.07)), group)
     rim = _round_poly([(x * 1.0, y) for x, y in [(-0.665, -0.155), (0.645, -0.155), (0.725, -0.02), (0.685, 0.195), (-0.685, 0.195)]], 0.04)
     lib.slab('ConsoleRim', rim, 0.07, 0.02, M('housing', 0.55), top.child((0, 0, -0.085)), group)
-    for x, y, a in ((-0.6, -0.15, 15), (-0.05, -0.16, -10), (0.15, 0.12, 25), (0.62, -0.12, -30), (-0.45, 0.13, 8),
+    for x, y, a in ((-0.6, -0.15, 15), (-0.12, -0.16, -10), (0.12, 0.13, 25), (0.62, 0.155, -20), (-0.45, 0.13, 8),
                     (0.36, 0.165, -12)):
         tape(group, top, (x, y, 0.001), (0.07, 0.035), a)
     # Front skirt down to the tray.
     lib.box('ConsoleSkirt', (1.30, 0.12, 0.05), M('beige', 0.62), CONSOLE.child((0, -0.09, 0.115)), group, bevel=0.012)
     # Key and SPACE housings ship with the control art (cockpit/art/controls/).
     # Right inset where the swappable slot lives (game slot at x 0.30).
-    lib.slab('SlotInset', rrect(0.30, 0.25, 0.03, 4), 0.012, 0.004, M('inset', 0.6), top.child((0.30, 0.01, -0.004)), group)
+    lib.slab('SlotInset', rrect(0.30, 0.25, 0.03, 4), 0.012, 0.004, M('inset', 0.6), top.child((SLOT_X, 0.01, -0.012)), group)   # top flush with the console
     rim = [(x, y) for x, y in rrect(0.30, 0.25, 0.03, 4)]
-    lib.slab('SlotRim', rim, 0.016, 0.005, M('housing_dark', 0.6), top.child((0.30, 0.01, 0.0)), group,
+    lib.slab('SlotRim', rim, 0.016, 0.005, M('housing_dark', 0.6), top.child((SLOT_X, 0.01, 0.0)), group,
              holes=[list(reversed(rrect(0.26, 0.21, 0.02, 4)))])
     # Right plate for UNDO / DISTRACT (positions read from the concept on the console plane).
-    lib.slab('ButtonPlate', _round_poly([(0.4, 0.16), (0.64, 0.16), (0.68, -0.13), (0.4, -0.13)], 0.03), 0.014, 0.005,
-             M('inset', 0.6), top.child((0, 0, -0.004)), group)
+    lib.slab('ButtonPlate', _round_poly([(0.515, 0.13), (0.655, 0.13), (0.675, -0.11), (0.515, -0.11)], 0.025), 0.014,
+             0.004, M('inset', 0.6), top.child((0, 0, -0.004)), group)
     # Decorative only (user call 2026-10-14): small matte caps, taped over, with an OUT OF ORDER note.
     # The note text is a Label3D in cockpit_art.tscn (ConsoleDecals/OutOfOrder).
-    for name, x, z, col in (('UndoButton', 0.485, -0.053, 'undo'), ('DistractButton', 0.49, 0.084, 'distract')):
+    for name, x, z, col in (('UndoButton', 0.592, -0.075, 'undo'), ('DistractButton', 0.596, 0.03, 'distract')):
         f = top.child((x, -z, 0.006))
-        lib.slab(name + 'Rim', circle(0.042, 28), 0.012, 0.005, M('rubber', 0.85), f, group)
-        lib.slab(name, circle(0.034, 28), 0.016, 0.007, M(col, 0.9), f.child((0, 0, 0.006)), group)
+        lib.slab(name + 'Rim', circle(0.034, 28), 0.01, 0.004, M('rubber', 0.85), f, group)
+        lib.slab(name, circle(0.027, 28), 0.014, 0.005, M(col, 0.9), f.child((0, 0, 0.005)), group)
         for a in (40, -40):
-            lib.box(name + 'Tape', (0.068, 0.016, 0.0015), M('tape', 0.55),
-                    f.child((0, 0, 0.0228), (0, 0, a + (5 if name[0] == 'U' else -7))), group)
-    note = top.child((0.517, -0.014, 0.0115), (0, 0, -6))   # plate top is at 0.010
+            lib.box(name + 'Tape', (0.056, 0.014, 0.0015), M('tape', 0.55),
+                    f.child((0, 0, 0.0198), (0, 0, a + (5 if name[0] == 'U' else -7))), group)
+    note = top.child((0.594, -0.09, 0.0115), (0, 0, -6))   # plate top is at 0.010; front edge, below the caps
     lib.box('OutOfOrderNote', (0.085, 0.042, 0.002), lib.mat('LabelPaper', '#F4ECDC', 0.85), note, group)
     tape(group, note, (-0.04, 0.0, 0.001), (0.016, 0.03), 4)
     # Screws around the slab edge.
-    for x in (-0.6, -0.36, -0.06, 0.12, 0.47, 0.6):
+    for x in (-0.6, -0.36, -0.06, 0.12):
         screw(group, top, (x, -0.155, 0.0))
         screw(group, top, (x, 0.12, 0.0))
-    for x, y in ((-0.5, -0.11), (-0.12, -0.11), (0.155, 0.1), (0.155, -0.08)):
+    for x, y in ((-0.6, 0.04), (-0.12, -0.11), (0.135, 0.1), (0.135, -0.08)):
         screw(group, top, (x, -y, 0.0))
     # Small knobs (decor) like the concept.
-    for x, y in ((-0.12, 0.085), (0.285, 0.15)):
+    for x, y in ((-0.13, 0.075), (0.11, 0.15)):
         lib.slab('Knob', circle(0.014, 20), 0.03, 0.006, M('rubber', 0.7), top.child((x, y, 0.0)), group)
     return group
 

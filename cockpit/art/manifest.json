@@ -10,8 +10,8 @@
     "note_defaults": "cockpit/art/notes/notes_text.json",
     "font": "cockpit/art/notes/fonts/PatrickHand-Regular.ttf (SIL OFL 1.1, OFL.txt alongside)"
   },
-  "model_sha256": "581058c145f07cf1b1bd277ea81896a4832989a595d314f2a405d3d1b218fdd6",
-  "triangles": 305180,
+  "model_sha256": "bd974f35f744e71c5950926e5a6356a50aefd8835ba3eb9f309e973fc313bb08",
+  "triangles": 307652,
   "source": "source/cockpit/cockpit_v2.blend",
   "rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build.py",
   "gameplay_hooks": {
@@ -40,7 +40,26 @@
     },
     "Camera3D": "adaptive fit: aspect < 16:9 -> KEEP_WIDTH, fov 100.3; else KEEP_HEIGHT, fov 68",
     "Lighting/Environment": "use cockpit_lighting.tscn instead of the greybox WorldEnvironment and lights",
-    "status": "screen + camera sent to gameplay session (ASSETS-001)"
+    "status": "screen + camera sent to gameplay session (ASSETS-001)",
+    "Console anchors": {
+      "LeftKeys": [
+        -0.38,
+        0,
+        0
+      ],
+      "PanicButton": [
+        0.0,
+        0,
+        -0.05
+      ],
+      "RightSlot": [
+        0.33,
+        0,
+        0
+      ],
+      "was": "LeftKeys -0.27, PanicButton (0.02, 0, -0.06), RightSlot 0.3"
+    },
+    "Console/Base": "hide the greybox BoxMesh when art is on (it pokes through the art console)"
   },
   "not_included": [
     "brain hands and sleeves (gameplay rig)",
@@ -80,5 +99,6 @@
   "cc0": "Kenney Food Kit tried for can/mug/donut; rejected (faceted low-poly clashes with the concept). No third-party models used.",
   "third_party": [
     "cockpit/art/notes/fonts/PatrickHand-Regular.ttf: SIL OFL 1.1 (OFL.txt)"
-  ]
+  ],
+  "clipping_audit": "Blender -b source/cockpit/cockpit_v2.blend --python scripts/cockpit_v2/audit.py (0 pairs at 2026-10-14; checks all slot modules at layout.json console.anchors)"
 }

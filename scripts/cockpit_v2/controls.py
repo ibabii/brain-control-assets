@@ -39,18 +39,18 @@ def cap_slab(action, outline, height, bevel, x, z, bottom):
 
 
 def left_keys():
-    objs = [lib.slab('Housing', rrect(0.40, 0.13, 0.024, 4), 0.012, 0.004, M('inset', '#4A5250'), top(-0.004)),
-            lib.slab('Well', rrect(0.36, 0.1, 0.02, 4), 0.006, 0.002, M('rubber', '#2F3434', 0.8), top(0.008))]
+    objs = [lib.slab('Housing', rrect(0.35, 0.115, 0.022, 4), 0.012, 0.004, M('inset', '#4A5250'), top(-0.004)),
+            lib.slab('Well', rrect(0.325, 0.09, 0.018, 4), 0.006, 0.002, M('rubber', '#2F3434', 0.8), top(0.008))]
     for i, action in enumerate(['left_1', 'left_2', 'left_3', 'left_4']):
-        objs.append(cap_slab(action, rrect(0.076, 0.074, 0.016, 4), 0.03, 0.009, (i - 1.5) * 0.085, 0.0, 0.01))
+        objs.append(cap_slab(action, rrect(0.066, 0.064, 0.014, 4), 0.03, 0.008, (i - 1.5) * 0.078, 0.0, 0.01))
     return objs
 
 
 def panic_button():
-    ring = lib.slab('Housing', circle(0.088, 48), 0.03, 0.012, M('ring', '#E9A23B', 0.45), top(0.0),
-                    holes=[list(reversed(circle(0.068, 48)))])
-    well = lib.slab('Well', circle(0.07, 40), 0.012, 0.004, M('rubber', '#2F3434', 0.8), top(0.0))
-    cap = cap_slab('thumb', circle(0.064, 40), 0.042, 0.02, 0.0, 0.0, 0.016)
+    ring = lib.slab('Housing', circle(0.08, 48), 0.03, 0.006, M('ring', '#E9A23B', 0.45), top(0.0),
+                    holes=[list(reversed(circle(0.063, 48)))])
+    well = lib.slab('Well', circle(0.064, 40), 0.012, 0.004, M('rubber', '#2F3434', 0.8), top(0.0))
+    cap = cap_slab('thumb', circle(0.058, 40), 0.042, 0.018, 0.0, 0.0, 0.016)
     return [ring, well, cap]
 
 

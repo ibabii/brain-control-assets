@@ -10,11 +10,11 @@ const ART := preload('res://cockpit/art/cockpit_art.tscn')
 const LIGHTING := preload('res://cockpit/art/cockpit_lighting.tscn')
 const SCREENS := preload('res://previews/cockpit_v2/preview_screens.glb')
 const CONCEPT := preload('res://concepts/cockpit/cockpit-warm-ceramic-v1.png')
-## Game Console anchors (src/cockpit/cockpit.tscn) and the control art placed on them.
+## Control art on the Console anchors from layout.json (console.anchors).
 const CONTROLS := {
-	'res://cockpit/art/controls/left_keys.glb': Vector3(-0.27, 0, 0),
-	'res://cockpit/art/controls/panic_button.glb': Vector3(0.02, 0, -0.06),
-	'res://cockpit/art/controls/joystick.glb': Vector3(0.3, 0, 0),
+	'res://cockpit/art/controls/left_keys.glb': 'LeftKeys',
+	'res://cockpit/art/controls/panic_button.glb': 'PanicButton',
+	'res://cockpit/art/controls/joystick.glb': 'RightSlot',
 }
 
 var overlay: TextureRect
@@ -35,9 +35,11 @@ func _ready() -> void:
 	console.position = Vector3(0, 0.95, 0.1)
 	console.rotation_degrees = Vector3(18, 0, 0)
 	add_child(console)
+	var anchors: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://cockpit/art/layout.json'))['console']['anchors']
 	for path in CONTROLS:
 		var module: Node3D = load(path).instantiate()
-		module.position = CONTROLS[path]
+		var a: Array = anchors[CONTROLS[path]]
+		module.position = Vector3(a[0], a[1], a[2])
 		console.add_child(module)
 	screens = SCREENS.instantiate()
 	add_child(screens)
