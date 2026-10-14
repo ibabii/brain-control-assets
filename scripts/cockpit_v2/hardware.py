@@ -188,13 +188,7 @@ def console(root):
         tape(group, top, (x, y, 0.001), (0.07, 0.035), a)
     # Front skirt down to the tray.
     lib.box('ConsoleSkirt', (1.30, 0.12, 0.05), M('beige', 0.62), CONSOLE.child((0, -0.09, 0.115)), group, bevel=0.012)
-    # Left inset holding the keys.
-    lib.slab('KeyInset', rrect(0.44, 0.17, 0.025, 4), 0.012, 0.004, M('inset', 0.6), top.child((-0.27, 0.0, -0.004)), group)
-    lib.slab('KeyWell', rrect(0.37, 0.10, 0.02, 4), 0.016, 0.004, M('rubber', 0.8), top.child((-0.27, 0.0, 0.0)), group)
-    # SPACE ring base.
-    lib.slab('SpaceRing', circle(0.088, 48), 0.03, 0.012, M('ring', 0.45), top.child((0.02, 0.06, 0.0)), group,
-             holes=[list(reversed(circle(0.067, 48)))])
-    lib.slab('SpaceWell', circle(0.072, 40), 0.012, 0.004, M('rubber', 0.8), top.child((0.02, 0.06, 0.0)), group)
+    # Key and SPACE housings ship with the control art (cockpit/art/controls/).
     # Right inset where the swappable slot lives (game slot at x 0.30).
     lib.slab('SlotInset', rrect(0.30, 0.25, 0.03, 4), 0.012, 0.004, M('inset', 0.6), top.child((0.30, 0.01, -0.004)), group)
     rim = [(x, y) for x, y in rrect(0.30, 0.25, 0.03, 4)]
@@ -231,31 +225,6 @@ def _round_poly(pts, r, seg=4):
             q = (1 - t) ** 2 * s + 2 * (1 - t) * t * p1 + t * t * e
             out.append((q.x, q.y))
     return out
-
-
-def controls(root):
-    """Art for the gameplay controls, on the game's Console anchors (LeftKeys, PanicButton, RightSlot/Joystick)."""
-    group = lib.empty('Controls', CONSOLE.o, root)
-    top = CONSOLE.child((0, 0, 0), UPF)
-    keys = lib.empty('LeftKeys', CONSOLE.at((-0.27, 0, 0)), group)
-    for i, (letter, col) in enumerate(zip('ASDF', C['keys'])):
-        f = top.child((-0.3975 + i * 0.085, 0.0, 0.0))
-        k = lib.slab('Key' + letter, rrect(0.074, 0.072, 0.014, 4), 0.032, 0.008,
-                     lib.mat('Key' + letter, col, 0.45), f, keys, pivot=f.o)
-    btn = lib.empty('PanicButton', CONSOLE.at((0.02, 0, -0.06)), group)
-    f = top.child((0.02, 0.06, 0.012))
-    lib.slab('SpaceCap', circle(0.064, 40), 0.042, 0.02, M('space', 0.38), f, btn, pivot=f.o)
-    joy = lib.empty('Joystick', CONSOLE.at((0.3, 0, 0)), group)
-    jf = top.child((0.3, 0.0, 0.0))
-    lib.slab('JoyBase', circle(0.065, 36), 0.025, 0.01, M('rubber', 0.75), jf, joy)
-    lib.slab('JoyBoot', circle(0.035, 24), 0.03, 0.014, M('rubber', 0.85), jf.child((0, 0, 0.02)), joy)
-    stick = lib.empty('Stick', jf.o, joy)
-    bm = bmesh.new()
-    bmesh.ops.create_cone(bm, cap_ends=True, segments=16, radius1=0.011, radius2=0.009, depth=0.12)
-    lib.transform_bm(bm, jf.child((0, 0, 0.07)))
-    lib.from_bmesh('Shaft', bm, M('rubber', 0.5), stick, pivot=jf.o)
-    lib.sphere('Knob', 0.034, M('joy', 0.35), jf.child((0, 0, 0.14)), stick)
-    return group
 
 
 def desk(root):
@@ -301,6 +270,5 @@ def build(root):
     sh, shelf_top = shelf(housings)
     gauges(root)
     console(root)
-    controls(root)
     desk(root)
     return shelf_top

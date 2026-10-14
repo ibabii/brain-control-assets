@@ -8,16 +8,16 @@
     "print_material": "cockpit/art/materials/concept_print.tres",
     "layout": "cockpit/art/layout.json"
   },
-  "model_sha256": "40417dbf28bcd8ba7b6af5cea812e2f26eb45c6ae54d889a213c390122311036",
-  "triangles": 274732,
+  "model_sha256": "1c16acc83dc16e110744e34c88418f411ee03417df821260c96cb71c19987bcf",
+  "triangles": 266968,
   "source": "source/cockpit/cockpit_v2.blend",
   "rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build.py",
   "gameplay_hooks": {
     "GaugeHousing/Needles/<Gauge>Needle": "rotate about local +Z; pivot at dial centre",
     "GaugeLabels (tscn)": "Label3D per gauge on taped paper",
-    "Controls/LeftKeys, PanicButton, Joystick/Stick": "optional art for the game's controls, at the game's local anchors",
     "Dressing/Notes/TaskNote": "blank paper at the game TaskNote transform; gameplay writes the text",
-    "ScreenHousings/*": "frames only; live screens render at layout.json anchors"
+    "ScreenHousings/*": "frames only; live screens render at layout.json anchors",
+    "Controls": "moved out of cockpit_art.glb into cockpit/art/controls/*.glb (see coordination/interfaces.md)"
   },
   "printed_from_concept": "notes, labels, book spines, can, mug, donut, lever box, trinkets: concept image projected from the game camera onto real geometry",
   "proposed_game_changes": {
@@ -44,5 +44,33 @@
   ],
   "style_id": "warm_ceramic_v1",
   "layout": "middle (user-approved 2026-10-14)",
-  "aspect_support": "16:9 reference; 16:10 and 4:3 show extra wall/desk (adaptive camera); 21:9 shows dressed sides"
+  "aspect_support": "16:9 reference; 16:10 and 4:3 show extra wall/desk (adaptive camera); 21:9 shows dressed sides",
+  "controls": {
+    "left_keys": {
+      "file": "cockpit/art/controls/left_keys.glb",
+      "sha256": "45bdceeabf3af4f3c15134335ea384bc118aa2820aa0f0a68e1035ea4a6fffbf"
+    },
+    "panic_button": {
+      "file": "cockpit/art/controls/panic_button.glb",
+      "sha256": "060852c595e30b7f244fbd2f92f7042a33425f763ed2e5af221bda6069d36bb4"
+    },
+    "joystick": {
+      "file": "cockpit/art/controls/joystick.glb",
+      "sha256": "ce8a3e6b0f043c2b4d79f6385d34bea8a511b4ad298aee8448c2c7d1977e40e0"
+    },
+    "lever": {
+      "file": "cockpit/art/controls/lever.glb",
+      "sha256": "88e685e23666d6791269c9f2dc67b86bbff241b03cc928904167e4698eb436ea"
+    },
+    "simon_pad": {
+      "file": "cockpit/art/controls/simon_pad.glb",
+      "sha256": "7f65e6643301ac78d512fba5c26f7b58562a9984281d685a880ff92518b8fb2c"
+    },
+    "arrow_keys": {
+      "file": "cockpit/art/controls/arrow_keys.glb",
+      "sha256": "5dc83910e497545c32c74044ad3c3f13e8009c32240ad8a9a924fbd7798e8e99"
+    }
+  },
+  "controls_rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build_controls.py",
+  "controls_check": "Godot --headless --path . --script res://previews/cockpit_v2/check_controls.gd"
 }

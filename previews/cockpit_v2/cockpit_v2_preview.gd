@@ -9,6 +9,12 @@ const ART := preload('res://cockpit/art/cockpit_art.tscn')
 const LIGHTING := preload('res://cockpit/art/cockpit_lighting.tscn')
 const SCREENS := preload('res://previews/cockpit_v2/preview_screens.glb')
 const CONCEPT := preload('res://concepts/cockpit/cockpit-warm-ceramic-v1.png')
+## Game Console anchors (src/cockpit/cockpit.tscn) and the control art placed on them.
+const CONTROLS := {
+	'res://cockpit/art/controls/left_keys.glb': Vector3(-0.27, 0, 0),
+	'res://cockpit/art/controls/panic_button.glb': Vector3(0.02, 0, -0.06),
+	'res://cockpit/art/controls/joystick.glb': Vector3(0.3, 0, 0),
+}
 
 var overlay: TextureRect
 var screens: Node3D
@@ -24,6 +30,14 @@ func _ready() -> void:
 	get_window().content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
 	add_child(LIGHTING.instantiate())
 	add_child(ART.instantiate())
+	var console := Node3D.new()
+	console.position = Vector3(0, 0.95, 0.1)
+	console.rotation_degrees = Vector3(18, 0, 0)
+	add_child(console)
+	for path in CONTROLS:
+		var module: Node3D = load(path).instantiate()
+		module.position = CONTROLS[path]
+		console.add_child(module)
 	screens = SCREENS.instantiate()
 	add_child(screens)
 	camera = Camera3D.new()
