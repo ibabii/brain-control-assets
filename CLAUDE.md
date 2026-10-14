@@ -17,5 +17,6 @@ Blender source in `source/<asset>/*.blend` → GLB export to `<asset>/art/` → 
 
 ## Status
 - Toothbrush v1: done and integrated in game (`defee4e`).
-- Cockpit: pass 1 blockout done (`docs/cockpit_plan.md`, `previews/cockpit/`). Waiting on CODEX-006 (cockpit art interfaces) from gameplay and user composition review.
+- Cockpit v2: scripted build `scripts/cockpit_v2/` matched to the concept from the game camera; preview + overlay in `previews/cockpit_v2/` (README there). Proposed screen layout change and hooks in `cockpit/art/manifest.json`; not yet sent to gameplay.
+- Blender builds run headless (`Blender -b --factory-startup --python ...`); import by rescanning the assets editor via MCP, then capture with a separate Godot process.
 - Initial commit 8629283 pushed to origin/main.
