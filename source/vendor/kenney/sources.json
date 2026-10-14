@@ -1,0 +1,58 @@
+{
+  "verified_date": "2026-10-14",
+  "used": [
+    {
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source_url": "https://kenney.nl/assets/furniture-kit",
+      "original_file": "source/vendor/kenney/selected/furniture-kit/books.glb",
+      "sha256": "b8dc56e5d29f6fc1f4727fccb1b9642627fee9942c48060a00034e98df02701c",
+      "blockout_node": "Books",
+      "adaptation": "rescaled to metres; atlas/material colours replaced with warm_ceramic_v1 flat materials; repositioned",
+      "license_file": "source/vendor/kenney/selected/furniture-kit/License.txt"
+    },
+    {
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source_url": "https://kenney.nl/assets/food-kit",
+      "original_file": "source/vendor/kenney/selected/food-kit/mug.glb",
+      "sha256": "5215ef74dbbc3a1c0ecf8d0937adde745bbcbd65d8facd228d9f3371991da435",
+      "blockout_node": "Mug",
+      "adaptation": "rescaled to metres; atlas/material colours replaced with warm_ceramic_v1 flat materials; repositioned",
+      "license_file": "source/vendor/kenney/selected/food-kit/License.txt"
+    },
+    {
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source_url": "https://kenney.nl/assets/food-kit",
+      "original_file": "source/vendor/kenney/selected/food-kit/soda-can.glb",
+      "sha256": "4ae68cbd532e69353ae1392e95bb57afa7cb2acc98f3bb46dc5a017c765c89fe",
+      "blockout_node": "BrainFuel",
+      "adaptation": "rescaled to metres; atlas/material colours replaced with warm_ceramic_v1 flat materials; repositioned",
+      "license_file": "source/vendor/kenney/selected/food-kit/License.txt"
+    },
+    {
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source_url": "https://kenney.nl/assets/food-kit",
+      "original_file": "source/vendor/kenney/selected/food-kit/donut-sprinkles.glb",
+      "sha256": "f45946b7e81221e9d45fdfab45ee89eeb095ff0d7fb6a3ad9988919cf587d3b7",
+      "blockout_node": "Donut",
+      "adaptation": "rescaled to metres; atlas/material colours replaced with warm_ceramic_v1 flat materials; repositioned",
+      "license_file": "source/vendor/kenney/selected/food-kit/License.txt"
+    }
+  ],
+  "retained_original_texture": "source/vendor/kenney/selected/food-kit/Textures/colormap.png",
+  "archives": [
+    {
+      "pack": "food-kit",
+      "sha256": "cdad90853682499b94c9fda2f87678b24bfd8f3264e0ed323f6b6a27fd7c6f6f",
+      "storage": "ignored local cache; selected sources retained in repository"
+    },
+    {
+      "pack": "furniture-kit",
+      "sha256": "e67652d0932cee41683f74711c03d3e192a2af9979ef8e6b237711f5482d46b0",
+      "storage": "ignored local cache; selected sources retained in repository"
+    }
+  ]
+}

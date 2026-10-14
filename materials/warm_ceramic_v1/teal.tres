@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "WC1_teal_painted"
+albedo_color = Color(0.17647059, 0.36078431, 0.35686275, 1)
+roughness = 0.62
+metallic = 0.0

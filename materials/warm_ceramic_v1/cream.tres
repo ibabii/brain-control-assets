@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "WC1_cream_ceramic"
+albedo_color = Color(0.94509804, 0.89411765, 0.81176471, 1)
+roughness = 0.38
+metallic = 0.0

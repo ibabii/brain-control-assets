@@ -1,0 +1,250 @@
+{
+  "asset_id": "toothbrush_v1",
+  "date": "2026-10-14",
+  "style_id": "warm_ceramic_v1",
+  "style_deviations": [],
+  "engine": "Godot 4.7.2",
+  "renderer_tested": "Forward+",
+  "blender": "5.2.2 LTS",
+  "entry_scene": "toothbrush_art.tscn",
+  "game_destination": "props/toothbrush/art/",
+  "files": [
+    {
+      "path": "toothbrush_art.tscn",
+      "bytes": 442,
+      "sha256": "1c753b3b675cff96447166f9204d403369df482feb945d477df76aa93c9bc71f"
+    },
+    {
+      "path": "toothbrush_body.glb",
+      "bytes": 23084,
+      "sha256": "fd517dcfbbc15bb58336b90afec41ed790db0408e5b6f0772848facb0f30ec0a"
+    },
+    {
+      "path": "toothbrush_paste.glb",
+      "bytes": 5552,
+      "sha256": "2c987362957d0f83a0a9fdf662a0197c61c540373790e7c68ed50dc00fb92d6a"
+    }
+  ],
+  "external_runtime_dependencies": [],
+  "textures": [],
+  "coordinates": {
+    "units": "meters",
+    "up": "+Y",
+    "handle": "+X",
+    "bristles": "+Y",
+    "width": "Z",
+    "pivot": "head centre",
+    "root_transform": "identity",
+    "grip_local": [
+      0.17,
+      -0.01,
+      0
+    ],
+    "bounds_min": [
+      -0.018,
+      -0.011,
+      -0.0105
+    ],
+    "bounds_size": [
+      0.194,
+      0.0438,
+      0.021
+    ]
+  },
+  "hierarchy": {
+    "root": "ToothbrushArt",
+    "direct_children": [
+      "Body",
+      "Paste",
+      "GripPoint"
+    ],
+    "toggle_path": "Paste",
+    "marker": "GripPoint"
+  },
+  "budget": {
+    "triangles_total": 1196,
+    "triangles_without_paste": 1004,
+    "mesh_surfaces": 6,
+    "materials": 5,
+    "parts": {
+      "Handle": 260,
+      "Head": 124,
+      "Grip": 92,
+      "Bristles": 528,
+      "PasteBody": 136,
+      "PasteStripe": 56
+    }
+  },
+  "materials": [
+    {
+      "name": "WC1_ClayPaint",
+      "palette_id": "clay",
+      "albedo_srgb": "C98778",
+      "roughness": 0.62,
+      "profile": "painted",
+      "metallic": 0,
+      "opaque": true,
+      "emissive": false,
+      "backface_culling": true
+    },
+    {
+      "name": "WC1_TealGrip",
+      "palette_id": "teal",
+      "albedo_srgb": "2D5C5B",
+      "roughness": 0.86,
+      "profile": "rubber",
+      "metallic": 0,
+      "opaque": true,
+      "emissive": false,
+      "backface_culling": true
+    },
+    {
+      "name": "WC1_PorcelainBristles",
+      "palette_id": "porcelain",
+      "albedo_srgb": "F8F4EA",
+      "roughness": 0.9,
+      "profile": "fabric",
+      "metallic": 0,
+      "opaque": true,
+      "emissive": false,
+      "backface_culling": true
+    },
+    {
+      "name": "WC1_SagePaste",
+      "palette_id": "sage",
+      "albedo_srgb": "BAC6B2",
+      "roughness": 0.72,
+      "profile": "paste",
+      "metallic": 0,
+      "opaque": true,
+      "emissive": false,
+      "backface_culling": true
+    },
+    {
+      "name": "WC1_PorcelainPaste",
+      "palette_id": "porcelain",
+      "albedo_srgb": "F8F4EA",
+      "roughness": 0.72,
+      "profile": "paste",
+      "metallic": 0,
+      "opaque": true,
+      "emissive": false,
+      "backface_culling": true
+    }
+  ],
+  "source": "source/toothbrush/toothbrush_v1.blend",
+  "build_script": "scripts/build_toothbrush.py",
+  "preview_scene": "previews/toothbrush/toothbrush_preview.tscn",
+  "previews": [
+    {
+      "path": "previews/toothbrush/screenshots/first-person.png",
+      "size_px": [
+        1280,
+        720
+      ],
+      "kind": "actual Godot render"
+    },
+    {
+      "path": "previews/toothbrush/screenshots/hero.png",
+      "size_px": [
+        1280,
+        720
+      ],
+      "kind": "actual Godot render"
+    },
+    {
+      "path": "previews/toothbrush/screenshots/mirror-projection.png",
+      "size_px": [
+        666,
+        540
+      ],
+      "kind": "actual Godot render"
+    },
+    {
+      "path": "previews/toothbrush/screenshots/reveal-distance.png",
+      "size_px": [
+        1280,
+        720
+      ],
+      "kind": "actual Godot render"
+    },
+    {
+      "path": "previews/toothbrush/screenshots/swing-left.png",
+      "size_px": [
+        1280,
+        720
+      ],
+      "kind": "actual Godot render"
+    },
+    {
+      "path": "previews/toothbrush/screenshots/swing-right.png",
+      "size_px": [
+        1280,
+        720
+      ],
+      "kind": "actual Godot render"
+    },
+    {
+      "path": "previews/toothbrush/screenshots/without-paste.png",
+      "size_px": [
+        1280,
+        720
+      ],
+      "kind": "actual Godot render"
+    }
+  ],
+  "preview_notes": {
+    "first_person": {
+      "eye": [
+        0,
+        1.62,
+        0
+      ],
+      "fov_degrees": 70,
+      "pitch_degrees": -12,
+      "wrapper_rest": [
+        0.03,
+        1.47,
+        -0.24
+      ],
+      "sphere": "existing grip reference, excluded from runtime package"
+    },
+    "mirror": {
+      "reflected_eye": [
+        0,
+        1.62,
+        -1.33
+      ],
+      "fov_degrees": 70,
+      "size_px": [
+        666,
+        540
+      ],
+      "scope": "projection at reflected eye; actual game mirror not tested"
+    },
+    "reveal": {
+      "distance_m": 2,
+      "fov_degrees": 50
+    },
+    "swing_y_degrees": [
+      -14,
+      14
+    ]
+  },
+  "validation": {
+    "asset_project": "passed, zero failures",
+    "fresh_project_import": "passed with only three runtime files, no addons or caches",
+    "blender_topology": "closed manifold meshes; no boundary edges or loose vertices",
+    "forward_plus_captures": "seven completed, no runtime errors",
+    "game_integration": "pending Claude"
+  },
+  "integration_checks_pending": [
+    "actual first-person/mirror/reveal framing",
+    "wrapper Paste reference and resource UIDs",
+    "slow-motion and 3x replay swing",
+    "fall pose",
+    "reset/replay",
+    "training_smoke",
+    "training_fail_smoke"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "style_id": "warm_ceramic_v1",
+  "version": 1,
+  "color_space": "sRGB",
+  "colors": [
+    {"id": "cream", "name": "Warm cream", "hex": "#F1E4CF", "role": "main neutral", "default_profile": "ceramic"},
+    {"id": "sage", "name": "Soft sage", "hex": "#BAC6B2", "role": "main colour", "default_profile": "painted"},
+    {"id": "teal", "name": "Deep teal", "hex": "#2D5C5B", "role": "contrast", "default_profile": "painted"},
+    {"id": "peach", "name": "Muted peach", "hex": "#EAA78B", "role": "supporting warmth", "default_profile": "fabric"},
+    {"id": "honey", "name": "Honey ochre", "hex": "#D9A04C", "role": "small accent", "default_profile": "painted"},
+    {"id": "clay", "name": "Dusty coral", "hex": "#C98778", "role": "secondary accent", "default_profile": "painted"},
+    {"id": "porcelain", "name": "Porcelain white", "hex": "#F8F4EA", "role": "clean surfaces", "default_profile": "paste"},
+    {"id": "graphite", "name": "Warm graphite", "hex": "#454C48", "role": "neutral dark", "default_profile": "rubber"}
+  ],
+  "profiles": {
+    "painted": {"roughness": 0.62, "metallic": 0.0},
+    "ceramic": {"roughness": 0.38, "metallic": 0.0},
+    "fabric": {"roughness": 0.9, "metallic": 0.0},
+    "rubber": {"roughness": 0.86, "metallic": 0.0},
+    "paste": {"roughness": 0.72, "metallic": 0.0},
+    "metal": {"roughness": 0.48, "metallic": 0.75}
+  }
+}

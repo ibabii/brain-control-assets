@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "WC1_peach_fabric"
+albedo_color = Color(0.91764706, 0.65490196, 0.54509804, 1)
+roughness = 0.9
+metallic = 0.0

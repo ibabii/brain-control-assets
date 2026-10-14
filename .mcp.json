@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "godot_assets": {
+      "type": "http",
+      "url": "http://127.0.0.1:9082/mcp"
+    },
+    "blender_assets": {
+      "type": "stdio",
+      "command": "/opt/homebrew/bin/uvx",
+      "args": ["--offline", "--python", "3.11", "--from", "mcp-for-blender==2.1.9", "mcp-for-blender"],
+      "env": {
+        "BLENDER_HOST": "127.0.0.1",
+        "BLENDER_PORT": "9876",
+        "DISABLE_TELEMETRY": "true",
+        "BLENDER_MCP_SAFE_MODE": "1"
+      }
+    }
+  }
+}

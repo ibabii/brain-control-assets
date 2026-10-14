@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "WC1_honey_painted"
+albedo_color = Color(0.85098039, 0.62745098, 0.29803922, 1)
+roughness = 0.62
+metallic = 0.0
