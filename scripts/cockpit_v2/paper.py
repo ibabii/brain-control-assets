@@ -317,7 +317,7 @@ def notebook(parent):
         ring = [f.at((-w / 2 - 0.012 + 0.016 * math.cos(a), yy * h, 0.004 + 0.011 * math.sin(a)))
                 for a in np.linspace(-0.6, math.pi + 0.3, 9)]
         lib.tube('Ring%02d' % k, ring, 0.0016, steel, g, res=3, bevel_res=1)
-    SLOTS['Today'] = {'kind': 'list', 'position': list(f.at((-w * 0.12, h * 0.08, 0.0008))),
+    SLOTS['Today'] = {'kind': 'list', 'position': list(f.at((-w * 0.12, 0.0, 0.0008))),
                       'basis': [list(f.m.col[i]) for i in range(3)], 'size': [w * 0.7, h * 0.8],
                       'line_height': 0.082 * h, 'ink': '#26405E', 'align': 'left',
                       'default': {'title': 'TODAY:', 'items': [

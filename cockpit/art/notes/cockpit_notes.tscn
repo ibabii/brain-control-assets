@@ -187,7 +187,7 @@ autowrap_mode = 3
 width = 309.4
 
 [node name="Today" type="Node3D" parent="."]
-transform = Transform3D(0.998131, -0.0611081, 0, 0, 0, 1, -0.0611081, -0.998131, 0, -0.0871284, 0.9058, 0.327223)
+transform = Transform3D(0.998131, -0.0611081, 0, 0, 0, 1, -0.0611081, -0.998131, 0, -0.0858926, 0.9058, 0.347409)
 
 [node name="Page" type="SubViewport" parent="Today"]
 disable_3d = true
