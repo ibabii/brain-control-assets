@@ -49,7 +49,7 @@ C = {
     'face': '#F3E5C8', 'steel': '#C4C0B5', 'needle': '#D23B2F', 'red_zone': '#D9473A', 'beige': '#B7A88C',
     'inset': '#4A5250', 'screw': '#A39D90', 'copper': '#B8763F', 'tape': '#D2CBB4', 'desk': '#7B6B5B',
     'tray': '#4C5654', 'space': '#E2402F', 'ring': '#E9A23B', 'rubber': '#2F3434', 'joy': '#2FA6A3',
-    'undo': '#9A58C6', 'distract': '#35B6AA', 'screen': '#1E2A31',
+    'undo': '#86709A', 'distract': '#5F9792', 'screen': '#1E2A31',
     'keys': ['#E8487F', '#4CC04F', '#2F80DD', '#F2A332'],
 }
 
@@ -197,10 +197,18 @@ def console(root):
     # Right plate for UNDO / DISTRACT (positions read from the concept on the console plane).
     lib.slab('ButtonPlate', _round_poly([(0.4, 0.16), (0.64, 0.16), (0.68, -0.13), (0.4, -0.13)], 0.03), 0.014, 0.005,
              M('inset', 0.6), top.child((0, 0, -0.004)), group)
+    # Decorative only (user call 2026-10-14): small matte caps, taped over, with an OUT OF ORDER note.
+    # The note text is a Label3D in cockpit_art.tscn (ConsoleDecals/OutOfOrder).
     for name, x, z, col in (('UndoButton', 0.485, -0.053, 'undo'), ('DistractButton', 0.49, 0.084, 'distract')):
         f = top.child((x, -z, 0.006))
-        lib.slab(name + 'Rim', circle(0.056, 32), 0.016, 0.006, M('rubber', 0.8), f, group)
-        lib.slab(name, circle(0.047, 32), 0.028, 0.012, M(col, 0.4), f.child((0, 0, 0.008)), group)
+        lib.slab(name + 'Rim', circle(0.042, 28), 0.012, 0.005, M('rubber', 0.85), f, group)
+        lib.slab(name, circle(0.034, 28), 0.016, 0.007, M(col, 0.9), f.child((0, 0, 0.006)), group)
+        for a in (40, -40):
+            lib.box(name + 'Tape', (0.068, 0.016, 0.0015), M('tape', 0.55),
+                    f.child((0, 0, 0.0228), (0, 0, a + (5 if name[0] == 'U' else -7))), group)
+    note = top.child((0.517, -0.014, 0.0115), (0, 0, -6))   # plate top is at 0.010
+    lib.box('OutOfOrderNote', (0.085, 0.042, 0.002), lib.mat('LabelPaper', '#F4ECDC', 0.85), note, group)
+    tape(group, note, (-0.04, 0.0, 0.001), (0.016, 0.03), 4)
     # Screws around the slab edge.
     for x in (-0.6, -0.36, -0.06, 0.12, 0.47, 0.6):
         screw(group, top, (x, -0.155, 0.0))

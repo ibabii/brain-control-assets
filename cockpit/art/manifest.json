@@ -8,8 +8,8 @@
     "print_material": "cockpit/art/materials/concept_print.tres",
     "layout": "cockpit/art/layout.json"
   },
-  "model_sha256": "1c16acc83dc16e110744e34c88418f411ee03417df821260c96cb71c19987bcf",
-  "triangles": 266968,
+  "model_sha256": "a9462a0ce2f8a9c07de33d79fb9906e2fbd37c52e96cded971ed89217a14d82b",
+  "triangles": 266720,
   "source": "source/cockpit/cockpit_v2.blend",
   "rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build.py",
   "gameplay_hooks": {

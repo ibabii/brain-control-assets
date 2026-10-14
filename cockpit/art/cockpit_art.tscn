@@ -52,3 +52,17 @@ modulate = Color(0.2, 0.18, 0.17, 1)
 outline_size = 0
 font_size = 44
 text = "Embarrassment"
+
+[node name="ConsoleDecals" type="Node3D" parent="."]
+position = Vector3(0, 0.95, 0.1)
+rotation_degrees = Vector3(18, 0, 0)
+
+[node name="OutOfOrder" type="Label3D" parent="ConsoleDecals"]
+position = Vector3(0.519, 0.0137, 0.014)
+rotation_degrees = Vector3(-90, 0, -6)
+pixel_size = 0.00026
+modulate = Color(0.72, 0.16, 0.13, 1)
+outline_size = 0
+font_size = 48
+text = "OUT OF
+ORDER"
