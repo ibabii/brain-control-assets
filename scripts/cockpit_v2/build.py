@@ -51,5 +51,15 @@ layout = {
 }
 with open(lib.ROOT + '/cockpit/art/layout.json', 'w') as f:
     json.dump(layout, f, indent=2, default=float)
+import hashlib  # noqa: E402
+manifest_path = lib.ROOT + '/cockpit/art/manifest.json'
+if os.path.exists(manifest_path):
+    with open(manifest_path) as f:
+        manifest = json.load(f)
+    with open(glb, 'rb') as f:
+        manifest['model_sha256'] = hashlib.sha256(f.read()).hexdigest()
+    manifest['triangles'] = lib.count_tris()
+    with open(manifest_path, 'w') as f:
+        json.dump(manifest, f, indent=2)
 bpy.ops.wm.save_as_mainfile(filepath=lib.ROOT + '/source/cockpit/cockpit_v2.blend')
 print('COCKPIT_V2_BUILT tris=%d objects=%d seconds=%.1f' % (lib.count_tris(), len(lib.COLL.objects), time.time() - t0))
