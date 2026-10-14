@@ -71,27 +71,27 @@
   "controls": {
     "left_keys": {
       "file": "cockpit/art/controls/left_keys.glb",
-      "sha256": "45bdceeabf3af4f3c15134335ea384bc118aa2820aa0f0a68e1035ea4a6fffbf"
+      "sha256": "3cbc1dc0be34bf6c46bd943032031e118a5e63827ed9c6990b6b7fc16c56315f"
     },
     "panic_button": {
       "file": "cockpit/art/controls/panic_button.glb",
-      "sha256": "060852c595e30b7f244fbd2f92f7042a33425f763ed2e5af221bda6069d36bb4"
+      "sha256": "fd9a3652c720a1c8fa6e531b56964a338c8885114a37bf19e6dcbb5c0ec0b906"
     },
     "joystick": {
       "file": "cockpit/art/controls/joystick.glb",
-      "sha256": "ce8a3e6b0f043c2b4d79f6385d34bea8a511b4ad298aee8448c2c7d1977e40e0"
+      "sha256": "8fc328c7993e7b34a0db196a25f3b12736eab055d223716b0694e03bcae20b2e"
     },
     "lever": {
       "file": "cockpit/art/controls/lever.glb",
-      "sha256": "88e685e23666d6791269c9f2dc67b86bbff241b03cc928904167e4698eb436ea"
+      "sha256": "fca2af4e5693cf0db8ddc82536580a1f465b91f428463279d491204f7ebc8a99"
     },
     "simon_pad": {
       "file": "cockpit/art/controls/simon_pad.glb",
-      "sha256": "7f65e6643301ac78d512fba5c26f7b58562a9984281d685a880ff92518b8fb2c"
+      "sha256": "fe9ea4efa93a21f7078ff9d2eb46d7cdb1d7dab2e4784ab27e9f3fdebb858ca6"
     },
     "arrow_keys": {
       "file": "cockpit/art/controls/arrow_keys.glb",
-      "sha256": "5dc83910e497545c32c74044ad3c3f13e8009c32240ad8a9a924fbd7798e8e99"
+      "sha256": "b8d7ce694d13fc78b298324de64d51e597f3d335b30f0c3fe604f6d929db28a6"
     }
   },
   "controls_rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build_controls.py",

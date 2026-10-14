@@ -63,6 +63,9 @@ if os.path.exists(manifest_path):
     with open(glb, 'rb') as f:
         manifest['model_sha256'] = hashlib.sha256(f.read()).hexdigest()
     manifest['triangles'] = lib.count_tris()
+    for c in manifest.get('controls', {}).values():           # controls export separately; keep their hashes current
+        with open(lib.ROOT + '/' + c['file'], 'rb') as f:
+            c['sha256'] = hashlib.sha256(f.read()).hexdigest()
     with open(manifest_path, 'w') as f:
         json.dump(manifest, f, indent=2)
 bpy.ops.wm.save_as_mainfile(filepath=lib.ROOT + '/source/cockpit/cockpit_v2.blend')
