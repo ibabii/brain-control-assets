@@ -155,6 +155,56 @@ def coplanar(faces, t):
     return a
 
 
+MOUNTED = ('Screw', 'Knob')     # small parts that must sit fully on a surface
+
+
+def floating(dg):
+    """Mounted parts whose underside (centre + rim) is more than 1 mm off any surface."""
+    others = [o for o in bpy.data.objects if o.type == 'MESH' and o.visible_get()
+              and not any(s in o.name for s in MOUNTED + ('Preview',))]
+    bm = bmesh.new()
+    for o in others:
+        b = bmesh.new()
+        b.from_object(o, dg)
+        b.transform(o.matrix_world)
+        me = bpy.data.meshes.new('tmp')
+        b.to_mesh(me)
+        b.free()
+        bm.from_mesh(me)
+        bpy.data.meshes.remove(me)
+    world = BVHTree.FromBMesh(bm)
+    bm.free()
+    bad = []
+    for o in bpy.data.objects:
+        if o.type != 'MESH' or not any(s in o.name for s in MOUNTED) or not o.visible_get():
+            continue
+        _, verts, _ = tree(o, dg)
+        c = sum(verts, Vector()) / len(verts)
+        cov = Matrix(((0,) * 3,) * 3)
+        for v in verts:
+            d = v - c
+            for i in range(3):
+                for j in range(3):
+                    cov[i][j] += d[i] * d[j]
+        import numpy as np
+        w, vec = np.linalg.eigh(np.array(cov))
+        if w[0] > 0.6 * w[1]:                         # not a flat part (tall knobs): check by eye
+            continue
+        n = Vector(vec[:, 0])                         # thinnest axis = mount normal
+        u = n.orthogonal().normalized()
+        r = max((v - c - n * (v - c).dot(n)).length for v in verts) * 0.8
+        half = max(abs((v - c).dot(n)) for v in verts)
+        worst = 0.0
+        for k in range(9):
+            q = c if k == 0 else c + (Matrix.Rotation(k * 0.785, 3, n) @ u) * r
+            hits = [world.ray_cast(q, d, 0.05) for d in (n, -n)]
+            dist = min([h[3] for h in hits if h[0] is not None] or [1.0])
+            worst = max(worst, dist - half)
+        if worst > 0.001:
+            bad.append((worst, o.name, tuple(round(x, 3) for x in (c.x, c.z, -c.y))))
+    return bad
+
+
 def main():
     import_controls()
     dg = bpy.context.evaluated_depsgraph_get()
@@ -181,6 +231,9 @@ def main():
                 d = max(depth_inside(va, tb), depth_inside(vb, ta))
             if d > TOL:
                 found.append((d, a, b))
+    for d, name, at in sorted(floating(dg), reverse=True):
+        found.append((d, name, 'air'))
+        print('FLOAT %.1f mm  %s at %s (Godot)' % (d * 1000, name, at))
     for d, a, b in sorted(found, reverse=True):
         print('CLIP %.1f mm  %s  x  %s' % (d * 1000, a, b))
     print('AUDIT %d clipping pairs' % len(found))

@@ -63,8 +63,10 @@ def M(key, rough=0.6, metal=0.0):
     return lib.mat(key, C[key], rough, metal)
 
 
-def screw(parent, frame, pos, r=0.009, mat=None):
+def screw(parent, frame, pos, r=0.009, mat=None, on=None, sink=0.0006):
     f = frame.child(pos)
+    if on is not None:                       # seat on the real (bevelled) surface
+        f = lib.on_surface(on, f, sink)
     return lib.slab('Screw', circle(r, 12), 0.006, 0.003, mat or M('screw', 0.35, 0.6), f, parent, bevel_res=2)
 
 
@@ -92,7 +94,7 @@ def screen_housing(root, name, main=False):
     oy = (top - bottom) / 2
     outer = [(x, y + oy) for x, y in rrect(ow, oh, 0.045 if main else 0.03, 6)]
     inner = list(reversed(rrect(w + 0.004, h + 0.004, 0.022 if main else 0.016, 5)))
-    lib.slab(name + 'Frame', outer, depth, 0.016, frame_mat, f.child((0, 0, -depth + 0.022)), group, holes=[inner])
+    frame = lib.slab(name + 'Frame', outer, depth, 0.016, frame_mat, f.child((0, 0, -depth + 0.022)), group, holes=[inner])
     # Deep back shell so the monitor reads as a chunky box; side monitors show a dark casing rim around the bezel.
     back_d = 0.12 if main else 0.17
     grow = 0.0 if main else 0.035
@@ -103,7 +105,7 @@ def screen_housing(root, name, main=False):
     for sx in (-1, 1):
         for sy in (-1, 1):
             screw(group, f, (sx * (w / 2 + side / 2), sy * (h / 2 + (top if sy > 0 else bottom) / 2) + 0, 0.022),
-                  0.0075 if main else 0.006)
+                  0.0075 if main else 0.006, on=frame, sink=0.0006 if main else 0.0025)   # side border is all bevel
     return group, f
 
 
@@ -208,11 +210,11 @@ def console(root):
     outline = _round_poly(outline, 0.035)
     # Hole for the slot insert (a flush insert on top of the slab z-fought with it). The rim hides the cut edge.
     slot_hole = [(x + SLOT_X, y + 0.01) for x, y in reversed(rrect(0.27, 0.22, 0.025, 4))]
-    lib.slab('ConsoleSlab', outline, 0.07, 0.018, M('beige', 0.62), top.child((0, 0, -0.07)), group, holes=[slot_hole])
+    slab = lib.slab('ConsoleSlab', outline, 0.07, 0.018, M('beige', 0.62), top.child((0, 0, -0.07)), group,
+                    holes=[slot_hole])
     rim = _round_poly([(x * 1.0, y) for x, y in [(-0.665, -0.155), (0.645, -0.155), (0.725, -0.02), (0.685, 0.195), (-0.685, 0.195)]], 0.04)
     lib.slab('ConsoleRim', rim, 0.07, 0.02, M('housing', 0.55), top.child((0, 0, -0.085)), group)
-    for x, y, a in ((-0.6, -0.15, 15), (-0.12, -0.16, -10), (0.12, 0.13, 25), (0.62, 0.155, -20), (-0.45, 0.13, 8),
-                    (0.36, 0.165, -12)):
+    for x, y, a in ((-0.49, -0.1, 15), (-0.2, 0.105, 25), (-0.45, 0.13, 8)):   # on the flat top
         tape(group, top, (x, y, 0.001), (0.07, 0.035), a)
     # Front skirt down to the tray.
     lib.box('ConsoleSkirt', (1.30, 0.12, 0.05), M('beige', 0.62), CONSOLE.child((0, -0.09, 0.111)), group, bevel=0.012)   # 4 mm behind the slab front (was flush: z-fight)
@@ -237,12 +239,10 @@ def console(root):
     note = top.child((0.594, -0.09, 0.0115), (0, 0, -6))   # plate top is at 0.010; front edge, below the caps
     lib.box('OutOfOrderNote', (0.085, 0.042, 0.002), lib.mat('LabelPaper', '#F4ECDC', 0.85), note, group)
     tape(group, note, (-0.04, 0.0, 0.001), (0.016, 0.03), 4)
-    # Screws around the slab edge.
-    for x in (-0.6, -0.36, -0.06, 0.12):
-        screw(group, top, (x, -0.155, 0.0))
-        screw(group, top, (x, 0.12, 0.0))
-    for x, y in ((-0.6, 0.04), (-0.12, -0.11), (0.135, 0.1), (0.135, -0.08)):
-        screw(group, top, (x, -y, 0.0))
+    # Screws in a row along the back and front of the flat top, clear of the controls, plate and the console note.
+    for x, y in ((-0.6, 0.152), (-0.3, 0.152), (0.33, 0.152), (0.6, 0.152), (-0.6, -0.112), (-0.38, -0.112),
+                 (-0.16, -0.112)):
+        screw(group, top, (x, y, 0.0), on=slab)
     # Small knobs (decor) like the concept.
     for x, y in ((-0.13, 0.075), (0.11, 0.15)):
         lib.slab('Knob', circle(0.014, 20), 0.03, 0.006, M('rubber', 0.7), top.child((x, y, 0.0)), group)

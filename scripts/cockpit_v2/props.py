@@ -372,8 +372,8 @@ def lever_box(name, base, w, h, parent):
         sheet(name + 'Label%d' % k, lf, lw, lh, tex(name + 'Label%d' % k, c, 0.85), parent, corner=0.003)
         tape(name + 'LabelTape%d' % k, lf, (0, lh * 0.48, 0.0003), (0.04, 0.014), 8 - 14 * k, parent, 30 + k)
     for sx in (-1, 1):
-        for sy in (0.12, 0.88):
-            screw(name + 'Screw', f, (sx * w * 0.44, h * sy, d / 2 + 0.006), parent)
+        for sy in (0.17, 0.83):                       # inside the front panel's rounded edge
+            screw(name + 'Screw', f, (sx * w * 0.4, h * sy, d / 2 + 0.006), parent)
     return f
 
 

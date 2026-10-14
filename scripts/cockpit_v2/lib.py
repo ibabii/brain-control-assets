@@ -93,6 +93,24 @@ class Frame:
 
 WORLD = Frame()
 
+
+def on_surface(obj, frame, sink=0.0006):
+    """frame moved along its +Z onto obj's surface (ray from above), sunk slightly so curved tops leave no gap."""
+    from mathutils.bvhtree import BVHTree
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    t = BVHTree.FromObject(obj, dg)
+    inv = obj.matrix_world.inverted()
+    n = frame.dir((0, 0, 1)).normalized()
+    start = inv @ B(frame.o + n * 0.05)
+    hit = t.ray_cast(start, (inv.to_3x3() @ B(-n)).normalized(), 0.1)
+    if hit[0] is None:
+        raise ValueError('no surface under %s on %s' % (tuple(frame.o), obj.name))
+    out = Frame()
+    out.m = frame.m
+    out.o = frame.o + n * (0.05 - hit[3] - sink)
+    return out
+
 # --- colours and materials ----------------------------------------------------------------------
 
 def srgb(h):
