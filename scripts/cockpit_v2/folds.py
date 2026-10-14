@@ -45,12 +45,10 @@ def distance(mask, iters=40):
     return d
 
 
-def fold_height(n=128, up=4, seed=7):
-    """0 = groove floor, 1 = top of a fold. Worm-shaped folds swollen until they touch; grooves at the midlines."""
+def fold_height(n=128, up=4, seed=7, core=0.12):
+    """0 = groove floor, 1 = top of a fold. Round tubes around the worm centrelines; V-grooves where tubes meet."""
     v = labyrinth(n, seed=seed)
     v = upsample((v - v.min()) / (v.max() - v.min()), up)
-    d = distance(v > 0.5)
-    t = np.clip(d / np.percentile(d, 96), 0, 1)
-    dg = distance(t > 0.95)                       # distance from the groove midlines
-    r = np.clip(dg / np.percentile(dg, 97), 0, 1)
-    return blur(np.sqrt(1 - (1 - r) ** 2), 2)
+    d = distance(v > np.percentile(v, 100 * (1 - core)), iters=60)
+    t = np.clip(d / np.percentile(d, 98), 0, 1)
+    return blur(np.sqrt(1 - t ** 2), 1)

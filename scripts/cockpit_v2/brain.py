@@ -10,13 +10,13 @@ import lib
 
 # Plan shape: superellipse around the seat. Back wall z = ZC - B, side walls x = +-A.
 # Near-circular around the eye so every wall faces the camera (no grazing smear).
-A, B, ZC, P = 1.68, 1.72, 0.75, 2.0
+A, B, ZC, P = 1.75, 1.86, 0.75, 2.0
 Y0, Y1 = 0.62, 2.75
-TILE = 1.9          # metres per height-field tile
-DEPTH = 0.13        # fold height
-STEP = 0.017        # grid spacing
+TILE = 1.15         # metres per height-field tile
+DEPTH = 0.075       # fold height
+STEP = 0.015        # grid spacing
 
-GROOVE, BASE, TOP = '#9A4038', '#EE8E7A', '#FBB7A2'
+GROOVE, BASE, TOP = '#A3463F', '#F29684', '#FFC6B4'
 
 
 def _plan(theta):
@@ -47,6 +47,13 @@ def wall_hit(px, py, gap=0.1):
     return lib.CAM + d * (t - gap), t - gap
 
 
+def wall_normal(p):
+    """Inward normal of the undisplaced wall at p (ignores the lean)."""
+    k = _lean(p[1])
+    n = Vector((-(p[0]) / (A * k) ** 2, 0, -(p[2] - ZC) / (B * k) ** 2))
+    return n.normalized()
+
+
 def _sample(h, u, v):
     n = h.shape[0]
     x, y = (u % 1) * n, (v % 1) * n
@@ -57,6 +64,18 @@ def _sample(h, u, v):
             + h[y1, x1] * fx * fy)
 
 
+def _normals(h, k):
+    """Tangent-space normals of the height field. h rows run with +v (bottom-up), columns with +u."""
+    du = (np.roll(h, -1, 1) - np.roll(h, 1, 1)) * k
+    dv = (np.roll(h, -1, 0) - np.roll(h, 1, 0)) * k
+    n = np.stack([-du, -dv, np.ones_like(h)], -1)
+    return n / np.linalg.norm(n, axis=-1, keepdims=True)
+
+
+def normal_map(h):
+    return _normals(h, 6.0) * 0.5 + 0.5
+
+
 def albedo(h):
     """Fold colour with baked stylised shading: soft top-left key plus occlusion in the grooves."""
     g, b, t = (np.array([lib.linear(c) for c in lib.srgb(x)]) for x in (GROOVE, BASE, TOP))
@@ -64,18 +83,13 @@ def albedo(h):
     col = g * (1 - s) + b * s
     s2 = np.clip((h - 0.75) / 0.25, 0, 1)[..., None]
     col = col * (1 - s2) + t * s2
-    # Height-field normal (rows run top-down here, so +row = down).
-    k = 7.0
-    dx = (np.roll(h, -1, 1) - np.roll(h, 1, 1)) * k
-    dy = (np.roll(h, 1, 0) - np.roll(h, -1, 0)) * k
-    n = np.stack([-dx, -dy, np.ones_like(h)], -1)
-    n /= np.linalg.norm(n, axis=-1, keepdims=True)
+    n = _normals(h, 12.0)
     light = np.array([-0.45, 0.6, 0.66])
     light /= np.linalg.norm(light)
     lambert = np.clip((n * light).sum(-1), 0, 1)
     cavity = np.clip(h - folds.blur(h, 6) + 0.5, 0, 1)          # <0.5 in grooves
-    shade = (0.62 + 0.5 * lambert) * (0.55 + 0.9 * cavity)
-    col *= np.clip(shade, 0.35, 1.35)[..., None]
+    shade = (0.55 + 0.6 * lambert) * (0.5 + 1.0 * cavity)
+    col *= np.clip(shade, 0.35, 1.3)[..., None]
     noise = folds.blur(np.random.default_rng(3).random(h.shape), 8)
     col *= (0.95 + 0.1 * (noise - noise.min()) / (np.ptp(noise) + 1e-6))[..., None]
     srgb = np.where(col <= 0.0031308, col * 12.92, 1.055 * np.power(np.clip(col, 0, None), 1 / 2.4) - 0.055)
@@ -84,8 +98,10 @@ def albedo(h):
 
 def build(parent):
     h = folds.fold_height(seed=7)
-    tex = lib.image_from_array('BrainFolds', albedo(h)[::-1])   # image rows run bottom-up in UV space
-    material = lib.mat('BrainFolds', BASE, rough=0.5, image=tex)
+    # h rows run bottom-up in UV space; image_from_array wants top-down rows.
+    tex = lib.image_from_array('BrainFolds', albedo(h)[::-1])
+    nrm = lib.image_from_array('BrainFoldsNormal', normal_map(h)[::-1], non_color=True)
+    material = lib.mat('BrainFolds', BASE, rough=0.42, image=tex, normal=nrm, normal_strength=0.7)
 
     thetas = np.linspace(-math.radians(128), math.radians(128), 700)
     plan = [_plan(t) for t in thetas]

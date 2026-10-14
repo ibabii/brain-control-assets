@@ -1,131 +1,75 @@
 {
-  "asset_id": "cockpit_blockout_v1",
-  "stage": "composition review only; not integration-ready",
-  "style_id": "warm_ceramic_v1",
-  "export": {
-    "path": "cockpit/art/cockpit_blockout.glb",
-    "sha256": "5cd98a9ae7378d73db70e60a4eb7ab93c082dc4ad7956a3cc74752acb28cb22f",
-    "triangles": 13258,
-    "meshes": 88,
-    "materials": 8,
-    "textures": 0,
-    "external_dependencies": []
+  "asset_id": "cockpit_v2",
+  "stage": "look-dev matched to concepts/cockpit/cockpit-warm-ceramic-v1.png; integration needs gameplay sign-off on layout",
+  "files": {
+    "scene": "cockpit/art/cockpit_art.tscn",
+    "model": "cockpit/art/cockpit_art.glb",
+    "lighting": "cockpit/art/cockpit_lighting.tscn",
+    "print_material": "cockpit/art/materials/concept_print.tres",
+    "layout": "cockpit/art/layout.json"
   },
-  "source": "source/cockpit/cockpit_blockout_v1.blend",
-  "rebuild_script": "scripts/build_cockpit_blockout.py",
-  "preview": "previews/cockpit/cockpit_blockout.tscn",
-  "third_party_sources": [
-    {
-      "author": "Kenney",
-      "license": "CC0-1.0",
-      "source_url": "https://kenney.nl/assets/furniture-kit",
-      "original_file": "source/vendor/kenney/selected/furniture-kit/books.glb",
-      "sha256": "b8dc56e5d29f6fc1f4727fccb1b9642627fee9942c48060a00034e98df02701c",
-      "blockout_node": "Books",
-      "adaptation": "rescaled to metres; atlas/material colours replaced with warm_ceramic_v1 flat materials; repositioned",
-      "license_file": "source/vendor/kenney/selected/furniture-kit/License.txt"
+  "model_sha256": "52322b601c4ec463cbb9c4bdf6d9c165bc936539cbb26e146d9b3a4fc6c68547",
+  "triangles": 259066,
+  "source": "source/cockpit/cockpit_v2.blend",
+  "rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build.py",
+  "gameplay_hooks": {
+    "GaugeHousing/Needles/<Gauge>Needle": "rotate about local +Z; pivot at dial centre",
+    "GaugeLabels (tscn)": "Label3D per gauge on taped paper",
+    "Controls/LeftKeys, PanicButton, Joystick/Stick": "optional art for the game's controls, at the game's local anchors",
+    "Dressing/Notes/TaskNote": "blank paper at the game TaskNote transform; gameplay writes the text",
+    "ScreenHousings/*": "frames only; live screens render at layout.json anchors"
+  },
+  "printed_from_concept": "notes, labels, book spines, can, mug, donut, lever box, trinkets: concept image projected from the game camera onto real geometry",
+  "proposed_game_changes": {
+    "FrontScreen": {
+      "position": [
+        0,
+        1.33,
+        -0.58
+      ],
+      "size": [
+        1.12,
+        0.49
+      ],
+      "was": "1.28 x 0.72 at y 1.43"
     },
-    {
-      "author": "Kenney",
-      "license": "CC0-1.0",
-      "source_url": "https://kenney.nl/assets/food-kit",
-      "original_file": "source/vendor/kenney/selected/food-kit/mug.glb",
-      "sha256": "5215ef74dbbc3a1c0ecf8d0937adde745bbcbd65d8facd228d9f3371991da435",
-      "blockout_node": "Mug",
-      "adaptation": "rescaled to metres; atlas/material colours replaced with warm_ceramic_v1 flat materials; repositioned",
-      "license_file": "source/vendor/kenney/selected/food-kit/License.txt"
+    "LeftPanel": {
+      "position": [
+        -0.77,
+        1.265,
+        -0.38
+      ],
+      "rotation_deg": [
+        0,
+        25,
+        -4
+      ],
+      "size": [
+        0.33,
+        0.42
+      ]
     },
-    {
-      "author": "Kenney",
-      "license": "CC0-1.0",
-      "source_url": "https://kenney.nl/assets/food-kit",
-      "original_file": "source/vendor/kenney/selected/food-kit/soda-can.glb",
-      "sha256": "4ae68cbd532e69353ae1392e95bb57afa7cb2acc98f3bb46dc5a017c765c89fe",
-      "blockout_node": "BrainFuel",
-      "adaptation": "rescaled to metres; atlas/material colours replaced with warm_ceramic_v1 flat materials; repositioned",
-      "license_file": "source/vendor/kenney/selected/food-kit/License.txt"
+    "RightPanel": {
+      "position": [
+        0.79,
+        1.262,
+        -0.38
+      ],
+      "rotation_deg": [
+        0,
+        -27,
+        3
+      ],
+      "size": [
+        0.33,
+        0.4
+      ]
     },
-    {
-      "author": "Kenney",
-      "license": "CC0-1.0",
-      "source_url": "https://kenney.nl/assets/food-kit",
-      "original_file": "source/vendor/kenney/selected/food-kit/donut-sprinkles.glb",
-      "sha256": "f45946b7e81221e9d45fdfab45ee89eeb095ff0d7fb6a3ad9988919cf587d3b7",
-      "blockout_node": "Donut",
-      "adaptation": "rescaled to metres; atlas/material colours replaced with warm_ceramic_v1 flat materials; repositioned",
-      "license_file": "source/vendor/kenney/selected/food-kit/License.txt"
-    }
+    "Lighting/Environment": "use cockpit_lighting.tscn instead of the greybox WorldEnvironment and lights"
+  },
+  "not_included": [
+    "brain hands and sleeves (gameplay rig)",
+    "screen content (gameplay)"
   ],
-  "material_notes": "painted .62 roughness throughout this blockout; final surface recipes will be assigned in the core/clutter passes",
-  "camera_reference": {
-    "position": [
-      0,
-      1.36,
-      0.8
-    ],
-    "pitch_deg": -14,
-    "fov_deg": 68
-  },
-  "proposal_not_applied_to_game": {
-    "right_slot_x_offset_m": 0.08,
-    "roomier_fov_deg": 74
-  },
-  "screenshots": [
-    {
-      "path": "previews/cockpit/screenshots/clearances-16x9.png",
-      "resolution": [
-        1280,
-        720
-      ]
-    },
-    {
-      "path": "previews/cockpit/screenshots/gameplay-layout-16x9.png",
-      "resolution": [
-        1280,
-        720
-      ]
-    },
-    {
-      "path": "previews/cockpit/screenshots/menu-16x9.png",
-      "resolution": [
-        1280,
-        720
-      ]
-    },
-    {
-      "path": "previews/cockpit/screenshots/menu-4x3.png",
-      "resolution": [
-        960,
-        720
-      ]
-    },
-    {
-      "path": "previews/cockpit/screenshots/proposed-roomier-framing-16x9.png",
-      "resolution": [
-        1280,
-        720
-      ]
-    },
-    {
-      "path": "previews/cockpit/screenshots/proposed-roomier-framing-4x3.png",
-      "resolution": [
-        960,
-        720
-      ]
-    },
-    {
-      "path": "previews/cockpit/screenshots/proposed-slot-spacing-16x9.png",
-      "resolution": [
-        1280,
-        720
-      ]
-    }
-  ],
-  "checks": {
-    "export": "valid embedded GLB; no runtime textures, animation or cameras",
-    "render": "seven Forward+ capture frames completed without errors",
-    "gauge_labels": "full names below dials; current joystick blocks final label; +8 cm outward clears it in static pose",
-    "aspect": "16:9 primary; 4:3 still clips outer side-screen frame edges; layout remains under review"
-  },
-  "pending": "Claude CODEX-006 reply: final control/gauge/hand hooks and layout agreement"
+  "style_id": "warm_ceramic_v1"
 }

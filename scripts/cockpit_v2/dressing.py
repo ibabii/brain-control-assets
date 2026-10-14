@@ -27,8 +27,10 @@ def depth_of(p):
 
 
 def wall_plane(px, py, gap=0.1, yaw=0.0):
+    """Plane through the wall point under (px, py), tilted halfway from facing the camera to lying on the wall."""
     p, _ = brain.wall_hit(px, py, gap)
-    return lib.facing(depth_of(p), yaw)
+    n = (brain.wall_normal(p) + (-lib.FWD)).normalized()
+    return p, n
 
 
 def plane3(a, b, c):
@@ -136,13 +138,13 @@ def notes(parent):
     ]
     for name, pts in wall:
         cx, cy = sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
-        lib.decal(name, pts, wall_plane(cx, cy, 0.2), g)
-    lib.decal('SameBrain', [(487, 47), (633, 30), (636, 140), (500, 152)], lib.zplane(-0.62), g)
+        lib.decal(name, pts, wall_plane(cx, cy, 0.32), g)
+    lib.decal('SameBrain', [(487, 47), (633, 30), (636, 140), (500, 152)], lib.zplane(-0.5), g)
     lib.decal('HeartSticky', [(1135, 280), (1190, 279), (1191, 357), (1136, 358)], lib.zplane(-0.53), g)
     lib.decal('Smiley', circle_px(547, 187, 16), lib.zplane(-0.555), g)
     heart = [(432, 92), (442, 84), (458, 81), (472, 88), (478, 103), (474, 122), (458, 143), (433, 166), (408, 143),
              (391, 122), (387, 103), (393, 88), (407, 81), (423, 84)]
-    lib.decal('SmallStepsHeart', heart, lib.facing(1.5), g)
+    lib.decal('SmallStepsHeart', heart, lib.facing(min(1.5, wall_depth(432, 120, 0.22))), g)
     lib.decal('DoTheThing', [(810, 702), (935, 685), (952, 752), (817, 770)], console_plane(0.004), g)
     # The list lies across the console lip onto the tray.
     top = lib.unproject(1050, 728, console_plane(0.004))
@@ -212,16 +214,46 @@ CABLE_PATHS = [
 ]
 
 
+BUNDLES = [
+    # (count, spread m, [(px, py, depth), ...]) — loose bundles that fill the gaps like the concept.
+    (10, 0.07, [(520, -40, 1.75), (512, 200, 1.58), (526, 400, 1.48), (508, 650, 1.2)]),
+    (8, 0.06, [(1178, -40, 1.75), (1182, 200, 1.58), (1170, 420, 1.48), (1160, 650, 1.2)]),
+    (9, 0.11, [(250, -40, 1.8), (232, 200, 1.62), (200, 400, 1.5), (170, 620, 1.3)]),
+    (7, 0.09, [(1470, 200, 1.55), (1520, 350, 1.55), (1565, 500, 1.5), (1600, 660, 1.4)]),
+    (6, 0.14, [(-40, 70, 2.0), (400, 40, 1.98), (800, 25, 2.05), (1200, 40, 1.98), (1720, 70, 2.0)]),
+    (5, 0.08, [(555, 420, 1.42), (545, 520, 1.4), (560, 620, 1.25)]),
+    (5, 0.08, [(1135, 420, 1.42), (1150, 520, 1.4), (1140, 620, 1.25)]),
+]
+
+
+def droop(pts, k=0.18):
+    """Insert sagging midpoints so cables hang instead of running straight."""
+    out = [pts[0]]
+    for a, b in zip(pts, pts[1:]):
+        span = math.hypot(b.x - a.x, b.z - a.z)
+        out += [(a + b) / 2 - Vector((0, k * span, 0)), b]
+    return out
+
+
 def cables(parent):
     g = lib.empty('Cables', (0, 1.3, -0.6), parent)
     mats = [lib.mat('Cable%d' % i, c, 0.45) for i, c in enumerate(CABLE)]
     for i, (ci, r, path) in enumerate(CABLE_PATHS):
-        pts = [at_depth(px, py, min(d, wall_depth(px, py, 0.12))) for px, py, d in path]
-        lib.tube('Cable%02d' % i, pts, r, mats[ci], g)
+        pts = [at_depth(px, py, wall_depth(px, py, 0.13)) for px, py, d in path]   # on the wall, behind notes
+        lib.tube('Cable%02d' % i, droop(pts), r, mats[ci], g)
+    rb = random.Random(11)
+    for b, (count, spread, path) in enumerate(BUNDLES):
+        base = [at_depth(px, py, wall_depth(px, py, 0.13)) for px, py, d in path]   # on the wall, behind notes
+        for k in range(count):
+            off = Vector((rb.uniform(-spread, spread), 0, rb.uniform(-spread, spread) * 0.6))
+            pts = [p + off + Vector((rb.uniform(-0.03, 0.03), rb.uniform(-0.03, 0.03), rb.uniform(-0.02, 0.02)))
+                   for p in base]
+            lib.tube('Bundle%d_%d' % (b, k), droop(pts, rb.uniform(0.1, 0.3)), rb.uniform(0.008, 0.015),
+                     mats[rb.randrange(len(mats))], g)
     # Tangles on the desk, left and right of the console.
     rnd = random.Random(4)
     for side, x0, x1 in ((-1, -1.0, -0.62), (1, 0.66, 1.05)):
-        for k in range(6):
+        for k in range(12):
             pts = []
             x = rnd.uniform(x0, x1)
             z = rnd.uniform(-0.35, 0.15)
@@ -239,7 +271,7 @@ BULBS = [(18, 170), (358, 33), (538, 8), (873, 35), (1068, 12), (1408, 37), (162
 def fairy_lights(parent):
     g = lib.empty('FairyLights', (0, 1.8, -0.6), parent)
     wire = lib.mat('FairyWire', '#3B3A36', 0.6)
-    bulb = lib.mat('FairyBulb', '#FFE2B0', 0.3, emit='#FFC978', strength=8.0)
+    bulb = lib.mat('FairyBulb', '#FFD39A', 0.3, emit='#FFB04A', strength=5.0)
     pts = []
     for px, py in BULBS:
         p, _ = brain.wall_hit(px, py, 0.16)
@@ -250,7 +282,7 @@ def fairy_lights(parent):
     route.append(pts[-1])
     lib.tube('FairyWire', route, 0.004, wire, g, bevel_res=1)
     for i, p in enumerate(pts):
-        lib.sphere('Bulb%02d' % i, 0.022, bulb, Frame(p), g, seg=14, rings=8)
+        lib.sphere('Bulb%02d' % i, 0.017, bulb, Frame(p), g, seg=14, rings=8)
     g['bulbs_godot'] = [list(p) for p in pts]
     return g, pts
 
@@ -270,9 +302,9 @@ def books(parent):
         a, b = at_depth(x0, y0, depth), at_depth(x1, y1, depth)
         w, h = abs(b.x - a.x), abs(a.y - b.y) * 0.98
         c = (a + b) / 2
-        bm = lib.box_bm((w, h, 0.2), Frame(c + Vector((0, 0, -0.1))))
+        bm = lib.box_bm((w * 1.02, h, 0.2), Frame(c + Vector((0, 0, -0.1))))
         o = lib.from_bmesh('Book%d' % i, bm, lib.print_mat(), g, None, smooth=False)
-        print_faces(o, lib.mat('Book%d' % i, col, 0.7), 0.5)
+        print_faces(o, lib.mat('Book%d' % i, col, 0.7), -0.2)
     return g
 
 

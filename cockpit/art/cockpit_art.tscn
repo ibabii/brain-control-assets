@@ -12,7 +12,7 @@ position = Vector3(0, 0.904, -0.566)
 [node name="Coordination" type="Label3D" parent="GaugeLabels"]
 position = Vector3(-0.48, 0, 0)
 rotation_degrees = Vector3(0, 0, -3)
-pixel_size = 0.0004
+pixel_size = 0.0005
 modulate = Color(0.2, 0.18, 0.17, 1)
 outline_size = 0
 font_size = 44
@@ -21,7 +21,7 @@ text = "Coordination"
 [node name="Confidence" type="Label3D" parent="GaugeLabels"]
 position = Vector3(-0.24, 0, 0)
 rotation_degrees = Vector3(0, 0, 2)
-pixel_size = 0.0004
+pixel_size = 0.0005
 modulate = Color(0.2, 0.18, 0.17, 1)
 outline_size = 0
 font_size = 44
@@ -29,7 +29,7 @@ text = "Confidence"
 
 [node name="Balance" type="Label3D" parent="GaugeLabels"]
 rotation_degrees = Vector3(0, 0, -2)
-pixel_size = 0.0004
+pixel_size = 0.0005
 modulate = Color(0.2, 0.18, 0.17, 1)
 outline_size = 0
 font_size = 44
@@ -38,7 +38,7 @@ text = "Balance"
 [node name="Focus" type="Label3D" parent="GaugeLabels"]
 position = Vector3(0.24, 0, 0)
 rotation_degrees = Vector3(0, 0, 3)
-pixel_size = 0.0004
+pixel_size = 0.0005
 modulate = Color(0.2, 0.18, 0.17, 1)
 outline_size = 0
 font_size = 44
@@ -47,7 +47,7 @@ text = "Focus"
 [node name="Embarrassment" type="Label3D" parent="GaugeLabels"]
 position = Vector3(0.48, 0, 0)
 rotation_degrees = Vector3(0, 0, -1)
-pixel_size = 0.0004
+pixel_size = 0.0005
 modulate = Color(0.2, 0.18, 0.17, 1)
 outline_size = 0
 font_size = 44

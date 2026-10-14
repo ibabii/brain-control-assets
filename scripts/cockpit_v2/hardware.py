@@ -20,8 +20,8 @@ DIAL_X = [-0.48, -0.24, 0.0, 0.24, 0.48]
 GAUGES = ['Coordination', 'Confidence', 'Balance', 'Focus', 'Embarrassment']
 
 C = {
-    'housing': '#3E5250', 'housing_dark': '#2E3B3A', 'side_frame': '#A8A38E', 'panel': '#4A5755',
-    'face': '#F3E5C8', 'steel': '#C4C0B5', 'needle': '#D23B2F', 'red_zone': '#D9473A', 'beige': '#BCA98A',
+    'housing': '#3E5250', 'housing_dark': '#2E3B3A', 'side_frame': '#B4B09D', 'panel': '#4A5755',
+    'face': '#F3E5C8', 'steel': '#C4C0B5', 'needle': '#D23B2F', 'red_zone': '#D9473A', 'beige': '#B7A88C',
     'inset': '#4A5250', 'screw': '#A39D90', 'copper': '#B8763F', 'tape': '#D2CBB4', 'desk': '#7B6B5B',
     'tray': '#4C5654', 'space': '#E2402F', 'ring': '#E9A23B', 'rubber': '#2F3434', 'joy': '#2FA6A3',
     'undo': '#9A58C6', 'distract': '#35B6AA', 'screen': '#1E2A31',
@@ -63,10 +63,11 @@ def screen_housing(root, name, main=False):
     outer = [(x, y + oy) for x, y in rrect(ow, oh, 0.045 if main else 0.03, 6)]
     inner = list(reversed(rrect(w + 0.004, h + 0.004, 0.022 if main else 0.016, 5)))
     lib.slab(name + 'Frame', outer, depth, 0.016, frame_mat, f.child((0, 0, -depth + 0.022)), group, holes=[inner])
-    # Deep back shell so the monitor reads as a chunky box from the side.
-    back_d = 0.12 if main else 0.16
-    lib.slab(name + 'Back', rrect(ow - 0.02, oh - 0.02, 0.04, 5), back_d, 0.03, back_mat,
-             f.child((0, oy, -depth + 0.022 - back_d + 0.01)), group)
+    # Deep back shell so the monitor reads as a chunky box; side monitors show a dark casing rim around the bezel.
+    back_d = 0.12 if main else 0.17
+    grow = 0.0 if main else 0.035
+    lib.slab(name + 'Back', rrect(ow - 0.02 + grow, oh - 0.02 + grow, 0.045, 5), back_d, 0.03, back_mat,
+             f.child((0, oy, -depth + 0.022 - back_d + (0.01 if main else -0.004))), group)
     # Dark glass bezel just behind the live screen plane (never in front of it).
     lib.box(name + 'Glass', (w + 0.01, h + 0.01, 0.004), M('screen', 0.3), f.child((0, 0, -0.006)), group)
     for sx in (-1, 1):
@@ -155,6 +156,11 @@ def console(root):
     outline = [(x, -z) for x, z in [(-0.64, 0.14), (0.62, 0.14), (0.70, 0.02), (0.66, -0.18), (-0.66, -0.18)]]
     outline = _round_poly(outline, 0.035)
     lib.slab('ConsoleSlab', outline, 0.07, 0.018, M('beige', 0.62), top.child((0, 0, -0.07)), group)
+    rim = _round_poly([(x * 1.0, y) for x, y in [(-0.665, -0.155), (0.645, -0.155), (0.725, -0.02), (0.685, 0.195), (-0.685, 0.195)]], 0.04)
+    lib.slab('ConsoleRim', rim, 0.07, 0.02, M('housing', 0.55), top.child((0, 0, -0.085)), group)
+    for x, y, a in ((-0.6, -0.15, 15), (-0.05, -0.16, -10), (0.15, 0.12, 25), (0.62, -0.12, -30), (-0.45, 0.13, 8),
+                    (0.36, 0.165, -12)):
+        tape(group, top, (x, y, 0.001), (0.07, 0.035), a)
     # Front skirt down to the tray.
     lib.box('ConsoleSkirt', (1.30, 0.12, 0.05), M('beige', 0.62), CONSOLE.child((0, -0.09, 0.115)), group, bevel=0.012)
     # Left inset holding the keys.
