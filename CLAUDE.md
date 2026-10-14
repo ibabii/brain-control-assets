@@ -18,4 +18,4 @@ Blender source in `source/<asset>/*.blend` → GLB export to `<asset>/art/` → 
 ## Status
 - Toothbrush v1: done and integrated in game (`defee4e`).
 - Cockpit: pass 1 blockout done (`docs/cockpit_plan.md`, `previews/cockpit/`). Waiting on CODEX-006 (cockpit art interfaces) from gameplay and user composition review.
-- Repo has no commits yet.
+- Initial commit 8629283 pushed to origin/main.
