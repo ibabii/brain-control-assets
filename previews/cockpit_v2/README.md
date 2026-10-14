@@ -10,4 +10,4 @@ Goal: match `concepts/cockpit/cockpit-warm-ceramic-v1.png` from the game camera.
 Everything is modelled and textured in Blender: paper notes (`paper.py`, live wording in `cockpit/art/notes/cockpit_notes.tscn` written by `notes_scene.py`), props and trinkets (`props.py`), hand-painted textures and lettering (`ink.py`, Patrick Hand font). No concept pixels in the art. Inspect from another angle: `--eye x,y,z --look x,y,z`.
 Screen content here is a preview stand-in; the game renders live screens at the anchors in `layout.json`.
 
-Clipping: after every build run `Blender -b source/cockpit/cockpit_v2.blend --python scripts/cockpit_v2/audit.py`; it must report 0 pairs.
+Clipping: after every build run `Blender -b source/cockpit/cockpit_v2.blend --python scripts/cockpit_v2/audit.py`; it must report 0 pairs (it also flags flush, same-facing surfaces that z-fight).

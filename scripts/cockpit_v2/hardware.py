@@ -206,17 +206,19 @@ def console(root):
     # Main beige slab: x -0.64..0.64, depth z -0.18..0.14 (local console z; +z toward the camera).
     outline = [(x, -z) for x, z in [(-0.64, 0.14), (0.62, 0.14), (0.70, 0.02), (0.66, -0.18), (-0.66, -0.18)]]
     outline = _round_poly(outline, 0.035)
-    lib.slab('ConsoleSlab', outline, 0.07, 0.018, M('beige', 0.62), top.child((0, 0, -0.07)), group)
+    # Hole for the slot insert (a flush insert on top of the slab z-fought with it). The rim hides the cut edge.
+    slot_hole = [(x + SLOT_X, y + 0.01) for x, y in reversed(rrect(0.27, 0.22, 0.025, 4))]
+    lib.slab('ConsoleSlab', outline, 0.07, 0.018, M('beige', 0.62), top.child((0, 0, -0.07)), group, holes=[slot_hole])
     rim = _round_poly([(x * 1.0, y) for x, y in [(-0.665, -0.155), (0.645, -0.155), (0.725, -0.02), (0.685, 0.195), (-0.685, 0.195)]], 0.04)
     lib.slab('ConsoleRim', rim, 0.07, 0.02, M('housing', 0.55), top.child((0, 0, -0.085)), group)
     for x, y, a in ((-0.6, -0.15, 15), (-0.12, -0.16, -10), (0.12, 0.13, 25), (0.62, 0.155, -20), (-0.45, 0.13, 8),
                     (0.36, 0.165, -12)):
         tape(group, top, (x, y, 0.001), (0.07, 0.035), a)
     # Front skirt down to the tray.
-    lib.box('ConsoleSkirt', (1.30, 0.12, 0.05), M('beige', 0.62), CONSOLE.child((0, -0.09, 0.115)), group, bevel=0.012)
+    lib.box('ConsoleSkirt', (1.30, 0.12, 0.05), M('beige', 0.62), CONSOLE.child((0, -0.09, 0.111)), group, bevel=0.012)   # 4 mm behind the slab front (was flush: z-fight)
     # Key and SPACE housings ship with the control art (cockpit/art/controls/).
     # Right inset where the swappable slot lives (game slot at x 0.30).
-    lib.slab('SlotInset', rrect(0.30, 0.25, 0.03, 4), 0.012, 0.004, M('inset', 0.6), top.child((SLOT_X, 0.01, -0.012)), group)   # top flush with the console
+    lib.slab('SlotInset', rrect(0.27, 0.22, 0.025, 4), 0.012, 0.004, M('inset', 0.6), top.child((SLOT_X, 0.01, -0.0125)), group)   # fills the hole, 0.5 mm below the console top
     rim = [(x, y) for x, y in rrect(0.30, 0.25, 0.03, 4)]
     lib.slab('SlotRim', rim, 0.016, 0.005, M('housing_dark', 0.6), top.child((SLOT_X, 0.01, 0.0)), group,
              holes=[list(reversed(rrect(0.26, 0.21, 0.02, 4)))])
@@ -267,7 +269,7 @@ def desk(root):
     # Dark tray in front of the console where the notebook and list lie.
     lib.slab('Tray', rrect(1.35, 0.34, 0.04, 4), 0.03, 0.01, M('tray', 0.65), Frame((0.0, 0.86, 0.36), UPF), group)
     # Deck connecting the console back to the gauge panel (hidden from the seat, seen in the reveal).
-    lib.slab('Deck', rrect(1.3, 0.46, 0.04, 4), 0.04, 0.01, M('housing_dark', 0.7), Frame((0, 0.80, -0.36), UPF), group)
+    lib.slab('Deck', rrect(1.3, 0.46, 0.04, 4), 0.04, 0.01, M('housing_dark', 0.7), Frame((0, 0.795, -0.36), UPF), group)   # bottom 5 mm under the desk bottom (flush z-fought)
     return group
 
 

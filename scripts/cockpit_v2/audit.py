@@ -16,6 +16,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 import lib  # noqa: E402
 
 TOL = 0.0025
+ZTOL = 0.0004          # surfaces closer than this flicker (z-fight)
+ZAREA = 2e-4           # 2 cm2 of shared surface
 # Designed joins (part sunk into the part it is mounted on). Patterns match name prefixes.
 ALLOW = [('ConsoleSlab', 'ConsoleRim'), ('ConsoleSlab', 'ConsoleSkirt'), ('ConsoleRim', 'ConsoleSkirt'),
          ('ConsoleSlab', 'SlotInset'), ('SlotInset', 'SlotRim'), ('ConsoleSlab', 'SlotRim'), ('ConsoleSlab', 'ButtonPlate'),
@@ -102,8 +104,9 @@ def tree(o, dg):
     bm.normal_update()
     t = BVHTree.FromBMesh(bm)
     verts = [v.co.copy() for v in bm.verts]
+    faces = [(f.calc_center_median(), f.normal.copy(), f.calc_area()) for f in bm.faces if f.calc_area() > 1e-7]
     bm.free()
-    return t, verts
+    return t, verts, faces
 
 
 def inside(p, t):
@@ -142,6 +145,16 @@ def behind(verts, t):
     return d
 
 
+def coplanar(faces, t):
+    """Area of `faces` lying on a same-facing surface of `t` (z-fighting)."""
+    a = 0.0
+    for c, n, ar in faces:
+        loc, m, _, dist = t.find_nearest(c, ZTOL)
+        if loc is not None and n.dot(m) > 0.995:
+            a += ar
+    return a
+
+
 def main():
     import_controls()
     dg = bpy.context.evaluated_depsgraph_get()
@@ -151,10 +164,16 @@ def main():
     found = []
     names = list(data)
     for i, a in enumerate(names):
-        ga, ta, va = data[a]
+        ga, ta, va, fa = data[a]
         for b in names[i + 1:]:
-            gb, tb, vb = data[b]
-            if ga == gb or allowed(a, b) or not ta.overlap(tb):
+            gb, tb, vb, fb = data[b]
+            if ga == gb or not ta.overlap(tb):
+                continue
+            z = max(coplanar(fa, tb), coplanar(fb, ta))    # never allowed, even for designed joins
+            if z > ZAREA:
+                found.append((0.0, a, b))
+                print('ZFIGHT %.1f cm2  %s  x  %s' % (z * 1e4, a, b))
+            if allowed(a, b):
                 continue
             if 'BrainFolds' in (a, b):            # open surface: use its inward-facing normals
                 d = behind(vb if a == 'BrainFolds' else va, ta if a == 'BrainFolds' else tb)
