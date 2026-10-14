@@ -161,17 +161,13 @@ _concept = None
 
 
 def concept_image():
+    """The approved concept, only for the look-dev preview screens (never in the shipped art)."""
     global _concept
     if _concept is None:
         _concept = bpy.data.images.load(CONCEPT)
         _concept.name = 'ConceptPrint'
         _concept.pack()
     return _concept
-
-
-def print_mat():
-    """Paper/print surfaces textured straight from the approved concept, projected from the game camera."""
-    return mat('ConceptPrint', '#ffffff', rough=0.82, image=concept_image())
 
 
 # --- scene objects -------------------------------------------------------------------------------
@@ -372,35 +368,6 @@ def tube(name, points, radius, material, parent=None, res=6, bevel_res=2, smooth
 
 
 # --- camera-projected print ---------------------------------------------------------------------
-
-def camera_uvs(o):
-    """UVs = where each vertex lands in the concept from the game camera."""
-    me = o.data
-    uv = me.uv_layers.get('UVMap') or me.uv_layers.new(name='UVMap')
-    mw = o.matrix_world
-    for loop in me.loops:
-        px, py = project(G(mw @ me.vertices[loop.vertex_index].co))
-        uv.data[loop.index].uv = (px / CW, 1 - py / CH)
-
-
-def decal(name, pts, plane, parent=None, cuts=6, offset=0.0, material=None):
-    """Flat cut-out whose outline is `pts` (concept pixels), lying on `plane`, textured from the concept."""
-    point, normal = plane
-    world = [unproject(x, y, plane) + Vector(normal) * offset for x, y in pts]
-    bm = bmesh.new()
-    vs = [bm.verts.new(p) for p in world]
-    f = bm.faces.new(vs)
-    bmesh.ops.triangulate(bm, faces=[f])
-    bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=cuts, use_grid_fill=True)
-    bm.normal_update()
-    # Face the camera.
-    for face in bm.faces:
-        if face.normal.dot(Vector(normal)) < 0:
-            face.normal_flip()
-    o = from_bmesh(name, bm, material or print_mat(), parent, None, smooth=False)
-    camera_uvs(o)
-    return o
-
 
 def count_tris():
     t = 0

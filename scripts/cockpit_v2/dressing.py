@@ -1,8 +1,7 @@
 """Clutter: cables, fairy lights, paper notes and props. Positions are read from concept pixels.
 
-Printed items (notes, labels, book spines, can, mug, trinkets) are textured straight from the concept image,
-projected from the game camera, so the seated view matches the approved render. Their geometry is real, so they
-keep depth and parallax for the reveal.
+Everything is modelled and textured in Blender (paper.py, props.py); placement follows the concept from the game
+camera. No concept pixels are used.
 """
 import math
 import random
@@ -14,6 +13,7 @@ import brain
 import hardware as hw
 import lib
 import paper
+import props
 from lib import Frame, UPF, circle, rrect
 
 CABLE = ['#2F6F70', '#1F4B4D', '#D4473A', '#E59A3A', '#EAC04A', '#3F6A86', '#2F6F70', '#D4473A']
@@ -53,41 +53,11 @@ def m_per_px(depth):
     return 2 * lib.TY * depth / lib.CH
 
 
-def print_faces(o, body, threshold=0.25, bbox=None, margin=0.15, lids=False):
-    """Faces turned toward the camera get the concept print; the rest get `body`.
-    With `bbox` (concept px), a face is printed only if its centre projects inside the bbox grown by `margin`
-    (fraction of its size) and inside the image, so items never pick up neighbouring artwork or the image edge.
-    `lids`: upward faces (can/mug tops) always get `body`."""
-    me = o.data
-    me.materials.clear()
-    me.materials.append(lib.print_mat())
-    me.materials.append(body)
-    mw = o.matrix_world
-    if bbox:
-        x0, y0, x1, y1 = bbox
-        mx, my = (x1 - x0) * margin, (y1 - y0) * margin
-        x0, y0, x1, y1 = x0 - mx, y0 - my, x1 + mx, y1 + my
-    else:
-        x0, y0, x1, y1 = 0, 0, lib.CW, lib.CH
-    x0, y0, x1, y1 = max(x0, 2), max(y0, 2), min(x1, lib.CW - 2), min(y1, lib.CH - 2)
-    for p in me.polygons:
-        c = lib.G(mw @ p.center)
-        n = (lib.G(mw.to_3x3() @ p.normal)).normalized()
-        px, py = lib.project(c)
-        ok = x0 <= px <= x1 and y0 <= py <= y1 and n.dot((lib.CAM - c).normalized()) > threshold
-        if lids and n.y > 0.8:
-            ok = False
-        p.material_index = 0 if ok else 1
-    lib.camera_uvs(o)
-    return o
-
-
-# --- proxies: simple solids fitted to a concept bounding box ----------------------------------------
-
 def _fit(bbox, depth=None, ground_y=None, shrink=0.94):
+    """Centre and size (m) of a concept-pixel box at `depth`, or standing on the floor height `ground_y`."""
     x0, y0, x1, y1 = bbox
     if ground_y is not None:
-        base = lib.unproject((x0 + x1) / 2, y1 - (y1 - y0) * 0.06, ground((ground_y)))
+        base = lib.unproject((x0 + x1) / 2, y1 - (y1 - y0) * 0.06, ground(ground_y))
         depth = depth_of(base)
     s = m_per_px(depth) * shrink
     w, h = (x1 - x0) * s, (y1 - y0) * s
@@ -100,67 +70,6 @@ def _fit(bbox, depth=None, ground_y=None, shrink=0.94):
 def wall_depth(px, py, gap):
     p, _ = brain.wall_hit(px, py, gap)
     return depth_of(p)
-
-
-def proxy(name, kind, bbox, parent, depth=None, ground_y=None, deep=None, body='#ffffff', yaw=0.0, threshold=-1.0,
-          shrink=0.94, shift=None, lids=False, margin=0.15, top_cut=0.0):
-    c, w, h = _fit(bbox, depth, ground_y, shrink)
-    if top_cut:       # a cylinder's far rim projects above its outline; lower the top so the rim lands on it
-        h -= top_cut
-        c = c - Vector((0, top_cut / 2, 0))
-    d = deep if deep is not None else w
-    f = Frame(c, (0, yaw, 0))
-    if kind == 'box':
-        bm = lib.box_bm((w, h, d), f)
-    elif kind == 'cyl':
-        bm = bmesh.new()
-        bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=True, segments=28, radius1=w / 2, radius2=w / 2, depth=h)
-        lib.transform_bm(bm, f.child((0, 0, 0), (90, 0, 0)))
-    elif kind == 'ball':
-        bm = lib.sphere_bm(1, f, (w / 2, h / 2, d / 2))
-    elif kind == 'torus':
-        bm = _torus(w / 2, h, f)
-    elif kind == 'disc':
-        bm = bmesh.new()
-        bmesh.ops.create_cone(bm, cap_ends=True, segments=28, radius1=w / 2, radius2=w / 2, depth=d)
-        lib.transform_bm(bm, f)
-    o = lib.from_bmesh(name, bm, lib.print_mat(), parent, None, smooth=kind in ('cyl', 'ball', 'torus'))
-    print_faces(o, lib.mat('Body_' + name, body, 0.6), threshold, bbox, margin, lids=lids)
-    return moved(o, shift)
-
-
-def place(o, base, scale=1.0, yaw=0.0):
-    """Re-seat a printed item: its base centre goes to `base` (Godot), scaled and turned about it. Keeps its artwork."""
-    me, mw = o.data, o.matrix_world
-    pts = [lib.G(mw @ v.co) for v in me.vertices]
-    old = Vector(((min(p.x for p in pts) + max(p.x for p in pts)) / 2, min(p.y for p in pts),
-                  (min(p.z for p in pts) + max(p.z for p in pts)) / 2))
-    r = lib.rot((0, yaw, 0))
-    inv = mw.inverted()
-    for v, p in zip(me.vertices, pts):
-        v.co = inv @ lib.B(Vector(base) + r @ ((p - old) * scale))
-    return o
-
-
-def moved(o, shift):
-    """Move a printed item after its UVs are baked (it keeps its concept artwork)."""
-    if shift is not None:
-        o.location += lib.B(shift)
-    return o
-
-
-def _torus(r_outer, height, frame, seg=28, ring=12):
-    rt = height / 2
-    rm = r_outer - rt
-    bm = bmesh.new()
-    grid = [[bm.verts.new(frame.at(((rm + rt * math.cos(b)) * math.cos(a), rt * math.sin(b),
-                                    (rm + rt * math.cos(b)) * math.sin(a))))
-             for b in (2 * math.pi * j / ring for j in range(ring))] for a in (2 * math.pi * i / seg for i in range(seg))]
-    for i in range(seg):
-        for j in range(ring):
-            bm.faces.new([grid[i][j], grid[(i + 1) % seg][j], grid[(i + 1) % seg][(j + 1) % ring], grid[i][(j + 1) % ring]])
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
-    return bm
 
 
 # --- cables and lights ----------------------------------------------------------------------------
@@ -279,29 +188,32 @@ def fairy_lights(parent):
 # --- props -----------------------------------------------------------------------------------------
 
 def books(parent):
-    """Book stack: spines printed from the concept; the stack continues as plain books past the concept's left edge
+    """Book stack: spines face the camera where the concept has them; the books run on past its left edge
     (seen on ultrawide screens). Returns the point on top of the stack."""
     g = lib.empty('Books', (-0.95, 1.0, -0.2), parent)
     spines = [
-        ((0, 372, 192, 405), '#D9A04C'), ((0, 405, 212, 445), '#2F6470'), ((0, 445, 215, 482), '#D86E73'),
-        ((0, 467, 218, 518), '#C9473D'), ((0, 518, 215, 563), '#7EA04A'), ((0, 535, 240, 610), '#3A63A8'),
-        ((0, 610, 200, 660), '#C9A464'), ((0, 660, 190, 710), '#B85B4E'),
+        ((0, 372, 192, 405), '#D9A04C', ''), ((0, 405, 212, 445), '#2F6470', 'PROCRASTINATION'),
+        ((0, 445, 215, 482), '#D86E73', 'OVERTHINKING'), ((0, 482, 218, 518), '#C9473D', 'RANDOM FACTS'),
+        ((0, 518, 215, 563), '#7EA04A', 'SNACK IDEAS'), ((0, 563, 240, 610), '#3A63A8', 'EMERGENCY MOTIVATION'),
+        ((0, 610, 200, 660), '#C9A464', ''), ((0, 660, 190, 710), '#B85B4E', ''),
     ]
     depth = 1.12
-    top = None
-    for i, (bbox, col) in enumerate(spines):
+    boxes = []
+    for bbox, col, title in spines:
         x0, y0, x1, y1 = bbox
         a, b = at_depth(x0, y0, depth), at_depth(x1, y1, depth)
-        w, h = abs(b.x - a.x), abs(a.y - b.y) * 0.98
-        c = (a + b) / 2
-        bm = lib.box_bm((w * 1.02, h, 0.2), Frame(c + Vector((0, 0, -0.1))))
-        o = lib.from_bmesh('Book%d' % i, bm, lib.print_mat(), g, None, smooth=False)
-        print_faces(o, lib.mat('Book%d' % i, col, 0.7), -0.2, (x0, y0, x1, y1), 0.1)
+        boxes.append((a, b, abs(a.y - b.y) * 0.97))
+    y = boxes[-1][1].y                                       # stack from the bottom up, no overlaps
+    top = None
+    for i in reversed(range(len(spines))):
+        a, b, h = boxes[i]
         ext = 0.28 + 0.05 * (i % 3)
-        lib.box('BookEnd%d' % i, (ext, h * 0.99, 0.2), lib.mat('Book%d' % i, col, 0.7),
-                Frame(Vector((a.x - ext / 2, c.y, c.z - 0.1))), g, bevel=0.006)
-        if top is None:
-            top = Vector((a.x + 0.075, c.y + h / 2, c.z - 0.03))   # clear left end, in front of the wall notes
+        jog = 0.012 * ((i * 7) % 3 - 1)
+        props.book('Book%d' % i, a.x - ext + jog, b.x + 0.01 + jog, y + h / 2, h, a.z + jog * 0.5,
+                   0.2 + 0.015 * (i % 2), spines[i][1], spines[i][2], g, i, label_x0=a.x + 0.01)
+        y += h
+        if i == 0:
+            top = Vector((a.x + 0.075, y, a.z - 0.03))   # clear left end, in front of the wall notes
     return g, top
 
 
@@ -312,27 +224,37 @@ def monitor_top(name, along=0.0, back=0.06):
     return f.at((along, hw.frame_top(name) - spec['pos'][1], -back))
 
 
+def on_ground(bbox, y, shrink=0.94):
+    c, w, h = _fit(bbox, ground_y=y, shrink=shrink)
+    return Vector((c.x, y, c.z)), w, h
+
+
 def trinkets(parent, shelf_top, books_top):
-    """Shelf items are fitted to the concept shelf, then lifted with the shelf for the chosen layout.
+    """Shelf items sit where the concept has them, lifted with the shelf for the chosen layout.
     Tall items that would leave a 16:9 frame sit on the side monitors and the book stack instead."""
     g = lib.empty('Trinkets', (0, shelf_top, -0.62), parent)
     s = hw.CONCEPT_SHELF_TOP
     up = Vector((0, shelf_top - s, 0))
-    proxy('Radio', 'box', (657, 110, 732, 146), g, ground_y=s, deep=0.08, body='#D9A04C', threshold=0.3, shift=up)
-    proxy('Alien', 'ball', (768, 66, 830, 146), g, ground_y=s, deep=0.05, shrink=0.9, shift=up, body='#7BC24A')
-    proxy('Valve', 'cyl', (1080, 86, 1116, 146), g, ground_y=s, body='#C9473D', shift=up)
-    place(proxy('MentalBandwidth', 'box', (854, 47, 1082, 142), g, ground_y=s, deep=0.12, body='#E6DCC6', threshold=0.3),
-          monitor_top('LeftPanel', 0.02), 0.62, 32)
-    place(proxy('CatTV', 'box', (1107, -10, 1316, 148), g, ground_y=s + 0.02, deep=0.22, body='#E6DCC6', threshold=0.3),
-          monitor_top('RightPanel', -0.03), 0.6, -32)
-    place(proxy('Banana', 'ball', (285, 18, 405, 188), g, depth=min(1.45, wall_depth(345, 100, 0.22)), deep=0.07,
-                shrink=0.88, body='#F2C94C'), books_top, 0.8, 20)
-    proxy('Speaker', 'disc', (618, -10, 702, 62), g, depth=wall_depth(660, 26, 0.12), deep=0.03, body='#3B3A36')
+    base, w, h = on_ground((657, 110, 732, 146), s)
+    props.radio('Radio', base + up, w * 0.9, g)
+    base, w, h = on_ground((768, 66, 830, 146), s, 0.9)
+    props.alien('Alien', base + up, h, g)
+    base, w, h = on_ground((1080, 86, 1116, 146), s)
+    props.valve('Valve', base + up, h, g)
+    _, w, h = on_ground((854, 47, 1082, 142), s)
+    props.meter_box('MentalBandwidth', monitor_top('LeftPanel', 0.02), w * 0.75, g, 32)
+    _, w, h = on_ground((1107, -10, 1316, 148), s + 0.02)
+    props.cat_tv('CatTV', monitor_top('RightPanel', -0.03), w * 0.6, g, -32)
+    c, w, h = _fit((285, 18, 405, 188), min(1.45, wall_depth(345, 100, 0.22)), shrink=0.88)
+    props.banana('Banana', books_top, h * 0.8, g, 20)
+    print('BANANA', books_top, h)
+    c, w, h = _fit((618, -10, 702, 62), wall_depth(660, 26, 0.12))
+    props.speaker('Speaker', c, w / 2, g)
     dd = min(1.6, wall_depth(746, 76, 0.25))
     c = at_depth(746, 76, dd) + up
-    r = 40 * m_per_px(dd)
-    proxy('DiscoBall', 'ball', (706, 36, 786, 116), g, depth=dd, shrink=0.97, shift=up, body='#BFC3C7')
-    lib.tube('DiscoString', [c + Vector((0, r, 0)), c + Vector((0, r + 0.25, -0.05))], 0.002,
+    r = 40 * m_per_px(dd) * 0.97
+    props.disco_ball('DiscoBall', c, r, g)
+    lib.tube('DiscoString', [c + Vector((0, r * 1.1, 0)), c + Vector((0, r + 0.25, -0.05))], 0.002,
              lib.mat('FairyWire', '#3B3A36'), g)
     return g
 
@@ -340,21 +262,26 @@ def trinkets(parent, shelf_top, books_top):
 def desk_props(parent):
     g = lib.empty('DeskProps', (0, 0.9, 0), parent)
     y = 0.865
-    proxy('BrainFuel', 'cyl', (182, 586, 332, 818), g, ground_y=y, shrink=0.97, threshold=-1, body='#C9C4BC', margin=0.02, top_cut=0.035)
-    proxy('Donut', 'torus', (22, 766, 246, 900), g, ground_y=y, shrink=0.93, body='#E58FA0')
-    proxy('Mug', 'cyl', (1472, 702, 1615, 905), g, ground_y=y, shrink=0.97, body='#F1E4CF', margin=0.02)
-    proxy('MugHandle', 'box', (1606, 760, 1672, 860), g, ground_y=y + 0.04, deep=0.02, shrink=0.95, body='#F1E4CF')
-    proxy('LeverBox', 'box', (1352, 600, 1662, 735), g, ground_y=y, deep=0.22, body='#C9BC9F', threshold=0.3)
-    box = g.children[-1]
-    front = depth_of(lib.G(box.matrix_world.translation)) - 0.06
-    proxy('AnxietyLever', 'cyl', (1474, 535, 1528, 600), g, depth=front, shrink=0.9, body='#3B3A36')
-    proxy('HypeLever', 'cyl', (1556, 550, 1606, 605), g, depth=front, shrink=0.9, body='#3B3A36')
-    proxy('Octopus', 'ball', (1140, 458, 1312, 590), g, ground_y=0.95, deep=0.16, shrink=0.95, body='#35B6AA')
-    proxy('PixelPal', 'box', (1302, 497, 1378, 612), g, ground_y=0.95, deep=0.05, shrink=0.95, body='#8A5A3A')
-    proxy('ProgressPaper', 'ball', (1352, 795, 1486, 925), g, ground_y=y, deep=0.12, shrink=0.97, body='#F2EEE6')
-    proxy('SmileyBadge', 'disc', (1140, 897, 1193, 941), g, ground_y=0.89, deep=0.01)
-    for i, bbox in enumerate([(100, 580, 197, 676), (1372, 715, 1480, 830)]):
-        proxy('Crumple%d' % i, 'ball', bbox, g, ground_y=y, deep=0.1, shrink=0.97, body='#F2EEE6')
+    base, w, h = on_ground((182, 586, 332, 818), y, 0.95)
+    props.can('BrainFuel', base, h, g)
+    base, w, h = on_ground((22, 766, 246, 900), y, 0.86)
+    props.donut('Donut', base, w, g)
+    base, w, h = on_ground((1472, 702, 1615, 905), y, 0.95)
+    props.mug('Mug', base + Vector((0.02, 0, -0.02)), h * 0.88, g)
+    base, w, h = on_ground((1352, 600, 1662, 735), 0.93)
+    props.lever_box('LeverBox', base + Vector((0, 0, 0.05)), w * 0.9, h, g)
+    base, w, h = on_ground((1140, 458, 1312, 590), 0.95, 0.95)
+    props.octopus('Octopus', base, w, g)
+    base, w, h = on_ground((1302, 497, 1378, 612), 0.95, 0.95)
+    props.pixel_pal('PixelPal', base, h, g)
+    base, w, h = on_ground((1140, 897, 1193, 941), 0.89)
+    props.badge('SmileyBadge', base, w, g)
+    for i, (bbox, seed) in enumerate([((100, 580, 197, 676), 1), ((1372, 715, 1480, 830), 2)]):
+        base, w, h = on_ground(bbox, y, 0.97)
+        props.crumple('Crumple%d' % i, base, w / 2, g, seed)
+    base, w, h = on_ground((1352, 795, 1486, 925), y, 0.97)
+    f = props.face_cam(base + Vector((-0.05, h * 0.22, 0.05)), 12).child((0, 0, 0), (-62, 0, 10))
+    props.folded_note('ProgressPaper', f, w * 0.95, h * 0.95, 'PROGRESS\n>\nPERFECTION', g, 7)
     return g
 
 

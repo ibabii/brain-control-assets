@@ -17,6 +17,6 @@ Blender source in `source/<asset>/*.blend` → GLB export to `<asset>/art/` → 
 
 ## Status
 - Toothbrush v1: done and integrated in game (`defee4e`).
-- Cockpit v2: scripted build `scripts/cockpit_v2/` matched to the concept from the game camera; preview + overlay in `previews/cockpit_v2/` (README there). Middle-ground layout agreed and applied in game `eeb819c`; art controls sit on the game anchors. Cockpit art + controls (cockpit/art/controls/, hook contract in interfaces.md) integrated in game f4eb8f0. Next: hands.
+- Cockpit v2: scripted build `scripts/cockpit_v2/` matched to the concept from the game camera; preview + overlay in `previews/cockpit_v2/` (README there). Middle-ground layout agreed and applied in game `eeb819c`; art controls sit on the game anchors. Cockpit art + controls (cockpit/art/controls/, hook contract in interfaces.md) integrated in game f4eb8f0. 2026-10-14: concept cut-outs removed (user rejected them); every prop is modelled (paper.py, props.py), note wording is live text (NoteText, agreed contract). Next: room pass (ceiling/floor, cable routing, wear), then hands.
 - Blender builds run headless (`Blender -b --factory-startup --python ...`); import by rescanning the assets editor via MCP, then capture with a separate Godot process.
 - Initial commit 8629283 pushed to origin/main.

@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dx8s5ehiuef4t"
-path.s3tc="res://.godot/imported/cockpit_art_cockpit-warm-ceramic-v1.png-425caa6602297ad480963db5711b6781.s3tc.ctex"
+uid="uid://75sq3t26g7op"
+path.s3tc="res://.godot/imported/cockpit_art_Prop_LeverBoxLabel1.png-4fbf949f10333de7c9b321f8e54b0b89.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "135e86938c35b87aa453689937341bf3"
+"md5": "77c0bf668988469df9bebd94a7bba9fd"
 }
 
 [deps]
 
-source_file="res://cockpit/art/cockpit_art_cockpit-warm-ceramic-v1.png"
-dest_files=["res://.godot/imported/cockpit_art_cockpit-warm-ceramic-v1.png-425caa6602297ad480963db5711b6781.s3tc.ctex"]
+source_file="res://cockpit/art/cockpit_art_Prop_LeverBoxLabel1.png"
+dest_files=["res://.godot/imported/cockpit_art_Prop_LeverBoxLabel1.png-4fbf949f10333de7c9b321f8e54b0b89.s3tc.ctex"]
 
 [params]
 

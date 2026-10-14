@@ -1,18 +1,17 @@
 {
   "asset_id": "cockpit_v2",
-  "stage": "look-dev matched to concepts/cockpit/cockpit-warm-ceramic-v1.png; integration needs gameplay sign-off on layout",
+  "stage": "modelled cockpit art: real textured 3D, styled after concepts/cockpit/cockpit-warm-ceramic-v1.png",
   "files": {
     "scene": "cockpit/art/cockpit_art.tscn",
     "model": "cockpit/art/cockpit_art.glb",
     "lighting": "cockpit/art/cockpit_lighting.tscn",
-    "print_material": "cockpit/art/materials/concept_print.tres",
     "layout": "cockpit/art/layout.json",
     "note_text": "cockpit/art/notes/cockpit_notes.tscn (instanced as NoteText in cockpit_art.tscn)",
     "note_defaults": "cockpit/art/notes/notes_text.json",
     "font": "cockpit/art/notes/fonts/PatrickHand-Regular.ttf (SIL OFL 1.1, OFL.txt alongside)"
   },
-  "model_sha256": "c3f8faf94d47c8984921b1108a52cef3f511089f963004e21feaf9e623e65c13",
-  "triangles": 277092,
+  "model_sha256": "526348a879be1a139ee3d2d7db1ac10c5d194111bed8caa4986e1717db250b99",
+  "triangles": 305180,
   "source": "source/cockpit/cockpit_v2.blend",
   "rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build.py",
   "gameplay_hooks": {
@@ -24,7 +23,7 @@
     "NoteText/<Id> (Label3D)": "sticky-note wording; set .text at runtime. Ids: YouGotThis, ItsFine, Chaos, MopFloor, SameBrain, HeartSticky, SmallSteps, DoTheThing, TodoList, Polaroid",
     "NoteText/Today": "notebook TODAY list: Page/List/Title.text; Page/List/Item0..5 (.visible, Text.text BBCode, Box/Tick.visible)"
   },
-  "printed_from_concept": "being removed (user: no concept cut-outs). Paper notes done as real textured sheets; still projected: book spines, can, mug, donut, lever box, trinkets, crumpled paper",
+  "printed_from_concept": "none: every prop is modelled and textured in Blender (paper.py, props.py)",
   "proposed_game_changes": {
     "FrontScreen": {
       "position": [
@@ -77,5 +76,9 @@
     }
   },
   "controls_rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build_controls.py",
-  "controls_check": "Godot --headless --path . --script res://previews/cockpit_v2/check_controls.gd"
+  "controls_check": "Godot --headless --path . --script res://previews/cockpit_v2/check_controls.gd",
+  "cc0": "Kenney Food Kit tried for can/mug/donut; rejected (faceted low-poly clashes with the concept). No third-party models used.",
+  "third_party": [
+    "cockpit/art/notes/fonts/PatrickHand-Regular.ttf: SIL OFL 1.1 (OFL.txt)"
+  ]
 }

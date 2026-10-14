@@ -205,6 +205,21 @@ def box(c, centre, s, ink, w=None, seed=0):
                                  (-0.4 + j(), -0.41 + j()), (-0.41 + j(), 0.44)]), w, ink)
 
 
+def brain(c, centre, s, ink_col, fill):
+    """Little pink brain doodle: lobed blob plus squiggly folds."""
+    k = c.h / c.w
+    c.ellipse(centre, s * 0.55 * 0.5 / 1, s * 0.36, fill)
+    for dx, dy in ((-0.3, 0.08), (0.28, 0.1), (0, 0.18), (-0.15, -0.12), (0.18, -0.12)):
+        c.ellipse((centre[0] + dx * s * k, centre[1] + dy * s), s * 0.24, s * 0.2, fill)
+    w = max(c.h * 0.01, 1.6)
+    rng = np.random.default_rng(2)
+    for _ in range(7):
+        x0, y0 = rng.uniform(-0.4, 0.3), rng.uniform(-0.2, 0.25)
+        pts = [(x0 + 0.05 * i, y0 + 0.05 * math.sin(i * 1.7 + x0 * 9)) for i in range(4)]
+        c.stroke(_pts(c, centre, s, pts), w, ink_col)
+    c.stroke(_pts(c, centre, s, [(0, -0.3), (0.02, -0.42), (0.08, -0.5)]), w * 1.5, ink_col)
+
+
 # --- photo for the polaroid: a cartoon golden retriever ----------------------------------------------
 
 def dog_photo(w, h):
@@ -236,3 +251,76 @@ def dog_photo(w, h):
     shade = 1 - 0.18 * np.clip((c.x / w - 0.5) ** 2 * 4 + (c.y / h - 0.5) ** 2 * 4 - 0.5, 0, 1)
     c.multiply(shade)
     return c
+
+
+# --- text: Blender lays out the glyphs, numpy rasterises the triangles -------------------------------
+
+FONT = lib.ROOT + '/cockpit/art/notes/fonts/PatrickHand-Regular.ttf'
+_font = None
+
+
+def _glyph_tris(body, align):
+    import bmesh
+    import bpy
+    global _font
+    if _font is None:
+        _font = bpy.data.fonts.load(FONT)
+    cu = bpy.data.curves.new('tmp_text', 'FONT')
+    cu.body, cu.font, cu.align_x, cu.size = body, _font, align.upper(), 1.0
+    cu.space_line = 1.0
+    ob = bpy.data.objects.new('tmp_text', cu)
+    bpy.context.scene.collection.objects.link(ob)
+    me = bpy.data.meshes.new_from_object(ob.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.triangulate(bm, faces=bm.faces[:])
+    tris = np.array([[(v.co.x, v.co.y) for v in f.verts] for f in bm.faces]) if bm.faces else np.zeros((0, 3, 2))
+    bm.free()
+    bpy.data.objects.remove(ob)
+    bpy.data.curves.remove(cu)
+    bpy.data.meshes.remove(me)
+    return tris
+
+
+def text(c, body, centre, height, color, align='center', opacity=1.0, rot=0.0, weight=0):
+    """Paint `body` with its glyph em = `height` (fraction of canvas height), block centred on `centre`.
+    `weight` thickens strokes by that many pixels (marker lettering)."""
+    tris = _glyph_tris(body, align)
+    if not len(tris):
+        return
+    lo, hi = tris.reshape(-1, 2).min(0), tris.reshape(-1, 2).max(0)
+    mid = (lo + hi) / 2
+    ss = 3                                     # supersampling
+    k = height * c.h * ss
+    ca, sa = math.cos(rot), math.sin(rot)
+    cx, cy = c.px(*centre)
+    p = (tris - mid) * k
+    p = np.stack([p[..., 0] * ca - p[..., 1] * sa, p[..., 0] * sa + p[..., 1] * ca], -1)
+    p[..., 0] += cx * ss
+    p[..., 1] = cy * ss - p[..., 1]
+    mask = np.zeros((c.h * ss, c.w * ss))
+    for t in p:
+        x0, y0 = np.floor(t.min(0)).astype(int)
+        x1, y1 = np.ceil(t.max(0)).astype(int) + 1
+        x0, y0, x1, y1 = max(x0, 0), max(y0, 0), min(x1, c.w * ss), min(y1, c.h * ss)
+        if x1 <= x0 or y1 <= y0:
+            continue
+        X, Y = np.meshgrid(np.arange(x0, x1) + 0.5, np.arange(y0, y1) + 0.5)
+        (ax, ay), (bx, by), (qx, qy) = t
+        d = (bx - ax) * (qy - ay) - (by - ay) * (qx - ax)
+        if abs(d) < 1e-12:
+            continue
+        w0 = ((bx - X) * (qy - Y) - (by - Y) * (qx - X)) / d
+        w1 = ((qx - X) * (ay - Y) - (qy - Y) * (ax - X)) / d
+        inside = (w0 >= 0) & (w1 >= 0) & (w0 + w1 <= 1)
+        mask[y0:y1, x0:x1] = np.maximum(mask[y0:y1, x0:x1], inside)
+    if weight:
+        r = int(round(weight * ss))
+        grown = mask.copy()
+        for dy in range(-r, r + 1):
+            for dx in range(-r, r + 1):
+                if dx * dx + dy * dy <= r * r:
+                    grown = np.maximum(grown, np.roll(np.roll(mask, dy, 0), dx, 1))
+        mask = grown
+    mask = mask.reshape(c.h, ss, c.w, ss).mean((1, 3))
+    c.paint(mask, color, opacity)

@@ -94,9 +94,9 @@ def sheet(name, f, w, h, material, parent, thick=0.0006, curl=0.0, corner=0.0, n
 def card(name, outline, thick, f, size, material, parent):
     """Thick card cut to `outline` (local metres); front face UV-mapped over a size[0] x size[1] box."""
     bm = lib.slab_bm(outline, thick, thick * 0.3, bevel_res=1)
-    uv = bm.loops.layers.uv.new('UVMap')
+    uv = bm.loops.layers.uv.active or bm.loops.layers.uv.new('UVMap')     # curves bring their own layer
     for fc in bm.faces:
-        front = fc.normal.z > 0.7
+        front = all(v.co.z > thick * 0.97 for v in fc.verts)
         for loop in fc.loops:
             co = loop.vert.co
             loop[uv].uv = (co.x / size[0] + 0.5, co.y / size[1] + 0.5) if front else (0.004, 0.004)
