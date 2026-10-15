@@ -458,17 +458,19 @@ def _walk(t, start, n0, d0, length, step=0.0015, hug=0.0012):
     edges and into concave corners and never jumps a gap. With no surface in reach the end hangs on straight.
     Returns [(s, point, normal, tangent)]."""
     from mathutils import Matrix
-    p, nrm, d = start, n0, d0
+    p, nrm, d = start + n0 * 0.0002, n0, d0              # start just above the surface: 'outside' must be known
     out = [(0.0, p, nrm, d)]
     s_ = 0.0
     angles = [0]
-    for k in range(1, 13):
+    for k in range(1, 7):
         angles += [12 * k, -12 * k]                        # + folds over (toward -normal), - climbs a corner
     while s_ < length:
         axis = d.cross(-nrm).normalized()
         found = None
         for ang in angles:
             dd = Matrix.Rotation(math.radians(ang), 3, axis) @ d
+            if dd.dot(d0) < -0.1:                          # tape can't fold back on itself
+                continue
             q = p + dd * step
             loc, m, _, dist = t.find_nearest(q, hug * 3)
             if loc is None:

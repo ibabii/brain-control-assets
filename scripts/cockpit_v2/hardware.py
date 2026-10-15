@@ -215,8 +215,7 @@ def console(root):
                     holes=[slot_hole])
     rim = _round_poly([(x * 1.0, y) for x, y in [(-0.665, -0.155), (0.645, -0.155), (0.725, -0.02), (0.685, 0.195), (-0.685, 0.195)]], 0.04)
     lib.slab('ConsoleRim', rim, 0.07, 0.02, M('housing', 0.55), top.child((0, 0, -0.085)), group)
-    for x, y, a in ((-0.49, -0.1, 15), (-0.2, 0.105, 25), (-0.45, 0.13, 8)):   # on the flat top
-        tape(group, top, (x, y, 0.001), (0.07, 0.035), a)
+    # No loose tape on the top (user 2026-10-14: only tape that holds something).
     # Front skirt down to the tray.
     lib.box('ConsoleSkirt', (1.30, 0.12, 0.05), M('beige', 0.62), CONSOLE.child((0, -0.09, 0.111)), group, bevel=0.012)   # 4 mm behind the slab front (was flush: z-fight)
     # Key and SPACE housings ship with the control art (cockpit/art/controls/).

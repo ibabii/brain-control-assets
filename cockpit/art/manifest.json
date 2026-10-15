@@ -10,8 +10,8 @@
     "note_defaults": "cockpit/art/notes/notes_text.json",
     "font": "cockpit/art/notes/fonts/PatrickHand-Regular.ttf (SIL OFL 1.1, OFL.txt alongside)"
   },
-  "model_sha256": "6408ce2c6f4a08f0635e6de9b7a94fbe8f57222869056f4997e9ada2023497ac",
-  "triangles": 310340,
+  "model_sha256": "ca439a2ac4038e4113a2620c7647869e9d7a45ce365bf28e864c5ad895a0ac09",
+  "triangles": 308324,
   "source": "source/cockpit/cockpit_v2.blend",
   "rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build.py",
   "gameplay_hooks": {

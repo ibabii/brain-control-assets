@@ -388,5 +388,5 @@ def build(root, shelf_top):
     trinkets(dressing, shelf_top, books_top)
     edge_dressing(dressing)
     desk_props(dressing)
-    frame_tape(dressing)
+    # frame_tape(dressing): removed (user 2026-10-14: no tape that holds nothing).
     return bulbs
