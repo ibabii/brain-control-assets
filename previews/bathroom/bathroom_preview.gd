@@ -2,7 +2,7 @@ extends Node3D
 ## Bathroom look-dev with the game's greybox lights: room + props at layout.json, a stand-in mirror (SSR),
 ## optionally the Human at the `human` mark and every hidden effect shown.
 ## godot --path . res://previews/bathroom/bathroom_preview.tscn -- --capture NAME [--size 1200x675]
-##   [--human] [--fx] [--fall --t 3] [--shots "name@eye@look[@fov];..."]   (2-column contact sheet in screenshots/NAME.png)
+##   [--human] [--fx] [--fall --t 3] [--door DEG (Hinge open angle)] [--shots "name@eye@look[@fov];..."]   (2-column contact sheet in screenshots/NAME.png)
 ## Named views: fp (first-person at the sink), reveal (game reveal mark), door, mirror (from the glass back).
 
 const VIEWS := {
@@ -12,6 +12,9 @@ const VIEWS := {
 	'mirror': ['0,1.58,-0.62', '0.3,1.2,2.6', 70.0],
 	'tub': ['-0.35,1.55,2.0', '-1.15,0.5,0.3', 60.0],
 	'toilet': ['0.75,1.5,1.5', '1.2,0.8,-0.45', 60.0],
+	'inmirror': ['0,1.6,-1.53', '0,1.58,2.6', 38.3, 0.88],   # the human eye reflected in the glass: what the mirror shows
+	'hall': ['0.2,1.5,1.2', '1.0,1.1,3.0', 60.0],
+	'gap': ['0.7,0.6,1.7', '1.0,0.0,2.6', 50.0],
 }
 const HIDDEN := ['Glob', 'Splats', 'Stream', 'Puddle', 'Drops']
 
@@ -40,6 +43,14 @@ func _ready() -> void:
 			if id == 'smudge':
 				holder.visible = false
 	_mirror(layout.mirror_glass)
+	var hl := OmniLight3D.new()                        # the game's warm hall light (art ships the lamp mesh only)
+	hl.position = Vector3(layout.hall_light[0], layout.hall_light[1], layout.hall_light[2])
+	hl.light_color = Color(1.0, 0.82, 0.6)
+	hl.light_energy = 1.6
+	hl.omni_range = 3.0
+	add_child(hl)
+	if args.has('--door'):
+		find_child('Hinge', true, false).rotation_degrees.y = float(args[args.find('--door') + 1])
 	if '--human' in args:
 		human = load('res://previews/human/human_A.glb').instantiate()
 		human.position = Vector3(0, 0, 0.2)
@@ -131,6 +142,7 @@ func _view(name: String) -> void:
 	camera.position = _vec(v[0])
 	camera.look_at(_vec(v[1]))
 	camera.fov = v[2]
+	camera.near = v[3] if v.size() > 3 else 0.02           # inmirror: start at the glass
 
 
 func _capture(name: String) -> void:

@@ -35,7 +35,7 @@ TOWEL_BAR = Vector((-0.72, 1.425, -0.655))
 PROPS = {   # id: node position (game), base pivots for the knockables (counter top 0.87)
     'toothpaste': (-0.35, 0.889, -0.4), 'cup': (0.33, 0.87, -0.56), 'soap': (-0.2, 0.87, -0.62),
     'lotion': (0.21, 0.87, -0.64), 'smudge': (0, 1.55, -0.657), 'towel': (-0.72, 1.2, -0.67),
-    'faucet': (0, 0.95, -0.64), 'tub': (-1.15, 0.5, 0.55),
+    'faucet': (0, 0.95, -0.64), 'tub': (-1.15, 0.5, 0.55), 'door': (0.585, 0.0, 2.64),
 }
 
 
@@ -303,50 +303,61 @@ def room(root):
             if b - a > 0.02:
                 tube('%sTrim%d' % (name, k), [f.at((a, TILE_TOP, 0.006)), f.at((b, TILE_TOP, 0.006))], 0.011, trim, shell, res=2)
     door(root)
+    hall(root)
     window(root)
     wall_art(root)
     lamp(shell)
     sockets(shell)
 
 
+DOOR_X = (1.42, 0.58)                      # opening, world x (from the front wall's local DOOR range)
+HINGE = (0.585, 0.0, 2.64)                 # door prop pivot: jamb at x 0.58, room face of the leaf (z 2.64)
+LEAF = (0.83, 2.025, 0.04, 0.015)          # width (+X from the hinge), height, thickness (+Z, toward the hall), floor gap
+HALL = (0.3, 1.7, 2.75, 3.6, 2.5)          # hallway stub behind the door: x0, x1, z0, z1, ceiling
+HALL_LIGHT = (1.0, 2.35, 3.15)             # gameplay's warm OmniLight (art has no lights); lamp mesh above it
+
+
 def door(root):
+    """Static parts of the doorway: casings both sides and the jamb lining. The leaf is the `door` prop."""
     f, w, holes = WALLS['Front']
     x0, x1, h = DOOR
     p = lib.empty('Door', f.at(((x0 + x1) / 2, 0, 0)), root)
     casing = M('Casing', 'porcelain', 'painted')
-    leaf_m = M('DoorLeaf', 'cream', 'painted')
     ring = lib.rrect(x1 - x0 + 0.16, h + 0.08, 0.02, 2)
     ring = [(x + (x0 + x1) / 2, y + (h + 0.08) / 2) for x, y in ring]
     hole = [(x + (x0 + x1) / 2, y + h / 2 - 0.02) for x, y in lib.rrect(x1 - x0, h + 0.04, 0.005, 1)][::-1]
     lib.slab('DoorCasing', ring, 0.022, 0.008, casing, f.child((0, 0, 0.0)), p, holes=[hole])
-    lf = f.child(((x0 + x1) / 2, 0, -0.03))
-    lib.slab('DoorLeaf', [(x, y + h / 2) for x, y in lib.rrect(x1 - x0 - 0.01, h - 0.01, 0.01, 2)], 0.04, 0.008,
-             leaf_m, lf, p)
-    for k, (cy, ph) in enumerate(((1.45, 0.72), (0.55, 0.78))):      # two shaker panels
-        pw = x1 - x0 - 0.2
-        outer = lib.rrect(pw, ph, 0.012, 2)
-        inner = lib.rrect(pw - 0.07, ph - 0.07, 0.008, 2)[::-1]
-        lib.slab('DoorPanel%d' % k, [(x, y + cy) for x, y in outer], 0.008, 0.003, leaf_m, lf.child((0, 0, 0.04)), p,
-                 holes=[[(x, y + cy) for x, y in inner]])
-    knob = M('Honey', 'honey', 'painted')
-    kf = lf.child((-(x1 - x0) / 2 + 0.08, 1.0, 0.04))
-    lib.sphere('DoorRose', 0.03, knob, kf.child((0, 0, 0.002)), p, scale=(1, 1, 0.25), seg=20, rings=8)
-    lib.sphere('DoorKnob', 0.027, knob, kf.child((0, 0, 0.05)), p, scale=(1, 1, 0.8), seg=20, rings=10)
-    tube('DoorKnobNeck', [kf.at((0, 0, 0.004)), kf.at((0, 0, 0.03))], 0.009, knob, p)
-    # Robe hooks with a hanging peach towel (dressing seen in the mirror).
-    for i, dx in enumerate((-0.1, 0.1)):
-        hf = lf.child((dx, 1.72, 0.04))
-        tube('Hook%d' % i, [hf.at((0, 0, 0)), hf.at((0, 0, 0.04)), hf.at((0, 0.03, 0.055))], 0.008, knob, p)
-    # Bath towel hanging from both hooks (seen in the mirror behind the Human).
-    peach = tex_mat('TowelPeach', PAL['peach'], terry_tex('TerryPeach', PAL['peach']), 0.95)
-    stripe = tex_mat('TowelStripe', '#F6D9CB', terry_tex('TerryStripe', '#F6D9CB', seed=9), 0.95)
-    face = f.at((0, 0, 0.01)).z                                       # door face (world z), towel hangs in front
-    prof = [(1.765, face - 0.03), (1.74, face - 0.022)] + [(1.72 - 0.6 * k / 10, face - 0.02 - 0.006 * math.sin(k / 10 * math.pi))
-                                                           for k in range(11)]
-    cx_ = f.at(((x0 + x1) / 2, 0, 0)).x
-    t = ribbon('DoorTowel', prof, cx_ - 0.17, cx_ + 0.17, 0.016, [peach, stripe], p, nx=10, wave=0.004,
-               split=lambda i: 1 if i in (9, 10) else 0)
-    _box_uv(t, 0.2)
+    hf = Frame((XR, 0, ZF + 0.1))                                     # hall side of the wall, facing +Z
+    lib.slab('DoorCasingHall', [(XR - x - XR, y) for x, y in ring][::-1], 0.022, 0.008, casing, hf, p,
+             holes=[[(XR - x - XR, y) for x, y in hole][::-1]])
+    # Jamb lining through the 10 cm wall (seen when the door is open).
+    lo, hi = DOOR_X[1], DOOR_X[0]
+    quad_grid('JambL', Frame((lo, 0, ZF + 0.1), (0, 90, 0)), 0, 0.1, 0, h, casing, p)
+    quad_grid('JambR', Frame((hi, 0, ZF), (0, -90, 0)), 0, 0.1, 0, h, casing, p)
+    quad_grid('JambHead', Frame((lo, h, ZF), (90, 0, 0)), 0, hi - lo, 0, 0.1, casing, p)
+
+
+def hall(root):
+    """Short hallway stub behind the door: warm walls, a lamp and a coat hook, so the open doorway reads."""
+    x0, x1, z0, z1, hc = HALL
+    g = lib.empty('Hall', ((x0 + x1) / 2, 0, (z0 + z1) / 2), root)
+    paint = M('HallPaint', 'peach', 'painted')
+    floor = M('HallFloor', 'honey', 'painted')
+    lo, hi, h = DOOR_X[1], DOOR_X[0], DOOR[2]
+    quad_grid('HallFloor', Frame((x0, 0, z1), (-90, 0, 0)), 0, x1 - x0, 0, z1 - ZF, floor, g)
+    quad_grid('HallCeiling', Frame((x0, hc, ZF), (90, 0, 0)), 0, x1 - x0, 0, z1 - ZF, paint, g)
+    quad_grid('HallEnd', Frame((x1, 0, z1), (0, 180, 0)), 0, x1 - x0, 0, hc, paint, g)
+    quad_grid('HallLeft', Frame((x0, 0, z1), (0, 90, 0)), 0, z1 - z0, 0, hc, paint, g)
+    quad_grid('HallRight', Frame((x1, 0, z0), (0, -90, 0)), 0, z1 - z0, 0, hc, paint, g)
+    wf = Frame((x0, 0, z0))                                           # back of the bathroom wall, facing the hall
+    for i, (a, b, y0, y1) in enumerate([(0, lo - x0, 0, hc), (hi - x0, x1 - x0, 0, hc), (lo - x0, hi - x0, h, hc)]):
+        quad_grid('HallWall%d' % i, wf, a, b, y0, y1, paint, g)
+    lamp_m = lib.mat('HallLamp', '#FFE7C2', 0.4, emit='#FFD49A', strength=3.0)
+    lib.sphere('HallLamp', 0.11, lamp_m, Frame((HALL_LIGHT[0], hc, HALL_LIGHT[2])), g, scale=(1, 1, 0.45), seg=24, rings=10)
+    # Coat hook with a jacket shape on the end wall (a silhouette in the doorway).
+    hook = M('Honey', 'honey', 'painted')
+    tube('HallHook', [Vector((1.15, 1.75, z1)), Vector((1.15, 1.75, z1 - 0.05)), Vector((1.15, 1.79, z1 - 0.065))], 0.01, hook, g)
+    rbox('HallCoat', (0.38, 0.7, 0.06), M('Teal', 'teal'), Frame((1.15, 1.38, z1 - 0.045)), g, 0.03)
 
 
 def _box_uv(o, size):
@@ -934,7 +945,67 @@ def p_towel():
     return r, {'lying_half_thickness': 0.015, 'bar': list(b), 'hangs_from': 'TowelBar (room)'}
 
 
-PROP_BUILDERS = [p_cup, p_lotion, p_soap, p_toothpaste, p_smudge, p_faucet, p_tub, p_towel]
+def p_door():
+    """Hinged door. Root = hinge (static). Gameplay rotates `Hinge` about +Y: 0 = shut, + opens into the room.
+    `Gap` (hall light under the door) and `Shadow` (feet in it, slide along X) stay put under the root."""
+    r = prop_root('door')
+    w, h, t, gap = LEAF
+    hx, hy, hz = HINGE
+    hg = lib.empty('Hinge', HINGE, r)
+    leaf_m = M('DoorLeaf', 'cream', 'painted')
+    lf = Frame((hx + w / 2, 0, hz))
+    lib.slab('Panel', [(x, y + gap + h / 2) for x, y in lib.rrect(w, h, 0.01, 2)], t, 0.008, leaf_m, lf, hg)
+    for side, z, flip in (('Room', 0.0, True), ('Hall', t, False)):              # shaker panels on both faces
+        for k, (cy, ph) in enumerate(((1.45, 0.72), (0.55, 0.78))):
+            pw = w - 0.19
+            outer = lib.rrect(pw, ph, 0.012, 2)
+            inner = lib.rrect(pw - 0.07, ph - 0.07, 0.008, 2)[::-1]
+            pf = lf.child((0, 0, z - 0.008 if flip else z))
+            lib.slab('Inset%s%d' % (side, k), [(x, y + cy) for x, y in outer], 0.008, 0.003, leaf_m, pf, hg,
+                     holes=[[(x, y + cy) for x, y in inner]])
+    knob = M('Honey', 'honey', 'painted')
+    handle = lib.empty('Handle', (hx + w - 0.08, 1.0, hz + t / 2), hg)
+    for side, z0, d in (('Room', hz, -1), ('Hall', hz + t, 1)):
+        c = Vector((hx + w - 0.08, 1.0, z0))
+        lib.sphere('Rose' + side, 0.03, knob, Frame(c + Vector((0, 0, d * 0.002))), handle, scale=(1, 1, 0.25), seg=20, rings=8)
+        lib.sphere('Knob' + side, 0.027, knob, Frame(c + Vector((0, 0, d * 0.05))), handle, scale=(1, 1, 0.8), seg=20, rings=10)
+        tube('Neck' + side, [c + Vector((0, 0, d * 0.004)), c + Vector((0, 0, d * 0.03))], 0.009, knob, handle)
+    # Robe hooks with the peach bath towel (seen in the mirror behind the Human); they swing with the door.
+    cx_ = hx + w / 2
+    for i, dx in enumerate((-0.1, 0.1)):
+        b = Vector((cx_ + dx, 1.72, hz))
+        tube('Hook%d' % i, [b, b + Vector((0, 0, -0.04)), b + Vector((0, 0.03, -0.055))], 0.008, knob, hg)
+    peach = tex_mat('TowelPeach', PAL['peach'], terry_tex('TerryPeach', PAL['peach']), 0.95)
+    stripe = tex_mat('TowelStripe', '#F6D9CB', terry_tex('TerryStripe', '#F6D9CB', seed=9), 0.95)
+    face = hz
+    prof = [(1.765, face - 0.03), (1.74, face - 0.022)] + [(1.72 - 0.6 * k / 10, face - 0.02 - 0.006 * math.sin(k / 10 * math.pi))
+                                                           for k in range(11)]
+    tw = ribbon('Towel', prof, cx_ - 0.17, cx_ + 0.17, 0.016, [peach, stripe], hg, nx=10, wave=0.004,
+                split=lambda i: 1 if i in (9, 10) else 0)
+    _box_uv(tw, 0.2)
+    # Hall light leaking under the door: warm emissive strip on the floor, fading into the room.
+    a = np.linspace(0, 1, 64)[:, None] ** 1.6 * 0.85                # row 0 = top = v 1 (into the room): faded
+    img = lib.image_from_array('DoorGapFade', np.dstack([np.ones((64, 8))] * 3 + [np.tile(a, (1, 8))]))
+    gm = lib.mat('DoorGap', '#FFE2B0', 0.9, emit='#FFC27A', strength=2.4, image=img)
+    nt = gm.node_tree
+    bsdf = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    nt.links.new(next(n for n in nt.nodes if n.type == 'TEX_IMAGE').outputs['Alpha'], bsdf.inputs['Alpha'])
+    gm.surface_render_method = 'BLENDED'
+    quad_grid('Gap', Frame((hx + 0.01, 0.0015, hz + 0.004), (-90, 0, 0)), 0, w - 0.02, 0, 0.09, gm, r)
+    # Shadow: two feet just past the door, toes toward the room (dark, soft).
+    sm = lib.mat('DoorShadow', '#2A2220', 1.0)
+    bsdf = next(n for n in sm.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    bsdf.inputs['Alpha'].default_value = 0.6
+    sm.surface_render_method = 'BLENDED'
+    sh = lib.empty('Shadow', (cx_, 0.0025, hz - 0.012), r)
+    for i, dx in enumerate((-0.06, 0.06)):
+        foot = [(x * 0.035, y * 0.05) for x, y in lib.circle(1.0, 20)]         # long ovals coming from under the door
+        lib.slab('Foot%d' % i, foot, 0.0005, 0.0002, sm, Frame((cx_ + dx, 0.0025, hz - 0.012), (-90, 0, 0)), sh)
+    return r, {'hinge': list(HINGE), 'leaf': {'width': w, 'height': h, 'thickness': t, 'floor_gap': gap},
+               'rotate': 'Hinge about +Y; 0 shut, +100 open into the room', 'hall_light': list(HALL_LIGHT)}
+
+
+PROP_BUILDERS = [p_cup, p_lotion, p_soap, p_toothpaste, p_smudge, p_faucet, p_tub, p_towel, p_door]
 
 
 # --- export ---------------------------------------------------------------------------------------------------
@@ -971,7 +1042,11 @@ def colliders():
     tub_x, tub_z = -1.15, 0.55
     side = (0.8 - 0.62) / 2
     boxes = [('Floor', (0, -0.05, cz), (w, 0.1, d)), ('Ceiling', (0, H + 0.05, cz), (w, 0.1, d)),
-             ('WallBack', (0, H / 2, ZB - 0.05), (w, H, 0.1)), ('WallFront', (0, H / 2, ZF + 0.05), (w, H, 0.1)),
+             ('WallBack', (0, H / 2, ZB - 0.05), (w, H, 0.1)),
+             # Front wall split around the doorway (x 0.58..1.42, up to DOOR height).
+             ('WallFrontL', ((XL + DOOR_X[1]) / 2, H / 2, ZF + 0.05), (DOOR_X[1] - XL, H, 0.1)),
+             ('WallFrontR', ((DOOR_X[0] + XR) / 2, H / 2, ZF + 0.05), (XR - DOOR_X[0], H, 0.1)),
+             ('WallFrontTop', (sum(DOOR_X) / 2, (DOOR[2] + H) / 2, ZF + 0.05), (DOOR_X[0] - DOOR_X[1], H - DOOR[2], 0.1)),
              ('WallLeft', (XL - 0.05, H / 2, cz), (0.1, H, d)), ('WallRight', (XR + 0.05, H / 2, cz), (0.1, H, d)),
              ('Vanity', (0, 0.435, -0.45), (0.96, 0.87, 0.5)),
              ('TubFloor', (tub_x, 0.06, tub_z), (0.8, 0.12, 1.7)),
@@ -1011,7 +1086,7 @@ def main():
         info.update(node_position=list(PROPS[r.name]), tris=tris(r), file='props/%s.glb' % r.name)
         manifest['props'][r.name] = info
     layout = {'props': {k: list(v) for k, v in PROPS.items()}, 'towel_bar': list(TOWEL_BAR), 'colliders': colliders(),
-              'lamp': [0, H, 0.4], 'mirror_glass': {'center': [0, 1.58, -0.665], 'size': [0.74, 0.6]}}
+              'lamp': [0, H, 0.4], 'hall_light': list(HALL_LIGHT), 'mirror_glass': {'center': [0, 1.58, -0.665], 'size': [0.74, 0.6]}}
     os.makedirs(os.path.join(lib.ROOT, 'source', 'bathroom'), exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(lib.ROOT, 'source', 'bathroom', 'bathroom.blend'))
     export(root, os.path.join(out, 'bathroom_room.glb'), False)
@@ -1020,6 +1095,10 @@ def main():
         r = bpy.data.objects[pid]
         export(r, os.path.join(out, 'props', pid + '.glb'), True)
         scene_file(os.path.join(out, 'props', pid + '.tscn'), 'props/%s.glb' % pid, pid.title() + 'Art')
+        if pid == 'door':                     # both see-through: the feet must draw after the glowing Gap
+            with open(os.path.join(out, 'props', 'door.tscn'), 'a') as f:
+                for i in range(2):
+                    f.write('\n[node name="Foot%d" parent="Shadow" index="%d"]\nsorting_offset = 1.0\n' % (i, i))
     with open(os.path.join(out, 'layout.json'), 'w') as f:
         json.dump(layout, f, indent=1)
     with open(os.path.join(out, 'manifest.json'), 'w') as f:

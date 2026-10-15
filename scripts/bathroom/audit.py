@@ -12,9 +12,9 @@ import bpy
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'cockpit_v2'))
 from audit import tree, depth_inside, coplanar, behind, TOL, ZAREA  # noqa: E402
 
-PROPS = ('toothpaste', 'cup', 'soap', 'lotion', 'smudge', 'towel', 'faucet', 'tub')
+PROPS = ('toothpaste', 'cup', 'soap', 'lotion', 'smudge', 'towel', 'faucet', 'tub', 'door')
 # Designed joins: (assembly, assembly) that are meant to sit into each other.
-ALLOW = {('Door', 'Shell'), ('Window', 'Shell'), ('faucet', 'Vanity'), ('Tub', 'tub'), ('towel', 'TowelBar')}
+ALLOW = {('Door', 'Shell'), ('Hall', 'Shell'), ('Hall', 'Door'), ('Window', 'Shell'), ('faucet', 'Vanity'), ('Tub', 'tub'), ('towel', 'TowelBar')}
 OPEN = ('Shell',)                                    # single-sided surfaces facing the room
 SHELL_TOL = 0.03     # behind a wall or floor is invisible from inside: only gross misplacement counts
 SKIP = ('Ring', 'Glass', 'Reveal', 'Hook')           # thin bits meant to hang or sit in openings
