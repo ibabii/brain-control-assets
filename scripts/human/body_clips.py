@@ -235,6 +235,30 @@ def brush_loop(rig):
     return keys
 
 
+def sit_floor():
+    """Plops down on the floor from standing: squat, bump, legs shoot out, then sits leaning back on the hands
+    (hold the last frame). The Hips end 0.2 m behind the start (json end)."""
+    hands_back = {'LeftArm': ((-0.24, 0.045, 0.5), (-0.6, 0.4, 0.2)), 'RightArm': ((0.24, 0.045, 0.5), (0.6, 0.4, 0.2))}
+    legs = {}
+    for s in (-1, 1):
+        n = 'Left' if s < 0 else 'Right'
+        legs[n + 'Leg'] = ((0.14 * s, 0.115, -0.5), (0.14 * s, 0.7, -0.2))
+    toes_up = {'LeftFoot': (15, 0, 0), 'RightFoot': (15, 0, 0)}
+    return [
+        (0, {'hips': ((0, 0.83, 0), (-2, 0, 0)), 'ik': stand_feet(), 'world': FLAT, 'rot': arms(3, 6, 3, 6, 8)}),
+        (8, {'hips': ((0, 0.5, 0.12), (-25, 0, 0)), 'ik': stand_feet(), 'world': FLAT,
+             'rot': merge(arms(45, 20, 45, 20, 20), {'Head': (10, 0, 0)})}),
+        (13, {'hips': ((0, 0.16, 0.2), (15, 0, 0)), 'ik': legs, 'world': toes_up, 'ground': True,
+              'rot': merge(arms(60, 45, 60, 45, 10), {'Head': (-15, 0, 0), 'Spine': (-5, 0, 0)})}),
+        (17, {'hips': ((0, 0.16, 0.2), (8, 0, 0)), 'ik': legs, 'world': toes_up, 'ground': True, 'lift': 0.03,
+              'rot': merge(arms(30, 40, 30, 40, 10), {'Head': (5, 0, 0)})}),
+        (24, {'hips': ((0, 0.16, 0.2), (30, 0, 0)), 'ik': merge(legs, hands_back), 'world': merge(palms(1), toes_up),
+              'ground': True, 'rot': {'Spine': (-10, 0, 0), 'Head': (-15, 0, 0)}}),
+        (40, {'hips': ((0, 0.16, 0.2), (28, 0, 0)), 'ik': merge(legs, hands_back), 'world': merge(palms(1), toes_up),
+              'ground': True, 'rot': {'Spine': (-10, 0, 0), 'Head': (-12, 0, 0)}}),
+    ]
+
+
 WALK = {'stride': 1.0, 'cycle': 1.0, 'speed': 1.0}       # m per full cycle (two steps), s, m/s
 
 
@@ -318,7 +342,7 @@ def step():
 
 
 FULL_EXTRA = {'stumble': stumble, 'climb_out_tub': climb_out_tub, 'walk_loop': walk_loop, 'turn_L': turn_L,
-              'turn_R': turn_R, 'step': step}
+              'turn_R': turn_R, 'step': step, 'sit_floor': sit_floor}
 UPPER = {'brush_loop': (brush_loop, 1)}
 LOOPS = ['brush_loop', 'walk_loop']
 

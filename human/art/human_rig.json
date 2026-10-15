@@ -1360,6 +1360,52 @@
    },
    "length": 1.0
   },
+  "sit_floor": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -2.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.1604,
+     0.2
+    ],
+    "pitch": 28.0,
+    "yaw": 0.0
+   },
+   "length": 1.333
+  },
   "brush_loop": {
    "layer": "upper",
    "bones": [
