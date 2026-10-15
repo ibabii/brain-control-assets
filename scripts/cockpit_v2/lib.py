@@ -634,15 +634,31 @@ def glb_signature(path, decimals=5):
             arr = np.round(arr.astype(np.float64), decimals)
         return hashlib.sha1(arr.tobytes()).hexdigest()
 
-    def tris_sig(i):                     # index width and triangle order don't matter
+    def rows(i):
         a = js['accessors'][i]
         v = views[a['bufferView']]
-        t = np.frombuffer(binary, dtype[a['componentType']], a['count'], v.get('byteOffset', 0) + a.get('byteOffset', 0))
-        t = t.astype(np.int64).reshape(-1, 3)
-        r = np.argmin(t, axis=1)
-        t = np.stack([np.roll(row, -k) for row, k in zip(t, r)]) if len(t) else t
-        t = t[np.lexsort(t.T[::-1])] if len(t) else t
-        return hashlib.sha1(t.tobytes()).hexdigest()
+        arr = np.frombuffer(binary, dtype[a['componentType']], a['count'] * comps[a['type']],
+                            v.get('byteOffset', 0) + a.get('byteOffset', 0)).reshape(a['count'], comps[a['type']])
+        return np.round(arr.astype(np.float64), decimals)
+
+    def prim_sig(p):                     # vertex order, index width and triangle order don't matter
+        cols = [rows(v) for _, v in sorted(p['attributes'].items())]
+        cols += [rows(v) for t in p.get('targets', []) for _, v in sorted(t.items())]
+        vert = np.concatenate(cols, axis=1)
+        _, ids = np.unique(vert, axis=0, return_inverse=True)        # canonical id per distinct vertex
+        ids = ids.ravel()
+        if 'indices' in p:
+            a = js['accessors'][p['indices']]
+            v = views[a['bufferView']]
+            t = np.frombuffer(binary, dtype[a['componentType']], a['count'], v.get('byteOffset', 0) + a.get('byteOffset', 0))
+            t = ids[t.astype(np.int64)].reshape(-1, 3)
+        else:
+            t = ids.reshape(-1, 3)
+        if len(t):
+            r = np.argmin(t, axis=1)
+            t = np.stack([np.roll(row, -k) for row, k in zip(t, r)])
+            t = t[np.lexsort(t.T[::-1])]
+        return hashlib.sha1(np.unique(vert, axis=0).tobytes() + t.astype(np.int64).tobytes()).hexdigest()
 
     def rnd(x):
         return [round(v, decimals) for v in x] if isinstance(x, list) else x
@@ -658,9 +674,7 @@ def glb_signature(path, decimals=5):
                     for k, v in m.items()}
         return [resolve_tex(x) for x in m] if isinstance(m, list) else m
     mats = [resolve_tex(m) for m in js.get('materials', [])]
-    meshes = [[{'attr': {k: acc(v) for k, v in sorted(p['attributes'].items())},
-                'idx': tris_sig(p['indices']) if 'indices' in p else None,
-                'mat': mats[p['material']] if 'material' in p else None} for p in m['primitives']]
+    meshes = [[{'geo': prim_sig(p), 'mat': mats[p['material']] if 'material' in p else None} for p in m['primitives']]
               for m in js.get('meshes', [])]
     nodes = js.get('nodes', [])
     sig = {'nodes': [{'name': n.get('name'), 'mesh': meshes[n['mesh']] if 'mesh' in n else None,

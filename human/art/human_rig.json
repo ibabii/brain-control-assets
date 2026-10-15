@@ -1585,6 +1585,14 @@
    ]
   }
  },
+ "first_person": [
+  "HandL",
+  "HandR",
+  "NailsL",
+  "NailsR",
+  "CuffL",
+  "CuffR"
+ ],
  "look": {
   "neck": "Neck",
   "head": "Head",

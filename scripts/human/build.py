@@ -454,6 +454,7 @@ def rig_json(path, hidden):
     s = lambda v: [round(x, 5) for x in v]
     data = {'markers': R.markers(LANDMARKS), 'ragdoll': R.ragdoll(table), 'hidden': hidden, 'loops': R.LOOPS,
             'clips': R.CLIPS,
+            'first_person': ['HandL', 'HandR', 'NailsL', 'NailsR', 'CuffL', 'CuffR'],   # meshes the player's own camera sees
             'look': {'neck': 'Neck', 'head': 'Head', 'share': [0.35, 0.65], 'yaw': 70, 'pitch': [-40, 30],
                      'eyes': ['LookL', 'LookR'], 'eye_yaw': 25, 'eye_pitch': 15},
             'render_layer': 2, 'ragdoll_layer': 2, 'ragdoll_mask': 1,
