@@ -57,6 +57,10 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
   (a 3 cm soap bar came out 19 cm tall). The bathroom's `rbox` caps it.
 - **Audits:** inside/outside (ray parity) only means something against closed meshes. Skip open sheets like puddles,
   lofts and wall quads, or the audit reports false clipping.
+- **Stable handoffs:** every build exports through `lib.export_glb`, which keeps the old file when the content signature
+  (resolved nodes, meshes, materials, animations, floats rounded) is unchanged. Unchanged assets stay byte-identical,
+  so gameplay skips reimporting them. Tape walks vary per build (BVH tie-breaking), so `conform_tapes` caches results
+  in `source/cockpit/tape_cache.json`. Delete an entry, or the file, to re-roll a tape on purpose.
 - **Scene BVH:** build it from triangles (`to_mesh` + `calc_loop_triangles` → `BVHTree.FromPolygons`). Repeated `BMesh.from_mesh` silently drops meshes.
 - **Normals:** mesh normals are not reliably outward. Orient a nearest-point normal by the side you came from.
 - **Godot import:** scene import resamples clips at 30 fps unless `animation/fps=100`. Hit frames and wing beats need 100.

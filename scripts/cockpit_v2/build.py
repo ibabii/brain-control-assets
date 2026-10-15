@@ -30,7 +30,7 @@ lib.conform_tapes()                       # after everything exists: drape tape 
 
 os.makedirs(lib.ROOT + '/cockpit/art', exist_ok=True)
 glb = lib.ROOT + '/cockpit/art/cockpit_art.glb'
-bpy.ops.export_scene.gltf(filepath=glb, export_format='GLB', export_yup=True, export_apply=True,
+lib.export_glb(filepath=glb, export_format='GLB', export_yup=True, export_apply=True,
                           export_cameras=False, export_lights=False, export_extras=True,
                           export_image_format='AUTO')
 for o in bpy.data.objects:
@@ -39,7 +39,7 @@ screens = hardware.preview_screens()
 for o in [screens, *screens.children_recursive]:
     o.select_set(True)
 os.makedirs(lib.ROOT + '/previews/cockpit_v2', exist_ok=True)
-bpy.ops.export_scene.gltf(filepath=lib.ROOT + '/previews/cockpit_v2/preview_screens.glb', export_format='GLB',
+lib.export_glb(filepath=lib.ROOT + '/previews/cockpit_v2/preview_screens.glb', export_format='GLB',
                           export_yup=True, use_selection=True, export_cameras=False, export_lights=False)
 for o in [*screens.children_recursive, screens]:
     bpy.data.objects.remove(o)

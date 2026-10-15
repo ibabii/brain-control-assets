@@ -651,7 +651,7 @@ def export(objs, path):
     for o in bpy.data.objects:
         o.select_set(o in objs)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', export_yup=True, use_selection=True,
+    lib.export_glb(filepath=path, export_format='GLB', export_yup=True, use_selection=True,
                               export_cameras=False, export_lights=False, export_image_format='AUTO')
     for o in objs:
         bpy.data.objects.remove(o, do_unlink=True)
@@ -894,7 +894,7 @@ def export_hand(rig, objs, path):
     for o in bpy.data.objects:
         o.select_set(o in [rig, *objs])
     bpy.context.view_layer.objects.active = rig
-    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', export_yup=True, use_selection=True,
+    lib.export_glb(filepath=path, export_format='GLB', export_yup=True, use_selection=True,
                               export_cameras=False, export_lights=False, export_image_format='AUTO',
                               export_animation_mode='NLA_TRACKS', export_force_sampling=True, export_skins=True)
 

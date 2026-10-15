@@ -523,40 +523,70 @@ def conform_tapes(offset=0.0005):
         tris += [tuple(base + i for i in lt.vertices) for lt in me.loop_triangles]
         e.to_mesh_clear()
     t = BVHTree.FromPolygons(verts, tris)
+    # BVH queries break ties (concave corners, shared edges) differently per build, so a walk can come out a little
+    # different each time. Cache each strip's result by its inputs: rebuilds stay byte-stable for the handoff.
+    import hashlib
+    import json
+    cache_path = os.path.join(ROOT, 'source', 'cockpit', 'tape_cache.json')
+    try:
+        cache = json.load(open(cache_path))
+    except (OSError, ValueError):
+        cache = {}
+    scene_key = '%d/%d/%.4f' % (len(verts), len(tris), sum(v.x + 2 * v.y + 3 * v.z for v in verts))
+    used = {}
     for o in tapes:
-        n = Vector(o['tape_normal']).normalized()
-        ax = Vector(o['tape_axis']).normalized()
-        c = Vector(o['tape_centre'])
-        side = n.cross(ax)
-        rng = np.random.default_rng(o['tape_seed'])
         mw = o.matrix_world
-        me = o.data
-        flat = [mw @ v.co for v in me.vertices]
-        xs = [(p - c).dot(ax) for p in flat]
-        ys = [(p - c).dot(side) for p in flat]
-        hit = t.ray_cast(c + n * 0.012, -n, 0.05)
-        if hit[0] is not None:
-            c0, n0 = hit[0], _orient(hit[1], n)
-        else:
-            loc, m, _, _ = t.find_nearest(c, 0.05)
-            c0, n0 = (loc, _orient(m, n)) if loc is not None else (c, n)
-        a0 = (ax - n0 * ax.dot(n0)).normalized()
-        span = max(abs(x) for x in xs) + 0.002
-        fwd, back = _walk(t, c0, n0, a0, span), _walk(t, c0, n0, -a0, span)
-        inv = mw.inverted()
-        for v, x, y in zip(me.vertices, xs, ys):
-            p, nrm, d = _at(fwd, x) if x >= 0 else _at(back, -x)
-            if x < 0:
-                d = -d
-            q = p + nrm.cross(d).normalized() * y               # across the width
-            loc, m, _, dist = t.find_nearest(q, 0.006)
-            if loc is not None:
-                m = _orient(m, p + nrm * 0.01 - loc)
-                q = loc
-                nrm = m
-            new = q + nrm * (offset + rng.uniform(0, 0.00045))         # tiny wrinkles
-            v.co = inv @ new
-        me.update()
+        key = hashlib.sha1(json.dumps([o.name, scene_key, o['tape_seed'], [round(x, 6) for v in o.data.vertices
+                                                                           for x in mw @ v.co]]).encode()).hexdigest()
+        if key in cache:
+            inv = mw.inverted()
+            for v, w in zip(o.data.vertices, cache[key]):
+                v.co = inv @ Vector(w)
+            o.data.update()
+            used[key] = cache[key]
+            continue
+        _conform_one(o, t, offset)
+        used[key] = [list(mw @ v.co) for v in o.data.vertices]
+    os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+    with open(cache_path, 'w') as f:
+        json.dump(used, f)
+
+
+def _conform_one(o, t, offset):
+    """Roll one strip onto the surfaces in BVH `t` (see conform_tapes)."""
+    n = Vector(o['tape_normal']).normalized()
+    ax = Vector(o['tape_axis']).normalized()
+    c = Vector(o['tape_centre'])
+    side = n.cross(ax)
+    rng = np.random.default_rng(o['tape_seed'])
+    mw = o.matrix_world
+    me = o.data
+    flat = [mw @ v.co for v in me.vertices]
+    xs = [(p - c).dot(ax) for p in flat]
+    ys = [(p - c).dot(side) for p in flat]
+    hit = t.ray_cast(c + n * 0.012, -n, 0.05)
+    if hit[0] is not None:
+        c0, n0 = hit[0], _orient(hit[1], n)
+    else:
+        loc, m, _, _ = t.find_nearest(c, 0.05)
+        c0, n0 = (loc, _orient(m, n)) if loc is not None else (c, n)
+    a0 = (ax - n0 * ax.dot(n0)).normalized()
+    span = max(abs(x) for x in xs) + 0.002
+    fwd, back = _walk(t, c0, n0, a0, span), _walk(t, c0, n0, -a0, span)
+    inv = mw.inverted()
+    for v, x, y in zip(me.vertices, xs, ys):
+        p, nrm, d = _at(fwd, x) if x >= 0 else _at(back, -x)
+        if x < 0:
+            d = -d
+        q = p + nrm.cross(d).normalized() * y               # across the width
+        loc, m, _, dist = t.find_nearest(q, 0.006)
+        if loc is not None:
+            m = _orient(m, p + nrm * 0.01 - loc)
+            q = loc
+            nrm = m
+        new = q + nrm * (offset + rng.uniform(0, 0.00045))         # tiny wrinkles
+        v.co = inv @ new
+    me.update()
 
 
 # --- camera-projected print ---------------------------------------------------------------------
@@ -568,3 +598,96 @@ def count_tris():
             o.data.calc_loop_triangles()
             t += len(o.data.loop_triangles)
     return t
+
+
+# --- stable export ------------------------------------------------------------------------------
+
+def glb_signature(path, decimals=5):
+    """Content hash of a GLB, independent of how the exporter lays out or shares buffers: nodes, meshes, materials,
+    images, skins and animations with every reference resolved to its data (floats rounded)."""
+    import hashlib
+    import json
+    import struct
+    with open(path, 'rb') as f:
+        data = f.read()
+    off, js, binary = 12, None, b''
+    while off < len(data):
+        n, kind = struct.unpack_from('<II', data, off)
+        chunk = data[off + 8:off + 8 + n]
+        if kind == 0x4E4F534A:
+            js = json.loads(chunk)
+        else:
+            binary = chunk
+        off += 8 + n
+    views = js.get('bufferViews', [])
+    dtype = {5120: np.int8, 5121: np.uint8, 5122: np.int16, 5123: np.uint16, 5125: np.uint32, 5126: np.float32}
+    comps = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4, 'MAT2': 4, 'MAT3': 9, 'MAT4': 16}
+
+    def acc(i):
+        a = js['accessors'][i]
+        if 'bufferView' not in a:
+            return 'empty%d' % a['count']
+        v = views[a['bufferView']]
+        arr = np.frombuffer(binary, dtype[a['componentType']], a['count'] * comps[a['type']],
+                            v.get('byteOffset', 0) + a.get('byteOffset', 0))
+        if a['componentType'] == 5126:
+            arr = np.round(arr.astype(np.float64), decimals)
+        return hashlib.sha1(arr.tobytes()).hexdigest()
+
+    def tris_sig(i):                     # index width and triangle order don't matter
+        a = js['accessors'][i]
+        v = views[a['bufferView']]
+        t = np.frombuffer(binary, dtype[a['componentType']], a['count'], v.get('byteOffset', 0) + a.get('byteOffset', 0))
+        t = t.astype(np.int64).reshape(-1, 3)
+        r = np.argmin(t, axis=1)
+        t = np.stack([np.roll(row, -k) for row, k in zip(t, r)]) if len(t) else t
+        t = t[np.lexsort(t.T[::-1])] if len(t) else t
+        return hashlib.sha1(t.tobytes()).hexdigest()
+
+    def rnd(x):
+        return [round(v, decimals) for v in x] if isinstance(x, list) else x
+
+    def image(i):
+        im = js['images'][i]
+        v = views[im['bufferView']] if 'bufferView' in im else None
+        return hashlib.sha1(binary[v.get('byteOffset', 0):v.get('byteOffset', 0) + v['byteLength']]).hexdigest() if v else im.get('uri')
+
+    def resolve_tex(m):
+        if isinstance(m, dict):
+            return {k: (image(js['textures'][v]['source']) if k == 'index' and isinstance(v, int) else resolve_tex(v))
+                    for k, v in m.items()}
+        return [resolve_tex(x) for x in m] if isinstance(m, list) else m
+    mats = [resolve_tex(m) for m in js.get('materials', [])]
+    meshes = [[{'attr': {k: acc(v) for k, v in sorted(p['attributes'].items())},
+                'idx': tris_sig(p['indices']) if 'indices' in p else None,
+                'mat': mats[p['material']] if 'material' in p else None} for p in m['primitives']]
+              for m in js.get('meshes', [])]
+    nodes = js.get('nodes', [])
+    sig = {'nodes': [{'name': n.get('name'), 'mesh': meshes[n['mesh']] if 'mesh' in n else None,
+                      'children': sorted(nodes[c].get('name', '') for c in n.get('children', [])),
+                      **{k: rnd(n[k]) for k in ('translation', 'rotation', 'scale', 'matrix') if k in n},
+                      'extras': n.get('extras')} for n in nodes],
+           'skins': [{'joints': [nodes[j].get('name') for j in s_['joints']],
+                      'ibm': acc(s_['inverseBindMatrices']) if 'inverseBindMatrices' in s_ else None}
+                     for s_ in js.get('skins', [])],
+           'anims': sorted(json.dumps({'name': a.get('name'), 'ch': sorted(
+               json.dumps([nodes[c['target']['node']].get('name'), c['target']['path'],
+                           acc(a['samplers'][c['sampler']]['input']), acc(a['samplers'][c['sampler']]['output']),
+                           a['samplers'][c['sampler']].get('interpolation')]) for c in a['channels'])})
+               for a in js.get('animations', []))}
+    return hashlib.sha256(json.dumps(sig, sort_keys=True).encode()).hexdigest()
+
+
+def export_glb(filepath, **kw):
+    """bpy glTF export that keeps the existing file when only float noise changed (stable bytes for handoffs)."""
+    import shutil
+    import tempfile
+    tmp = os.path.join(tempfile.mkdtemp(), os.path.basename(filepath))   # outside the project: editors watch it
+    bpy.ops.export_scene.gltf(filepath=tmp, **kw)
+    same = os.path.exists(filepath) and glb_signature(filepath) == glb_signature(tmp)
+    if same:
+        print('GLB unchanged', os.path.basename(filepath))
+    else:
+        shutil.move(tmp, filepath)
+    shutil.rmtree(os.path.dirname(tmp), ignore_errors=True)
+    return not same

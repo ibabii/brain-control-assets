@@ -112,7 +112,7 @@ def build_all():
         roots = fn()
         for o in bpy.data.objects:
             o.select_set(True)
-        bpy.ops.export_scene.gltf(filepath=OUT + name + '.glb', export_format='GLB', export_yup=True,
+        lib.export_glb(filepath=OUT + name + '.glb', export_format='GLB', export_yup=True,
                                   use_selection=True, export_apply=True, export_cameras=False, export_lights=False)
         report[name] = {'nodes': sorted(o.name for o in bpy.data.objects), 'triangles': lib.count_tris()}
     return report

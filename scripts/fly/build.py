@@ -102,7 +102,7 @@ def main():
     os.makedirs(out, exist_ok=True)
     for o in bpy.data.objects:
         o.select_set(o == root or o in root.children_recursive)
-    bpy.ops.export_scene.gltf(filepath=os.path.join(out, 'fly.glb'), export_format='GLB', export_yup=True,
+    lib.export_glb(filepath=os.path.join(out, 'fly.glb'), export_format='GLB', export_yup=True,
                               use_selection=True, export_cameras=False, export_lights=False,
                               export_animation_mode='NLA_TRACKS', export_force_sampling=True)
     os.makedirs(os.path.join(lib.ROOT, 'source', 'fly'), exist_ok=True)

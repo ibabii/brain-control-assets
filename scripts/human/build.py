@@ -371,7 +371,7 @@ def export(root, path):
     hidden = [o for o in bpy.data.objects if o.get('hidden')]
     for o in bpy.data.objects:
         o.select_set(o == root or o in root.children_recursive)
-    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', export_yup=True, use_selection=True,
+    lib.export_glb(filepath=path, export_format='GLB', export_yup=True, use_selection=True,
                               export_cameras=False, export_lights=False, export_extras=True)
     return hidden
 
