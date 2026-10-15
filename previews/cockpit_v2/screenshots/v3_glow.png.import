@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bxa5fqyckf8j3"
-path="res://.godot/imported/chin32.png-7c336af092840ff430fce5baf976b142.ctex"
+uid="uid://dcconh43fudhh"
+path="res://.godot/imported/v3_glow.png-0cbb66b5cfb1d7ec4f2bba9c3f7ea4d9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://previews/cockpit_v2/screenshots/chin32.png"
-dest_files=["res://.godot/imported/chin32.png-7c336af092840ff430fce5baf976b142.ctex"]
+source_file="res://previews/cockpit_v2/screenshots/v3_glow.png"
+dest_files=["res://.godot/imported/v3_glow.png-0cbb66b5cfb1d7ec4f2bba9c3f7ea4d9.ctex"]
 
 [params]
 

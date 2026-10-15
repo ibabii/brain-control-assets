@@ -97,12 +97,15 @@ BUBBLE = 128          # 9-slice margins 44 px on every side
 TAIL = (64, 72)
 
 
-def bubble():
+HONEY = '#E7B865'      # Bernard's own bubble (warm honey, lighter than the palette accent so graphite stays readable)
+
+
+def bubble(fill_col=PAPER, name='bubble_9slice.png'):
     c = blank(BUBBLE, BUBBLE)
     pts = rrect_px(4, 4, BUBBLE - 4, BUBBLE - 4, 38)
-    fill(c, pts, PAPER)
+    fill(c, pts, fill_col)
     sketch(c, pts, 5, 3)
-    save(c, 'bubble_9slice.png')
+    save(c, name)
 
 
 def tail():
@@ -116,6 +119,18 @@ def tail():
     stroke(c, wobble(left[1:], 0.8, 5, False) + [(4, h - 4)], 5, INK)
     stroke(c, [(4, h - 4)] + wobble(right[1:-1], 0.8, 6, False) + [(54, 12)], 5, INK)
     save(c, 'bubble_tail.png')
+
+
+def tail_down(fill_col=HONEY, name='bubble_bernard_tail.png'):
+    """Symmetric tail pointing straight down (Bernard's bubble rises from the screen's bottom centre)."""
+    w, h = TAIL
+    c = blank(w, h)
+    left = [(8, 0), (14, 20), (24, 44), (32, h - 4)]
+    right = [(32, h - 4), (40, 44), (50, 20), (56, 0)]
+    fill(c, left + right, fill_col)
+    stroke(c, wobble(left[1:], 0.8, 7, False) + [(32, h - 4)], 5, INK)
+    stroke(c, [(32, h - 4)] + wobble(right[:-1], 0.8, 8, False) + [(55, 12)], 5, INK)
+    save(c, name)
 
 
 # --- scribble gibberish -----------------------------------------------------------------------------
@@ -150,7 +165,7 @@ def scribbles(n=12):
 # --- organ icons (same shapes as the intercom lamps) -------------------------------------------------
 
 ICON = 128
-COL = {'heart': '#C98778', 'stomach': '#A9B89F', 'gary': '#D9A04C', 'brain': '#E8A9A0'}
+COL = {'heart': '#C98778', 'stomach': '#A9B89F', 'gary': '#D9A04C', 'brain': '#EAA78B'}   # lamp lit colours
 
 
 def shape_px(outline, size, cx=64, cy=66):
@@ -183,17 +198,13 @@ def build_icons():
             fill(c, shape_px(hole, 1.0), INK)
         fill(c, rrect_px(36, 46, 92, 60, 4), '#F4ECDC')      # label strip
     icon('gary', body, reels)
-    # Brain: lumpy blob with two fold squiggles.
-    pts = []
-    for i in range(72):
-        t = 2 * math.pi * i / 72
-        r = 1 + 0.07 * math.sin(7 * t) + 0.03 * math.sin(13 * t)
-        pts.append((0.5 * r * math.cos(t), 0.38 * r * math.sin(t) + 0.02))
+    pts = intercom.brain(1.0)                 # same lumpy outline as the intercom's Brain lamp
 
     def folds(c):
-        stroke(c, [(64, 34), (60, 52), (66, 70), (62, 92)], 5, INK)
-        stroke(c, [(34, 60), (46, 56), (52, 66)], 4.5, INK)
-        stroke(c, [(78, 50), (90, 56), (86, 72), (96, 80)], 4.5, INK)
+        stroke(c, [(64, 42), (60, 56), (66, 70), (62, 86)], 5, INK)
+        stroke(c, [(36, 62), (46, 58), (52, 68)], 4.5, INK)
+        stroke(c, [(78, 54), (90, 60), (86, 72), (94, 78)], 4.5, INK)
+
     icon('brain', pts, folds)
 
 
@@ -277,8 +288,12 @@ def preview():
     ink.text(sheet, 'STOMACH', (920 / 1200, 1 - 268 / 560), 46 / 560, '#F4ECDC', weight=1.0)
     for i, n in enumerate(('heart', 'stomach', 'brain', 'gary')):
         ic = load('icon_%s.png' % n)
-        paste(sheet, ic, 40 + i * 290, 380)
-        paste(sheet, ic, 40 + i * 290 + 150, 380 + 32, 0.5, 0.5)       # 64 px check
+        paste(sheet, ic, 30 + i * 205, 380)
+        paste(sheet, ic, 30 + i * 205 + 132, 380 + 32, 0.5, 0.5)       # 64 px check
+    bb = nine(load('bubble_bernard_9slice.png'), 300, 110, 44)
+    paste(sheet, bb, 860, 340)
+    paste(sheet, load('bubble_bernard_tail.png'), 860 + 150 - 32, 440)
+    ink.text(sheet, 'OK. I GOT THIS.', (1010 / 1200, 1 - 395 / 560), 40 / 560, INK, weight=1.0)
     sheet.a[:] = 1
     save(sheet, 'preview_sheet.png')
 
@@ -286,6 +301,8 @@ def preview():
 os.makedirs(OUT, exist_ok=True)
 bubble()
 tail()
+bubble(HONEY, 'bubble_bernard_9slice.png')
+tail_down()
 scribbles()
 build_icons()
 lower_third()

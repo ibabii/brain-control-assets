@@ -3,6 +3,3 @@
 [ext_resource type="PackedScene" path="res://cockpit/art/intercom/intercom.glb" id="1"]
 
 [node name="Intercom" instance=ExtResource("1")]
-
-[node name="ThoughtAnchor" type="Marker3D" parent="."]
-position = Vector3(0, -0.04, -0.003)

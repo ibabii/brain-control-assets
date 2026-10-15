@@ -47,7 +47,10 @@ ANCHORS = {'LeftKeys': (-0.38, 0, 0), 'PanicButton': (0.0, 0, -0.05), 'RightSlot
 SLOT_X = ANCHORS['RightSlot'][0]
 DIALS = Frame((0, 0.93, -0.59))                   # game GaugeDials node (was 0.955 before the intercom, 2026-10-15)
 DIAL_X = [-0.48, -0.24, 0.0, 0.24, 0.48]
-LABEL_Y = -0.093                                 # label paper centre, below the dial (r 0.07)
+LABEL_SIZE = (0.21, 0.068)                       # gauge label paper (>=14 px caps on the Deck)
+LABEL_TILT = 16.7                                # leans back onto the bezel front
+LABEL_C = (0.0, -0.0754, 0.0113)                 # paper centre in dial space (bottom edge y -0.108, z 0.0015)
+LABEL_SHORT = ['COORD', 'CONF', 'BAL', 'FOCUS', 'EMBAR']
 GAUGES = ['Coordination', 'Confidence', 'Balance', 'Focus', 'Embarrassment']
 
 C = {
@@ -183,10 +186,12 @@ def gauges(root):
         needle['rotation_axis'] = 'local +Z (Godot)'
         lib.slab(name + 'Cap', circle(0.009, 16), 0.008, 0.004, M('needle', 0.4), Frame(pivot), needle, bevel_res=2)
         # Taped paper label across the lower face; gameplay/art scene writes the full name on it.
-        paper = f.child((0, LABEL_Y, 0.004), (0, 0, (-3, 2, -2, 3, -1)[i]))
-        lib.box(name + 'Paper', (0.215, 0.034, 0.002), lib.mat('LabelPaper', '#F4ECDC', 0.85), paper, group)
+        # Short-name label (COORD, CONF..., game-ux 2026-10-15): taped to the panel at the bottom, leaning on the
+        # bezel. Its bottom stays above the console rim's sight line (y 0.82); it covers only the blank face bottom.
+        paper = f.child(LABEL_C, (LABEL_TILT, 0, (-3, 2, -2, 3, -1)[i]))
+        lib.box(name + 'Paper', (LABEL_SIZE[0], LABEL_SIZE[1], 0.0006), lib.mat('LabelPaper', '#F4ECDC', 0.85), paper, group)
         for sx in (-1, 1):
-            hw_tape = paper.child((sx * 0.104, 0.007, 0.002), (0, 0, sx * 12))
+            hw_tape = paper.child((sx * (LABEL_SIZE[0] / 2 - 0.012), -LABEL_SIZE[1] / 2 + 0.006, 0.0004), (0, 0, sx * 12))
             lib.tape_strip('LabelTape', hw_tape, (0.028, 0.022), group, seed=i * 2 + (sx > 0), nx=6)
         # Copper rivets between dials, like the concept.
         if i < 4:

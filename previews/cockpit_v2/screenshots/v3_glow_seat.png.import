@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bgneqf2qhd400"
-path="res://.godot/imported/final_219_seat.png-43af706135f3f4e93600d788f2d596c6.ctex"
+uid="uid://d3yiecr4tch6v"
+path="res://.godot/imported/v3_glow_seat.png-921d1ba422087bf77abee30a36925b48.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://previews/cockpit_v2/screenshots/final_219_seat.png"
-dest_files=["res://.godot/imported/final_219_seat.png-43af706135f3f4e93600d788f2d596c6.ctex"]
+source_file="res://previews/cockpit_v2/screenshots/v3_glow_seat.png"
+dest_files=["res://.godot/imported/v3_glow_seat.png-921d1ba422087bf77abee30a36925b48.ctex"]
 
 [params]
 

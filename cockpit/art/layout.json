@@ -568,15 +568,16 @@
       1.055,
       -0.5495
     ],
-    "thought_anchor": [
-      0.0,
-      1.0149999856948853,
-      -0.5525000095367432
-    ],
     "display_size": [
       0.656,
       0.056
-    ]
+    ],
+    "lamp_lit": {
+      "Brain": "#EAA78B",
+      "Heart": "#C98778",
+      "Stomach": "#A9B89F",
+      "Gary": "#D9A04C"
+    }
   },
   "answering_machine": {
     "position": [

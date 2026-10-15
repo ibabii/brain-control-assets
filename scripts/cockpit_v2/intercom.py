@@ -17,13 +17,16 @@ from lib import Frame, circle, rrect
 
 SCREEN = hw.LAYOUT['FrontScreen']
 CHIN_Y = SCREEN['pos'][1] - SCREEN['size'][1] / 2 - hw.CHIN / 2
-FACE = (1.17, 0.08)                      # cream faceplate on the chin
+FACE = (1.22, 0.08)                      # cream faceplate on the chin
 DISPLAY = (0.656, 0.056)
 GLASS = (0.67, 0.06)
 FP_Z = -0.003                            # faceplate front (display plane = 0)
 POS = (0.0, CHIN_Y, SCREEN['pos'][2] + 0.022 + 0.0055 - FP_Z)      # faceplate back 0.5 mm into the chin
-LAMPS = [('Heart', 0.392, '#C98778'), ('Stomach', 0.4575, '#A9B89F'), ('Gary', 0.523, '#D9A04C')]
-SIZE = 0.05                              # lamp icon span
+# Caller lamps, left of the text so the eye meets the speaker first (game-ux). Colour = lit tone; unlit albedo is dimmed.
+LAMPS = [('Brain', -0.553, '#EAA78B'), ('Heart', -0.4993, '#C98778'), ('Stomach', -0.4457, '#A9B89F'),
+         ('Gary', -0.392, '#D9A04C')]
+SIZE = 0.046                             # lamp icon span
+UNLIT = 0.55                             # unlit albedo = lit colour x this (a clear on/off jump, not only hue)
 
 
 def M(key, color, rough=0.6, metal=0.0):
@@ -56,14 +59,29 @@ def heart(s):
 
 
 def bean(s):
-    """Stomach: kidney bean, dented on the upper right."""
+    """Stomach: a round bean with a shallow dent (smooth, unlike the lumpy brain)."""
     pts = []
     for i in range(64):
         t = 2 * math.pi * i / 64
-        d = math.atan2(math.sin(t - 1.0), math.cos(t - 1.0))
-        r = 1 - 0.38 * math.exp(-(d / 0.55) ** 2)
-        pts.append((math.cos(t) * 0.58 * r * s, math.sin(t) * 0.42 * r * s))
+        d = math.atan2(math.sin(t - 1.2), math.cos(t - 1.2))
+        r = 1 - 0.2 * math.exp(-(d / 0.5) ** 2)
+        pts.append((math.cos(t) * 0.52 * r * s, math.sin(t) * 0.44 * r * s))
     return _ccw(_smooth(pts, 1))
+
+
+def brain(s):
+    """Brain: wide lumpy cloud (seven lobes)."""
+    pts = []
+    for i in range(84):
+        t = 2 * math.pi * i / 84
+        r = 1 + 0.09 * math.cos(7 * t) + 0.03 * math.cos(13 * t)
+        pts.append((math.cos(t) * 0.52 * r * s, math.sin(t) * 0.38 * r * s + 0.02 * s))
+    return _ccw(_smooth(pts, 1))
+
+
+def _dim(col):
+    r, g, b = (int(col[i:i + 2], 16) * UNLIT for i in (1, 3, 5))
+    return '#%02X%02X%02X' % (round(r), round(g), round(b))
 
 
 def cassette(s):
@@ -92,27 +110,28 @@ def build(root):
     c = ink.Canvas(500, 200, '#3A3F3C')
     for i in range(14):
         for j in range(5):
-            c.ellipse(((i + 0.5) / 12, (j + 0.5) / 5), 0.055, 0.055, '#16191A')
-    props.face_card('Grille', 0.17, 0.06, c, f.child((-0.46, 0, FP_Z + 0.0015)), g, rough=0.7, thick=0.002)
-    lib.slab('LampPlate', rrect(0.205, 0.066, 0.012), 0.003, 0.001, M('LampPlate', '#2F3434', 0.8),
-             f.child((0.4575, 0, FP_Z - 0.0005)), g)
+            c.ellipse(((i + 0.5) / 14, (j + 0.5) / 5), 0.055, 0.055, '#16191A')
+    props.face_card('Grille', 0.2, 0.06, c, f.child((0.468, 0, FP_Z + 0.0015)), g, rough=0.7, thick=0.002)
+    lib.slab('LampPlate', rrect(0.228, 0.066, 0.012), 0.003, 0.001, M('LampPlate', '#2F3434', 0.8),
+             f.child((-0.468, 0, FP_Z - 0.0005)), g)
     lamps = lib.empty('Lamps', POS, g)
     base = FP_Z + 0.002
     for name, x, col in LAMPS:
         holes = []
-        if name == 'Heart':
+        if name == 'Brain':
+            out = brain(SIZE)
+        elif name == 'Heart':
             out = heart(SIZE)
         elif name == 'Stomach':
             out = bean(SIZE)
         else:
             out, holes = cassette(SIZE)
-        lib.slab(name, out, 0.008, 0.0022, M('Lamp' + name, col, 0.35), f.child((x, 0, base)), lamps,
+        lib.slab(name, out, 0.008, 0.0022, M('Lamp' + name, _dim(col), 0.35), f.child((x, 0, base)), lamps,
                  holes=holes, pivot=f.at((x, 0, base + 0.008)))
     face = bpy.data.objects['Faceplate']
     for sx in (-1, 1):
         for sy in (-1, 1):
-            hw.screw(g, f, (sx * 0.572, sy * 0.028, FP_Z), 0.0045, on=face, sink=0.0008)
-    # Second-hand retrofit: tape over the faceplate's top-left corner onto the chin (in the main art, not the module).
-    lib.tape_strip('IntercomTape', f.child((-0.565, 0.04, FP_Z + 0.0005), (0, 0, 35)), (0.05, 0.03), root, seed=77)
-    thought = f.at((0, -GLASS[1] / 2 - 0.01, FP_Z))
-    return g, {'position': list(POS), 'thought_anchor': list(thought), 'display_size': list(DISPLAY)}
+            hw.screw(g, f, (sx * 0.597, sy * 0.028, FP_Z), 0.0045, on=face, sink=0.0008)
+    # Second-hand retrofit: tape over the faceplate's top-right corner onto the chin (in the main art, not the module).
+    lib.tape_strip('IntercomTape', f.child((0.59, 0.042, FP_Z + 0.0005), (0, 0, -35)), (0.045, 0.026), root, seed=77)
+    return g, {'position': list(POS), 'display_size': list(DISPLAY), 'lamp_lit': {n: c for n, _, c in LAMPS}}

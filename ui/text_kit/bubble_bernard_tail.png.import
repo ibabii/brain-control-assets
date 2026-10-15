@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://inc8n3vg1r7t"
-path="res://.godot/imported/chin_1280x800_seat.png-1acbf75af61883b1a24c39654dd72920.ctex"
+uid="uid://dl786nbuatcap"
+path="res://.godot/imported/bubble_bernard_tail.png-de4b11ba0fb584a98682705684c87611.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://previews/cockpit_v2/screenshots/chin_1280x800_seat.png"
-dest_files=["res://.godot/imported/chin_1280x800_seat.png-1acbf75af61883b1a24c39654dd72920.ctex"]
+source_file="res://ui/text_kit/bubble_bernard_tail.png"
+dest_files=["res://.godot/imported/bubble_bernard_tail.png-de4b11ba0fb584a98682705684c87611.ctex"]
 
 [params]
 

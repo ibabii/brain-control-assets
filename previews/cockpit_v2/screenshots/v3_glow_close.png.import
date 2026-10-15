@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dupybjycd4pwg"
-path="res://.godot/imported/chin32_close.png-908ef81ce14523ee29e87ebb670a8bcf.ctex"
+uid="uid://btlrb2110msgj"
+path="res://.godot/imported/v3_glow_close.png-a5e157f806456a1f0d51b3aa16eb6588.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://previews/cockpit_v2/screenshots/chin32_close.png"
-dest_files=["res://.godot/imported/chin32_close.png-908ef81ce14523ee29e87ebb670a8bcf.ctex"]
+source_file="res://previews/cockpit_v2/screenshots/v3_glow_close.png"
+dest_files=["res://.godot/imported/v3_glow_close.png-a5e157f806456a1f0d51b3aa16eb6588.ctex"]
 
 [params]
 

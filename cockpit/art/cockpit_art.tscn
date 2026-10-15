@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://cockpit/art/cockpit_art.glb" id="1"]
 [ext_resource type="PackedScene" path="res://cockpit/art/notes/cockpit_notes.tscn" id="notes"]
+[ext_resource type="FontFile" path="res://cockpit/art/notes/fonts/PatrickHand-Regular.ttf" id="hand"]
 [ext_resource type="PackedScene" path="res://cockpit/art/intercom/intercom.tscn" id="intercom"]
 [ext_resource type="PackedScene" path="res://cockpit/art/answering_machine/answering_machine.tscn" id="machine"]
 
@@ -19,51 +20,62 @@ position = Vector3(0.8303, 0.95, -0.1992)
 rotation_degrees = Vector3(0, -25, 0)
 
 [node name="GaugeLabels" type="Node3D" parent="."]
-position = Vector3(0, 0.837, -0.5838)
+position = Vector3(0, 0.8544, -0.5779)
 
 [node name="Coordination" type="Label3D" parent="GaugeLabels"]
 position = Vector3(-0.48, 0, 0)
-rotation_degrees = Vector3(0, 0, -3)
+rotation_degrees = Vector3(16.7, 0, -3)
+scale = Vector3(0.88, 1, 1)
 pixel_size = 0.0005
 modulate = Color(0.2, 0.18, 0.17, 1)
 outline_size = 0
-font_size = 44
-text = "Coordination"
+font = ExtResource("hand")
+font_size = 150
+text = "COORD"
 
 [node name="Confidence" type="Label3D" parent="GaugeLabels"]
 position = Vector3(-0.24, 0, 0)
-rotation_degrees = Vector3(0, 0, 2)
+rotation_degrees = Vector3(16.7, 0, 2)
+scale = Vector3(0.88, 1, 1)
 pixel_size = 0.0005
 modulate = Color(0.2, 0.18, 0.17, 1)
 outline_size = 0
-font_size = 44
-text = "Confidence"
+font = ExtResource("hand")
+font_size = 150
+text = "CONF"
 
 [node name="Balance" type="Label3D" parent="GaugeLabels"]
-rotation_degrees = Vector3(0, 0, -2)
+position = Vector3(0.0, 0, 0)
+rotation_degrees = Vector3(16.7, 0, -2)
+scale = Vector3(0.88, 1, 1)
 pixel_size = 0.0005
 modulate = Color(0.2, 0.18, 0.17, 1)
 outline_size = 0
-font_size = 44
-text = "Balance"
+font = ExtResource("hand")
+font_size = 150
+text = "BAL"
 
 [node name="Focus" type="Label3D" parent="GaugeLabels"]
 position = Vector3(0.24, 0, 0)
-rotation_degrees = Vector3(0, 0, 3)
+rotation_degrees = Vector3(16.7, 0, 3)
+scale = Vector3(0.88, 1, 1)
 pixel_size = 0.0005
 modulate = Color(0.2, 0.18, 0.17, 1)
 outline_size = 0
-font_size = 44
-text = "Focus"
+font = ExtResource("hand")
+font_size = 150
+text = "FOCUS"
 
 [node name="Embarrassment" type="Label3D" parent="GaugeLabels"]
 position = Vector3(0.48, 0, 0)
-rotation_degrees = Vector3(0, 0, -1)
+rotation_degrees = Vector3(16.7, 0, -1)
+scale = Vector3(0.88, 1, 1)
 pixel_size = 0.0005
 modulate = Color(0.2, 0.18, 0.17, 1)
 outline_size = 0
-font_size = 44
-text = "Embarrassment"
+font = ExtResource("hand")
+font_size = 150
+text = "EMBAR"
 
 [node name="ConsoleDecals" type="Node3D" parent="."]
 position = Vector3(0, 0.95, 0.1)
