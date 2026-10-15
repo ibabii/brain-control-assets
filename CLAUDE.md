@@ -13,6 +13,7 @@ Read `docs/style-guide.md` and `materials/warm_ceramic_v1/palette.json` before a
 - Fallback without native tools: `scripts/mcp_client.py` and `scripts/blender_client.py`, run with the godot-editor-mcp uv Python (has fastmcp + mcp).
 
 ## Pipeline
+Use the `asset-pipeline` skill (.claude/skills/asset-pipeline): build → scripts/tools/reimport.sh → scripts/tools/verify.sh → scripts/tools/capture.sh --shots (contact sheet) → commit → scripts/tools/handoff.sh (SYNC line). Headless only; MCP is for live editor inspection, not builds.
 Blender source in `source/<asset>/*.blend` → GLB export to `<asset>/art/` → script-free Godot art scene + `manifest.json` → preview in `previews/<asset>/`. Gameplay wraps the art; never edit the gameplay repo.
 
 ## Status

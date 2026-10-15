@@ -4,6 +4,7 @@ extends Node3D
 ## Capture: godot --path . res://previews/cockpit_v2/cockpit_v2_preview.tscn -- --capture <name> [--size 1672x941] [--fit adaptive|height]
 ##   [--eye x,y,z --look x,y,z]  inspect from another point (no overlay).
 ##   [--extra res://path.glb]  add a scene (e.g. previews/hands/sheet_teal.glb).
+##   [--shots "seat;name@eye@look;..."]  several views in one run + a contact sheet (see _multi).
 ## Fit "adaptive" (recommended for the game): keep the 16:9 framing whole; narrower windows reveal more top/bottom,
 ## wider ones more sides. "height" is Godot's default (narrow windows crop the sides).
 
@@ -134,8 +135,40 @@ func _capture(name: String) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 	for n in 10:
 		await get_tree().process_frame
+	var sh := args.find('--shots')
+	if sh >= 0:
+		await _multi(dir, name, args[sh + 1])
+		get_tree().quit()
+		return
 	await _shot(dir + name + '.png')
 	if size == Vector2i(1672, 941) and not '--eye' in args:
 		_set_overlay(1)
 		await _shot(dir + name + '-overlay.png')
 	get_tree().quit()
+
+
+## --shots "seat;left@-0.55,1.35,0.25@-0.8,1.3,-0.38;..." : many views in one run (one Godot start, one import).
+## "seat" = the game camera. Writes <dir>/<name>_<shot>.png and a 2-column contact sheet <name>.png (each
+## tile 800 px wide), so one image read reviews every view.
+func _multi(dir: String, name: String, spec: String) -> void:
+	var tiles: Array[Image] = []
+	for item in spec.split(';', false):
+		var part := item.split('@')
+		if part.size() == 3:
+			camera.position = _vec(part[1])
+			camera.look_at(_vec(part[2]))
+		else:
+			camera.position = Vector3(0, 1.36, 0.8)
+			camera.rotation_degrees = Vector3(-14, 0, 0)
+		await _shot(dir + name + '_' + part[0] + '.png')
+		var img := get_viewport().get_texture().get_image()
+		img.resize(800, int(800.0 * img.get_height() / img.get_width()))
+		tiles.append(img)
+	var tw := tiles[0].get_width()
+	var th := tiles[0].get_height()
+	var cols := mini(2, tiles.size())
+	var sheet := Image.create(tw * cols, th * ceili(tiles.size() / float(cols)), false, tiles[0].get_format())
+	for i in tiles.size():
+		sheet.blit_rect(tiles[i], Rect2i(0, 0, tw, th), Vector2i((i % cols) * tw, (i / cols) * th))
+	sheet.save_png(dir + name + '.png')
+	print('COCKPIT_V2_SHEET ', dir + name + '.png')
