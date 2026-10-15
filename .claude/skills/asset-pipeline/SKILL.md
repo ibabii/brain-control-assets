@@ -73,6 +73,9 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
 - **Import scripts:** `Skeleton3D.get_bone_global_pose` is stale outside the tree; compose the local poses yourself.
 - **Hands:** check the thumb from the thumb side and the palm. The thumb roots low by the wrist, the nail faces sideways, and it curls across the palm.
 - **Tape:** only where it holds something (notes, labels, the OUT OF ORDER caps). The user removed decorative tape.
+- Godot's glTF import strips a `_loop` suffix from animation names (and loops them); `human_import.gd` renames them back to the json name.
+- Measuring a pose in Blender while an action is assigned: the depsgraph re-applies the keyed action, so key first, `scene.frame_set(f)`, then measure (pose.py does this; NLA muted while baking).
+- Interpolating joint rotations between pose keys drags planted hands/feet through the floor; bake in-betweens from blended targets (pose.between) and read the build log's `CLIP <name> sampled worst`.
 
 ## Contracts
 
@@ -80,6 +83,3 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
 - Changing names, anchors or axes needs gameplay's agreement first; propose by SendMessage and record it there.
 - Gameplay replies to a SYNC line in one report: commits, per-folder checksums, reimport errors, one seat-view contact sheet (16:9 / 4:3 / 21:9), smoke test counts, local changes to upstream.
 - To see art in a live gameplay moment (a press, the swat, a reveal), ask game-mechanics for a probe scenario. Their `-- --probe` + `tools/probe.py` pauses on an exact condition and shoots crops; don't guess timings yourself.
-- Godot's glTF import strips a `_loop` suffix from animation names (and loops them); `human_import.gd` renames them back to the json name.
-- Measuring a pose in Blender while an action is assigned: the depsgraph re-applies the keyed action, so key first, `scene.frame_set(f)`, then measure (pose.py does this; NLA muted while baking).
-- Interpolating joint rotations between pose keys drags planted hands/feet through the floor; bake in-betweens from blended targets (pose.between) and read the build log's `CLIP <name> sampled worst`.
