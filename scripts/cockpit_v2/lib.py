@@ -411,6 +411,93 @@ def tube(name, points, radius, material, parent=None, res=6, bevel_res=2, smooth
     return from_bmesh(name, bm, material, parent, None, smooth)
 
 
+# --- tape -----------------------------------------------------------------------------------------
+
+def tape_mat():
+    """Masking tape: warm beige, a bit darker than paper, slightly see-through."""
+    m = mat('MaskingTape', '#CBB98E', 0.5)
+    bsdf = next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    bsdf.inputs['Alpha'].default_value = 0.8
+    m.surface_render_method = 'BLENDED'
+    return m
+
+
+def tape_strip(name, frame, size, parent, seed=0, nx=14, ny=4):
+    """Flat tape strip on frame's XY plane (torn ends); conform_tapes() later drapes it onto what is under it."""
+    rng = np.random.default_rng(abs(int(seed)))
+    w, h = size
+    tear = [rng.uniform(-0.003, 0.003, ny + 1) for _ in range(2)]
+    bm = bmesh.new()
+    grid = []
+    for j in range(ny + 1):
+        row = []
+        for i in range(nx + 1):
+            u = i / nx
+            x = -w / 2 + w * u + (tear[0][j] * (1 - u) + tear[1][j] * u if i in (0, nx) else 0.0)
+            row.append(bm.verts.new((x, -h / 2 + h * j / ny, 0.0)))
+        grid.append(row)
+    for j in range(ny):
+        for i in range(nx):
+            bm.faces.new((grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]))
+    transform_bm(bm, frame)
+    o = from_bmesh(name, bm, tape_mat(), parent, pivot=frame.o, smooth=True)
+    o['tape_normal'] = list(B(frame.dir((0, 0, 1))))
+    return o
+
+
+def conform_tapes(offset=0.0005, reach=0.05, wrap=0.03):
+    """Drape every tape strip onto the surfaces under it: ray along -normal; where a ray misses (strip hangs
+    past an edge) snap to the nearest surface so the tape wraps around rims and bezels."""
+    from mathutils.bvhtree import BVHTree
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    tapes = [o for o in COLL.all_objects if 'tape_normal' in o]
+    world = bmesh.new()
+    for o in COLL.all_objects:
+        if o.type != 'MESH' or 'tape_normal' in o or 'Preview' in o.name:
+            continue
+        b = bmesh.new()
+        b.from_object(o, dg)
+        b.transform(o.matrix_world)
+        me = bpy.data.meshes.new('tmp')
+        b.to_mesh(me)
+        b.free()
+        world.from_mesh(me)
+        bpy.data.meshes.remove(me)
+    t = BVHTree.FromBMesh(world)
+    world.free()
+    for o in tapes:
+        n = Vector(o['tape_normal']).normalized()
+        mw = o.matrix_world
+        inv = mw.inverted()
+        me = o.data
+        pos = [mw @ v.co for v in me.vertices]
+        new, hit = list(pos), [False] * len(pos)
+        for i, p in enumerate(pos):
+            loc, nrm, _, _ = t.ray_cast(p + n * 0.012, -n, reach)
+            if loc is not None:
+                nrm = nrm if nrm.dot(n) > 0 else -nrm
+                new[i], hit[i] = loc + nrm * offset, True
+        nbrs = [[] for _ in pos]
+        for e in me.edges:
+            a, b = e.vertices
+            nbrs[a].append(b)
+            nbrs[b].append(a)
+        for _ in range(6):                                   # misses: follow hit neighbours, then wrap the edge
+            for i in range(len(pos)):
+                if hit[i]:
+                    continue
+                hn = [j for j in nbrs[i] if hit[j]]
+                if hn:
+                    guess = sum((new[j] for j in hn), Vector()) / len(hn) + (pos[i] - sum((pos[j] for j in hn), Vector()) / len(hn))
+                    loc, nrm, _, d = t.find_nearest(guess, wrap)
+                    new[i] = loc + nrm * offset if loc is not None else guess
+                    hit[i] = True
+        for v, p in zip(me.vertices, new):
+            v.co = inv @ p
+        me.update()
+
+
 # --- camera-projected print ---------------------------------------------------------------------
 
 def count_tris():

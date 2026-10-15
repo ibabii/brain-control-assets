@@ -71,8 +71,7 @@ def screw(parent, frame, pos, r=0.009, mat=None, on=None, sink=0.0006):
 
 
 def tape(parent, frame, pos, size=(0.05, 0.035), angle=0.0):
-    f = frame.child(pos, (0, 0, angle))
-    return lib.box('Tape', (size[0], size[1], 0.002), M('tape', 0.55), f.child((0, 0, 0.001)), parent)
+    return lib.tape_strip('Tape', frame.child(pos, (0, 0, angle)), size, parent, seed=int(abs(pos[0]) * 1000))
 
 
 # --- screens -------------------------------------------------------------------------------------
@@ -183,7 +182,7 @@ def gauges(root):
         lib.box(name + 'Paper', (0.215, 0.034, 0.002), lib.mat('LabelPaper', '#F4ECDC', 0.85), paper, group)
         for sx in (-1, 1):
             hw_tape = paper.child((sx * 0.104, 0.007, 0.002), (0, 0, sx * 12))
-            lib.box('LabelTape', (0.028, 0.022, 0.0015), M('tape', 0.55), hw_tape, group)
+            lib.tape_strip('LabelTape', hw_tape, (0.028, 0.022), group, seed=i * 2 + (sx > 0), nx=6)
         # Copper rivets between dials, like the concept.
         if i < 4:
             screw(group, DIALS, (x + 0.12, 0.045, 0.0), 0.007, M('copper', 0.35, 0.6))
@@ -234,8 +233,8 @@ def console(root):
         lib.slab(name + 'Rim', circle(0.034, 28), 0.01, 0.004, M('rubber', 0.85), f, group)
         lib.slab(name, circle(0.027, 28), 0.014, 0.005, M(col, 0.9), f.child((0, 0, 0.005)), group)
         for a in (40, -40):
-            lib.box(name + 'Tape', (0.056, 0.014, 0.0015), M('tape', 0.55),
-                    f.child((0, 0, 0.0198), (0, 0, a + (5 if name[0] == 'U' else -7))), group)
+            lib.tape_strip(name + 'Tape', f.child((0, 0, 0.0198), (0, 0, a + (5 if name[0] == 'U' else -7))),
+                           (0.068, 0.014), group, seed=a + len(name))       # long enough to wrap onto the rim
     note = top.child((0.594, -0.09, 0.0115), (0, 0, -6))   # plate top is at 0.010; front edge, below the caps
     lib.box('OutOfOrderNote', (0.085, 0.042, 0.002), lib.mat('LabelPaper', '#F4ECDC', 0.85), note, group)
     tape(group, note, (-0.04, 0.0, 0.001), (0.016, 0.03), 4)

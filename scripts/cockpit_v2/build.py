@@ -26,6 +26,7 @@ shell = lib.empty('Shell', (0, 1.5, -0.3), root)
 brain.build(shell)
 shelf_top = hardware.build(root)
 bulbs = dressing.build(root, shelf_top)
+lib.conform_tapes()                       # after everything exists: drape tape onto what it holds
 
 os.makedirs(lib.ROOT + '/cockpit/art', exist_ok=True)
 glb = lib.ROOT + '/cockpit/art/cockpit_art.glb'

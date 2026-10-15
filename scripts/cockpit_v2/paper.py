@@ -112,17 +112,8 @@ def paper_mat(name, canvas, rough=0.85):
 
 
 def tape(name, f, pos, size, angle, parent, seed=0):
-    """Thin masking-tape strip with torn ends, lying on the frame's surface."""
-    rng = np.random.default_rng(seed)
-    w, h = size
-    n = 6
-    right = [(w / 2 + rng.uniform(-0.003, 0.003), h / 2 - h * k / n) for k in range(n + 1)]
-    left = [(-w / 2 + rng.uniform(-0.003, 0.003), -h / 2 + h * k / n) for k in range(n + 1)]
-    outline = right + left
-    g = f.child(pos, (0, 0, angle))
-    bm = lib.slab_bm(outline, 0.0004, 0.0, bevel_res=0)
-    lib.transform_bm(bm, g)
-    return lib.from_bmesh(name, bm, lib.mat('MaskingTape', '#E9DDBF', 0.55), parent, pivot=g.o, smooth=False)
+    """Masking-tape strip at pos on the frame; draped onto what is under it at the end of the build."""
+    return lib.tape_strip(name, f.child(pos, (0, 0, angle)), size, parent, seed)
 
 
 def pin(name, f, pos, color, parent, depth):
