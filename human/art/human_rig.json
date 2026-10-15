@@ -893,6 +893,182 @@
     "RightToes"
    ]
   },
+  "faceplant": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.84,
+     -0.0
+    ],
+    "pitch": -0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.1735,
+     -0.96
+    ],
+    "pitch": -90.0
+   },
+   "length": 1.6
+  },
+  "sit_tub": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     -0.06,
+     0.31
+    ],
+    "pitch": 50.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     -0.11,
+     0.31
+    ],
+    "pitch": 60.0
+   },
+   "length": 2.0
+  },
+  "get_up_back": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.1669,
+     -0.0
+    ],
+    "pitch": 90.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.84,
+     -0.0
+    ],
+    "pitch": -0.0
+   },
+   "length": 2.267
+  },
+  "get_up_front": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.1735,
+     -0.0
+    ],
+    "pitch": -90.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.84,
+     -0.0
+    ],
+    "pitch": -0.0
+   },
+   "length": 2.467
+  },
   "hand_grip_L": {
    "layer": "hand",
    "bones": [

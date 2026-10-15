@@ -4,6 +4,8 @@ extends Node3D
 ##   ik      TwoBoneIK3D reaching (arms to a counter and overhead, a foot onto a step) with the json poles
 ##   hands   finger clips: grip, relaxed, spread
 ##   ragdoll drop onto the floor, captured after --t seconds (default 3)
+##   clip    one Human playing --clip NAME, one tile per --times "0,0.5,.." (seconds) and per shot; --tub sits it on
+##           the bathroom tub's Seat
 ## godot --path . res://previews/human/human_rig_preview.tscn -- --capture NAME --mode pose [--shots "name@eye@look[@fov];..."]
 
 const POSES := {   # bone: [local axis, degrees] applied on top of the rest pose
@@ -56,6 +58,14 @@ func _ready() -> void:
 				i += 1
 		'ragdoll':
 			_ragdoll()
+		'clip':
+			var h := _human(Vector3.ZERO)
+			if '--tub' in args:                       # in the bathroom, root on the tub's Seat
+				add_child(load('res://bathroom/art/bathroom_room.tscn').instantiate())
+				var tub: Node3D = load('res://bathroom/art/props/tub.tscn').instantiate()
+				tub.position = Vector3(-1.15, 0.5, 0.55)
+				add_child(tub)
+				h.transform = tub.transform * (tub.get_node('Seat') as Node3D).transform
 	if '--capture' in args:
 		_capture(args[args.find('--capture') + 1])
 
@@ -218,20 +228,32 @@ func _capture(name: String) -> void:
 	var spec: String = args[args.find('--shots') + 1] if '--shots' in args else 'front@0,1.0,-5@0,0.9,0'
 	var items := spec.split(';', false)
 	var tiles: Array[Image] = []
-	for item in items:
-		var part := item.split('@')
+	var times: Array = [-1.0]
+	if '--times' in args:
+		times = Array(args[args.find('--times') + 1].split(',')).map(func(x): return float(x))
+	var jobs := []
+	for t in times:
+		for item in items:
+			jobs.append([t, item])
+	for job in jobs:
+		if job[0] >= 0.0:
+			var anim: AnimationPlayer = humans[0].get_node('Anim')
+			anim.play(args[args.find('--clip') + 1])
+			anim.seek(job[0], true)
+			anim.pause()
+		var part: PackedStringArray = job[1].split('@')
 		camera.position = Vector3(float(part[1].split(',')[0]), float(part[1].split(',')[1]), float(part[1].split(',')[2]))
 		camera.look_at(Vector3(float(part[2].split(',')[0]), float(part[2].split(',')[1]), float(part[2].split(',')[2])))
 		camera.fov = float(part[3]) if part.size() > 3 else 30.0
 		for n in 4:
 			await RenderingServer.frame_post_draw
 		var img := get_viewport().get_texture().get_image()
-		if items.size() > 1:
+		if jobs.size() > 1:
 			img.resize(800, int(800.0 * img.get_height() / img.get_width()))
 		tiles.append(img)
 	var tw := tiles[0].get_width()
 	var th := tiles[0].get_height()
-	var cols := mini(2, tiles.size())
+	var cols := mini(int(args[args.find('--cols') + 1]) if '--cols' in args else 2, tiles.size())
 	var sheet := Image.create(tw * cols, th * ceili(tiles.size() / float(cols)), false, tiles[0].get_format())
 	for i in tiles.size():
 		sheet.blit_rect(tiles[i], Rect2i(0, 0, tw, th), Vector2i((i % cols) * tw, (i / cols) * th))

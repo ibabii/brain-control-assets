@@ -5,7 +5,7 @@ import math
 
 import bmesh
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Euler, Matrix, Vector
 from mathutils.bvhtree import BVHTree
 
 import lib
@@ -293,9 +293,9 @@ def _key(rig, frame, rots):
     """rots: bone -> (x, y, z) degrees about the bone's own axes (Blender pose space)."""
     for pb in rig.pose.bones:
         if pb.name in rots:
-            pb.rotation_mode = 'XYZ'
-            pb.rotation_euler = [math.radians(a) for a in rots[pb.name]]
-            pb.keyframe_insert('rotation_euler', frame=frame)
+            pb.rotation_mode = 'QUATERNION'                       # one mode for every clip (body clips bake quaternions)
+            pb.rotation_quaternion = Euler([math.radians(a) for a in rots[pb.name]], 'XYZ').to_quaternion()
+            pb.keyframe_insert('rotation_quaternion', frame=frame)
 
 
 def finger_pose(side, kind):
@@ -378,11 +378,50 @@ def clips(rig, arm_up):
         idle.append((k, {'Chest': (-1.4 * a, 0, 0), 'UpperChest': (-1.0 * a, 0, 0), 'Head': (1.6 * a, 0, 0),
                          'LeftShoulder': (0, 0, 1.2 * a), 'RightShoulder': (0, 0, -1.2 * a)}))
     clip('idle', idle, arms=True)
+    import body_clips
+    import pose as PZ
+    PZ.ARM_UP = arm_up
+    for name, fn in body_clips.FULL.items():
+        names.append(body_clip(rig, name, fn(), boxes=body_clips.BOXES.get(name)))
     for s in (-1, 1):
         for kind in ('grip', 'relaxed', 'spread'):
             p = finger_pose(s, kind)
             clip('hand_%s_%s' % (kind, 'L' if s < 0 else 'R'), [(0, p), (1, p)], layer='hand', side=s)
     return names
+
+
+def body_clip(rig, name, keys, layer='full', side=None, boxes=None):
+    """Bake pose keys (body_clips.py) into an NLA track; the json records the bones and the Hips at both ends."""
+    import pose as PZ
+    act = bpy.data.actions.new(name)
+    rig.animation_data.action = act
+    rig.animation_data.use_nla = False                       # only this action while measuring
+    bones = clip_bones(rig, layer, side)
+    prev, ends = {}, []
+    scene = bpy.context.scene
+    for f, p in keys:                       # measured on the keyed frame (what the export samples)
+        P = PZ.pose_at(rig, p)
+        PZ.key(rig, f, bones, prev)
+        scene.frame_set(f)
+        if p.get('ground'):
+            P = PZ.pose_at(rig, p, p.get('lift', 0.0) - PZ.lowest(rig))
+            PZ.key(rig, f, bones, prev)
+            scene.frame_set(f)
+        low = PZ.lowest(rig)
+        hit = PZ.penetration(rig, (boxes or []) + [((-5, -1, -5), (5, 0, 5))])     # + the floor
+        print('CLIP %s f%d lowest %.3f inside %d (%.3f m) %s' % (name, f, low, hit[0], hit[1], hit[2] or ''))
+        ends.append(PZ.hips_info(P))
+    rig.animation_data.action = None
+    rig.animation_data.use_nla = True
+    scene.frame_set(0)
+    for pb in rig.pose.bones:
+        pb.matrix_basis = Matrix.Identity(4)
+    tr = rig.animation_data.nla_tracks.new()
+    tr.name = name
+    tr.strips.new(name, 0, act)
+    CLIPS[name] = {'layer': layer, 'bones': bones, 'start': ends[0], 'end': ends[-1],
+                   'length': round(keys[-1][0] / FPS, 3)}
+    return name
 
 
 # --- markers and ragdoll (human_rig.json) -------------------------------------------------------------------
