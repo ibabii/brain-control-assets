@@ -43,7 +43,8 @@ CHIN = 0.10          # main screen's bottom border: the intercom is built into i
 CONSOLE = Frame((0, 0.95, 0.1), (18, 0, 0))     # game Console node
 # Control module anchors in Console space (game src/cockpit/cockpit.tscn).
 # Spread out 2026-10-14 (user: controls too close); proposed to gameplay, was LeftKeys -0.27, Panic (0.02, 0, -0.06), RightSlot 0.3.
-ANCHORS = {'LeftKeys': (-0.38, 0, 0), 'PanicButton': (0.0, 0, -0.05), 'RightSlot': (0.33, 0, 0)}
+# LeftKeys -0.38 -> -0.29 (2026-10-15, user): the A-press forearm cleared the TODAY notebook stand.
+ANCHORS = {'LeftKeys': (-0.29, 0, 0), 'PanicButton': (0.0, 0, -0.05), 'RightSlot': (0.33, 0, 0)}
 SLOT_X = ANCHORS['RightSlot'][0]
 DIALS = Frame((0, 0.93, -0.59))                   # game GaugeDials node (was 0.955 before the intercom, 2026-10-15)
 DIAL_X = [-0.48, -0.24, 0.0, 0.24, 0.48]
@@ -252,7 +253,7 @@ def console(root):
                  (-0.16, -0.112)):
         screw(group, top, (x, y, 0.0), on=slab)
     # Small knobs (decor) like the concept.
-    for x, y in ((-0.13, 0.075), (0.11, 0.15)):
+    for x, y in ((-0.5, 0.075), (0.11, 0.15)):          # left knob moved off the keys' new spot
         lib.slab('Knob', circle(0.014, 20), 0.03, 0.006, M('rubber', 0.7), top.child((x, y, 0.0)), group)
     return group
 

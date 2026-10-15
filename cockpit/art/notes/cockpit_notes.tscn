@@ -6,7 +6,7 @@
 
 [sub_resource type="Theme" id="theme_Today"]
 default_font = ExtResource("font")
-default_font_size = 47
+default_font_size = 53
 Label/colors/font_color = Color(0.149, 0.251, 0.369, 1)
 RichTextLabel/colors/default_color = Color(0.149, 0.251, 0.369, 1)
 
@@ -22,7 +22,7 @@ roughness = 0.8
 texture_filter = 1
 
 [sub_resource type="QuadMesh" id="quad_Today"]
-size = Vector2(0.18775, 0.20224)
+size = Vector2(0.24412, 0.24664)
 
 [node name="CockpitNotes" type="Node3D"]
 
@@ -187,13 +187,13 @@ autowrap_mode = 3
 width = 314.7
 
 [node name="Today" type="Node3D" parent="."]
-transform = Transform3D(0.998131, -0.0611081, 0, 0, 0, 1, -0.0611081, -0.998131, 0, -0.0858926, 0.9058, 0.402409)
+transform = Transform3D(1, 1.40753e-08, -0, -1.36572e-08, 0.970296, 0.241922, 3.40512e-09, -0.241922, 0.970296, -0.56767, 1.05749, 0.272478)
 
 [node name="Page" type="SubViewport" parent="Today"]
 disable_3d = true
 transparent_bg = true
 gui_disable_input = true
-size = Vector2i(512, 551)
+size = Vector2i(512, 403)
 render_target_update_mode = 4
 
 [node name="List" type="VBoxContainer" parent="Today/Page"]
@@ -205,16 +205,16 @@ offset_top = 4.0
 offset_right = -6.0
 offset_bottom = -4.0
 theme = SubResource("theme_Today")
-theme_override_constants/separation = 0
+theme_override_constants/separation = -16
 
 [node name="Title" type="Label" parent="Today/Page/List"]
 text = "TODAY:"
 
 [node name="Item0" type="HBoxContainer" parent="Today/Page/List"]
-theme_override_constants/separation = 11
+theme_override_constants/separation = 7
 
 [node name="Box" type="TextureRect" parent="Today/Page/List/Item0"]
-custom_minimum_size = Vector2(39, 39)
+custom_minimum_size = Vector2(45, 45)
 size_flags_vertical = 4
 texture = ExtResource("box")
 expand_mode = 1
@@ -228,7 +228,7 @@ offset_left = 2.0
 offset_top = -6.0
 offset_right = 8.0
 offset_bottom = 0.0
-pivot_offset = Vector2(22.5, 22.5)
+pivot_offset = Vector2(25.5, 25.5)
 texture = ExtResource("tick")
 expand_mode = 1
 stretch_mode = 5
@@ -238,14 +238,14 @@ size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-autowrap_mode = 3
+autowrap_mode = 0
 text = "Mop kitchen floor"
 
 [node name="Item1" type="HBoxContainer" parent="Today/Page/List"]
-theme_override_constants/separation = 11
+theme_override_constants/separation = 7
 
 [node name="Box" type="TextureRect" parent="Today/Page/List/Item1"]
-custom_minimum_size = Vector2(39, 39)
+custom_minimum_size = Vector2(45, 45)
 size_flags_vertical = 4
 texture = ExtResource("box")
 expand_mode = 1
@@ -260,7 +260,7 @@ offset_left = 2.0
 offset_top = -6.0
 offset_right = 8.0
 offset_bottom = 0.0
-pivot_offset = Vector2(22.5, 22.5)
+pivot_offset = Vector2(25.5, 25.5)
 texture = ExtResource("tick")
 expand_mode = 1
 stretch_mode = 5
@@ -270,14 +270,14 @@ size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-autowrap_mode = 3
+autowrap_mode = 0
 text = "Be a functional human"
 
 [node name="Item2" type="HBoxContainer" parent="Today/Page/List"]
-theme_override_constants/separation = 11
+theme_override_constants/separation = 7
 
 [node name="Box" type="TextureRect" parent="Today/Page/List/Item2"]
-custom_minimum_size = Vector2(39, 39)
+custom_minimum_size = Vector2(45, 45)
 size_flags_vertical = 4
 texture = ExtResource("box")
 expand_mode = 1
@@ -292,7 +292,7 @@ offset_left = 2.0
 offset_top = -6.0
 offset_right = 8.0
 offset_bottom = 0.0
-pivot_offset = Vector2(22.5, 22.5)
+pivot_offset = Vector2(25.5, 25.5)
 texture = ExtResource("tick")
 expand_mode = 1
 stretch_mode = 5
@@ -302,14 +302,14 @@ size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-autowrap_mode = 3
+autowrap_mode = 0
 text = "Pet the cat/kind of"
 
 [node name="Item3" type="HBoxContainer" parent="Today/Page/List"]
-theme_override_constants/separation = 11
+theme_override_constants/separation = 7
 
 [node name="Box" type="TextureRect" parent="Today/Page/List/Item3"]
-custom_minimum_size = Vector2(39, 39)
+custom_minimum_size = Vector2(45, 45)
 size_flags_vertical = 4
 texture = ExtResource("box")
 expand_mode = 1
@@ -324,7 +324,7 @@ offset_left = 2.0
 offset_top = -6.0
 offset_right = 8.0
 offset_bottom = 0.0
-pivot_offset = Vector2(22.5, 22.5)
+pivot_offset = Vector2(25.5, 25.5)
 texture = ExtResource("tick")
 expand_mode = 1
 stretch_mode = 5
@@ -334,15 +334,15 @@ size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-autowrap_mode = 3
+autowrap_mode = 0
 text = "It's okay. :)"
 
 [node name="Item4" type="HBoxContainer" parent="Today/Page/List"]
 visible = false
-theme_override_constants/separation = 11
+theme_override_constants/separation = 7
 
 [node name="Box" type="TextureRect" parent="Today/Page/List/Item4"]
-custom_minimum_size = Vector2(39, 39)
+custom_minimum_size = Vector2(45, 45)
 size_flags_vertical = 4
 texture = ExtResource("box")
 expand_mode = 1
@@ -357,7 +357,7 @@ offset_left = 2.0
 offset_top = -6.0
 offset_right = 8.0
 offset_bottom = 0.0
-pivot_offset = Vector2(22.5, 22.5)
+pivot_offset = Vector2(25.5, 25.5)
 texture = ExtResource("tick")
 expand_mode = 1
 stretch_mode = 5
@@ -367,15 +367,15 @@ size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-autowrap_mode = 3
+autowrap_mode = 0
 text = ""
 
 [node name="Item5" type="HBoxContainer" parent="Today/Page/List"]
 visible = false
-theme_override_constants/separation = 11
+theme_override_constants/separation = 7
 
 [node name="Box" type="TextureRect" parent="Today/Page/List/Item5"]
-custom_minimum_size = Vector2(39, 39)
+custom_minimum_size = Vector2(45, 45)
 size_flags_vertical = 4
 texture = ExtResource("box")
 expand_mode = 1
@@ -390,7 +390,7 @@ offset_left = 2.0
 offset_top = -6.0
 offset_right = 8.0
 offset_bottom = 0.0
-pivot_offset = Vector2(22.5, 22.5)
+pivot_offset = Vector2(25.5, 25.5)
 texture = ExtResource("tick")
 expand_mode = 1
 stretch_mode = 5
@@ -400,7 +400,7 @@ size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-autowrap_mode = 3
+autowrap_mode = 0
 text = ""
 
 [node name="Ink" type="MeshInstance3D" parent="Today"]

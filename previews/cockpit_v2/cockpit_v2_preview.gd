@@ -58,7 +58,9 @@ func _ready() -> void:
 	task = Label3D.new()
 	task.text = 'TASK: Mop the\nkitchen floor\n(again...)'
 	task.rotation_degrees = Vector3(-10, 25, 0)
-	task.position = Vector3(-0.74, 1.0, -0.12) + task.basis * Vector3(0.025, -0.012, 0.006)
+	var paper := find_child('TaskNote', true, false) as MeshInstance3D   # placed like the game: on the paper's centre
+	var centre := paper.global_transform * paper.get_aabb().get_center()
+	task.position = centre + (camera.position - centre).normalized() * 0.02 + task.basis.y * 0.01
 	task.pixel_size = 0.0004
 	task.font_size = 40
 	task.outline_size = 0

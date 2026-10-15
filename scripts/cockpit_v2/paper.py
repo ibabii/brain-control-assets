@@ -267,7 +267,7 @@ def notes(parent):
 
     # Task note: blank paper; gameplay writes the task on it (same transform as the game TaskNote).
     tf = Frame((-0.74, 1.0, -0.12), (-10, 25, 0))
-    f, w, h = frame_from([(267, 520), (420, 492), (447, 582), (295, 612)], (tf.o, tf.dir((0, 0, 1))))
+    f, w, h = frame_from([(344, 520), (497, 492), (524, 582), (372, 612)], (tf.o, tf.dir((0, 0, 1))))   # +77 px: clear of the notebook
     o = sticky('TaskNote', f, w, h, YELLOW, g, 11, curl=0.002)
     o['gameplay'] = 'TaskNote paper: game Label goes on top, same transform as game TaskNote'
     return g
@@ -280,40 +280,65 @@ def _wall_depth(px, py, gap):
 
 # --- notebook with the TODAY list --------------------------------------------------------------------
 
+NB_PAGE = (6, 590, 356, 960)    # TODAY page on screen, 1920x1080 px from the seat: left of the TaskNote, above the sleeve
+NB_CAP = 22.5                    # cap height in px at 1080p (15 px on the Steam Deck, game-ux)
+NB_SQUEEZE = 0.78                # glyph width factor (Patrick Hand is wide): ~22 chars fit one row
+NB_GAP = -0.3                    # row gap in em: rows at 1.07 em instead of the font's 1.37
+ROWS = 7                         # title + 6 items
+TRAY_TOP = 0.89
+
+
 def notebook(parent):
-    g = lib.empty('Notebook', (-0.1, 0.9, 0.3), parent)
-    y = 0.905
-    ground = (Vector((0, y, 0)), Vector((0, 1, 0)))
-    f, w, h = frame_from([(615, 795), (900, 772), (962, 941), (600, 941)], ground, shrink=1.0)
-    f.o += Vector((0, 0, 0.055))                       # clear of the console lip
-    ext = 0.08                     # the page runs past the concept's bottom edge
-    h += ext
-    f.o = f.at((0, -ext / 2, 0))
+    """TODAY notebook propped on a wooden stand at the tray's left end, square to the view (2026-10-15, user pick B:
+    the flat page was cut off at 16:9). Sized so all seven rows read at NB_CAP."""
+    k = lib.CH / 1080
+    x0, y0, x1, y1 = (v * k for v in NB_PAGE)
+    n = -lib.FWD                       # parallel to the screen: even scale across the page (no edge stretch)
+    cw, ch = 0.04, 0.03                                           # cover margin around the page
+    lift = 0.0
+    for _ in range(2):                                            # cover bottom rests on the stand foot
+        base = lib.unproject((x0 + x1) / 2, y1, (Vector((0, TRAY_TOP + 0.012 + lift, 0)), Vector((0, 1, 0))))
+        f, w, h = frame_from([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], (base, n), shrink=1.0)
+        lift += TRAY_TOP + 0.012 - f.at((0, -h / 2 - ch / 2, -0.0145)).y
+    g = lib.empty('Notebook', tuple(f.o), parent)
     cover = lib.mat('NotebookCover', '#C9786A', 0.7)
-    lib.slab('Cover', lib.rrect(w + 0.05, h + 0.025, 0.01, 3), 0.014, 0.003, cover, f.child((-0.01, 0, -0.0145)), g)
+    lib.slab('Cover', lib.rrect(w + cw, h + ch, 0.01, 3), 0.014, 0.003, cover, f.child((-0.014, 0, -0.0145)), g)
     lib.slab('PageBlock', lib.rrect(w, h, 0.004, 2), 0.0035, 0.001, lib.mat('PageBlock', '#E9DCC6', 0.85),
              f.child((0, 0, -0.0045)), g)
+    # Text block: rows at NB_CAP from the seat (cap = 0.5 em in Patrick Hand).
+    em = 2 * NB_CAP * k * 2 * lib.TY * (f.o - lib.CAM).dot(lib.FWD) / lib.CH     # uniform px/m on this plane
+    pitch = (1.37 + NB_GAP) * em
+    mt, ml, mr = 0.006, 0.008, 0.004
+    lh, lw = ROWS * pitch, w - ml - mr
+    print('NOTEBOOK page %.3f x %.3f m, em %.4f, rows %.3f of %.3f' % (w, h, em, lh, h - 2 * mt))
     c = ink.paper(*tex_size(w, h, 1.6), '#F6EEDD', 12, grain=0.025)
-    ink.ruled(c, 0.082, top=0.86, margin=0.1)
+    top = 1 - (mt + 1.1 * em) / h                                 # first rule under the title baseline
+    ink.ruled(c, pitch / h, top=top, bottom=0.02, margin=None)
     blue, pink = '#3F5FA8', '#D45C8A'
-    ink.cat(c, (0.82, 0.74), 0.13, blue)
-    ink.heart(c, (0.7, 0.86), 0.06, blue)
-    ink.star(c, (0.94, 0.9), 0.06, blue)
-    ink.rainbow(c, (0.8, 0.44), 0.18)
-    ink.star(c, (0.66, 0.36), 0.06, blue)
-    ink.heart(c, (0.95, 0.56), 0.05, pink)
+    ink.cat(c, (0.8, 1 - (mt + 0.55 * em) / h), 0.07, blue)       # doodles beside the short title only
+    ink.heart(c, (0.62, 1 - (mt + 0.5 * em) / h), 0.035, pink)
+    ink.star(c, (0.94, 1 - (mt + 0.45 * em) / h), 0.035, blue)
     sheet('Page', f, w, h, paper_mat('TodayPage', c), g, thick=0.0004, curl=0.0, corner=0.002, nx=12, ny=12)
     # Spiral binding along the left edge.
     steel = lib.mat('Spiral', '#9AA1A3', 0.35, 0.8)
-    n = 11
-    for k in range(n):
-        yy = (k + 0.5) / n - 0.5
+    rings = 11
+    for i in range(rings):
+        yy = (i + 0.5) / rings - 0.5
         ring = [f.at((-w / 2 - 0.012 + 0.016 * math.cos(a), yy * h, 0.004 + 0.011 * math.sin(a)))
                 for a in np.linspace(-0.6, math.pi + 0.3, 9)]
-        lib.tube('Ring%02d' % k, ring, 0.0016, steel, g, res=3, bevel_res=1)
-    SLOTS['Today'] = {'kind': 'list', 'position': list(f.at((-w * 0.12, 0.0, 0.0008))),
-                      'basis': [list(f.m.col[i]) for i in range(3)], 'size': [w * 0.7, h * 0.8],
-                      'line_height': 0.082 * h, 'ink': '#26405E', 'align': 'left',
+        lib.tube('Ring%02d' % i, ring, 0.0016, steel, g, res=3, bevel_res=1)
+    # Stand: flat foot on the tray with a front lip, back board, wire strut.
+    wood = lib.mat('NotebookStand', '#B5835A', 0.6)
+    bottom = f.at((-0.014, -h / 2 - ch / 2, -0.0145))
+    ff = Frame((bottom.x, TRAY_TOP, bottom.z))
+    lib.box('StandFoot', (w + 0.07, 0.012, 0.06), wood, ff.child((0, 0.006, -0.01)), g, bevel=0.002)   # clear of the console front
+    lib.box('StandLip', (w + 0.07, 0.016, 0.012), wood, ff.child((0, 0.012 + 0.008, 0.026)), g, bevel=0.002)
+    lib.box('StandBoard', (w + 0.03, h * 0.75, 0.008), wood, f.child((-0.014, -h * 0.1, -0.0145 - 0.0045)), g, bevel=0.002)
+    lib.tube('StandStrut', [f.at((-0.014, h * 0.02, -0.024)), ff.at((0, 0.012, -0.035))], 0.004,
+             lib.mat('StandWire', '#3B3A36', 0.4, 0.7), g, res=3)
+    SLOTS['Today'] = {'kind': 'list', 'position': list(f.at((-w / 2 + ml + lw / 2, h / 2 - mt - lh / 2, 0.0008))),
+                      'basis': [list(f.m.col[i]) for i in range(3)], 'size': [lw, lh],
+                      'line_height': pitch, 'row_gap': NB_GAP, 'squeeze': NB_SQUEEZE, 'ink': '#26405E', 'align': 'left',
                       'default': {'title': 'TODAY:', 'items': [
                           {'text': 'Mop kitchen floor', 'done': True},
                           {'text': 'Be a functional human', 'done': False},

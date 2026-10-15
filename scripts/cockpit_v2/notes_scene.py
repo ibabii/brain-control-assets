@@ -11,6 +11,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DIR = 'res://cockpit/art/notes/'
 FONT_SIZE = 64
 EM = 1.18                 # Patrick Hand line height / em
+FONT_H = 1.37             # Patrick Hand font height / em (a Label row; lists with row_gap pack rows tighter)
 ITEMS = 6
 
 
@@ -56,9 +57,10 @@ def write(slots):
                       'width = %.1f' % (s['size'][0] / px), '']
         else:
             w, h = s['size']
-            vw, vh = 512, int(round(512 * h / w))
+            gap, squeeze = s.get('row_gap'), s.get('squeeze', 1.0)
+            vw, vh = 512, int(round(512 * h / w * squeeze))       # squeeze < 1: glyphs drawn narrower on the paper
             line = s['line_height'] / h * vh
-            fs = int(line / EM)
+            fs = int(line / (FONT_H + gap)) if gap is not None else int(line / EM)
             subs += ['[sub_resource type="Theme" id="theme_%s"]' % id,
                      'default_font = ExtResource("font")',
                      'default_font_size = %d' % fs,
@@ -83,7 +85,8 @@ def write(slots):
                       '[node name="List" type="VBoxContainer" parent="%s/Page"]' % id,
                       'anchors_preset = 15', 'anchor_right = 1.0', 'anchor_bottom = 1.0',
                       'offset_left = 10.0', 'offset_top = 4.0', 'offset_right = -6.0', 'offset_bottom = -4.0',
-                      'theme = SubResource("theme_%s")' % id, 'theme_override_constants/separation = 0', '',
+                      'theme = SubResource("theme_%s")' % id,
+                      'theme_override_constants/separation = %d' % round((gap or 0) * fs), '',
                       '[node name="Title" type="Label" parent="%s/Page/List"]' % id,
                       'text = %s' % _str(d['title']), '']
             for i in range(ITEMS):
@@ -93,7 +96,7 @@ def write(slots):
                 nodes += ['[node name="Item%d" type="HBoxContainer" parent="%s/Page/List"]' % (i, id)]
                 if i >= len(d['items']):
                     nodes.append('visible = false')
-                nodes += ['theme_override_constants/separation = %d' % int(fs * 0.25), '',
+                nodes += ['theme_override_constants/separation = %d' % int(fs * (0.15 if gap is not None else 0.25)), '',
                           '[node name="Box" type="TextureRect" parent="%s"]' % p,
                           'custom_minimum_size = Vector2(%d, %d)' % (box, box),
                           'size_flags_vertical = 4', 'texture = ExtResource("box")',
@@ -107,7 +110,7 @@ def write(slots):
                           'texture = ExtResource("tick")', 'expand_mode = 1', 'stretch_mode = 5', '',
                           '[node name="Text" type="RichTextLabel" parent="%s"]' % p,
                           'size_flags_horizontal = 3', 'bbcode_enabled = true', 'fit_content = true',
-                          'scroll_active = false', 'autowrap_mode = 3',
+                          'scroll_active = false', 'autowrap_mode = %d' % (0 if gap is not None else 3),   # packed list: one row each
                           'text = %s' % _str(item['text']), '']
             nodes += ['[node name="Ink" type="MeshInstance3D" parent="%s"]' % id,
                       'cast_shadow = 0', 'mesh = SubResource("quad_%s")' % id,

@@ -293,9 +293,11 @@ def desk_props(parent):
     g = lib.empty('DeskProps', (0, 0.9, 0), parent)
     y = 0.865
     base, w, h = on_ground((182, 586, 332, 818), y, 0.95)
-    props.can('BrainFuel', seat(Vector((-0.81, 0, 0.17))), h, g)
+    # The TODAY notebook stand took the left desk front (2026-10-15): the can moves back left (seen on ultrawide),
+    # the donut beside it (both seen on ultrawide).
+    props.can('BrainFuel', seat(Vector((-0.95, 0, 0.12))), h, g)
     base, w, h = on_ground((22, 766, 246, 900), y, 0.86)
-    props.donut('Donut', seat(base + Vector((-0.03, 0, 0.06))), w, g)
+    props.donut('Donut', seat(Vector((-1.0, 0, 0.3))), w, g)
     base, w, h = on_ground((1472, 702, 1615, 905), y, 0.95)
     props.mug('Mug', seat(Vector((0.6, 0, 0.3))), h * 0.8, g)
     base, w, h = on_ground((1352, 600, 1662, 735), 0.93)
