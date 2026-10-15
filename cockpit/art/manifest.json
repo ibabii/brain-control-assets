@@ -10,7 +10,7 @@
     "note_defaults": "cockpit/art/notes/notes_text.json",
     "font": "cockpit/art/notes/fonts/PatrickHand-Regular.ttf (SIL OFL 1.1, OFL.txt alongside)"
   },
-  "model_sha256": "9159e55e1a58c1a1e5cc903fe7a4e5569b2907f88c9f15387d47e9db60707432",
+  "model_sha256": "fde471c0542a45c76c426634b9d8866cd62b9f1966a28ad0c24e851343483613",
   "triangles": 307080,
   "source": "source/cockpit/cockpit_v2.blend",
   "rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build.py",

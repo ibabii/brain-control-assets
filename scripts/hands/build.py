@@ -834,6 +834,14 @@ def clips(rig, hand, objs):
     up = dict(name='flat', wrist=(55, 0, 0), loc=(0, -0.02, 0.08))
     C['idle_wave'] = [(0, rel), (0.4, up)] + [(0.7 + i * 0.3, dict(up, wrist=(55, 0, 20 if i % 2 == 0 else -20)))
                                               for i in range(4)] + [(1.9, up), (2.2, rel)]
+    # Swat at a fly (gameplay spawns it): lift, swing left-right with the flat hand, slap the tray, settle.
+    swing = dict(name='flat', wrist=(35, 0, 0), loc=(0, -0.02, 0.11))
+    sw = [(0.28, swing)]
+    for i, (dx, yaw) in enumerate(((0.05, -32), (-0.05, 32), (0.06, -36), (-0.03, 26))):
+        sw.append((0.4 + i * 0.13, dict(swing, wrist=(30, 0, yaw), loc=(dx, -0.02, 0.12 + 0.01 * (i % 2)))))
+    slap = dict(name='flat', wrist=(-6, 0, 0), loc=(0.02, 0.01, 0.002))
+    C['idle_swat'] = [(0, rel)] + sw + [(1.04, dict(swing, loc=(0.02, 0.0, 0.13))), (1.12, slap), (1.5, slap),
+                                         (1.9, rel)]
     return C, P
 
 

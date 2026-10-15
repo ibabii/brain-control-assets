@@ -4,7 +4,7 @@ extends SceneTree
 ## godot --headless --path . -s scripts/hands/check_hand_rig.gd
 
 const CLIPS := ["relaxed", "grip", "grip_tight", "grip_yank", "idle_hover_ripple", "idle_hover_tap",
-	"idle_grip_thumbtap", "idle_grip_drum", "idle_rest", "idle_drum", "idle_stretch", "idle_nails", "idle_wave"]
+	"idle_grip_thumbtap", "idle_grip_drum", "idle_rest", "idle_drum", "idle_stretch", "idle_nails", "idle_wave", "idle_swat"]
 const TYPES := ["finger", "fingers", "palm", "fist"]
 const TOL := 0.0015
 

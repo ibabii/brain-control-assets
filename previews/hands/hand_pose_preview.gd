@@ -34,7 +34,7 @@ func _place(side: String, clip: String, target: Vector3, frac: float) -> void:
 	var offset: Vector3 = hand.global_transform.affine_inverse() * hand.find_child(marker, true, false).global_position
 	hand.global_position = target - hand.global_basis * offset
 	var rest := get_parent().find_child("HandRest_" + side.to_upper(), true, false) as Marker3D
-	if rest and (clip == "relaxed" or clip in ["idle_rest", "idle_drum", "idle_stretch", "idle_nails", "idle_wave"]):
+	if rest and (clip == "relaxed" or clip in ["idle_rest", "idle_drum", "idle_stretch", "idle_nails", "idle_wave", "idle_swat"]):
 		hand.global_transform = rest.global_transform             # away idles: wrist on the desk rest spot
 	anim.play(clip)
 	anim.seek(anim.get_animation(clip).length * frac, true)

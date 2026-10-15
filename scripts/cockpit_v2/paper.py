@@ -138,7 +138,8 @@ def pin(name, f, pos, color, parent, depth):
 def slot(id, f, w, h, box, text, ink_col, size, align='center', kind='label'):
     """Register a text slot: `box` = (u0, v0, u1, v1) of the paper, `size` = line height as a fraction of h."""
     u0, v0, u1, v1 = box
-    c = f.at(((u0 + u1 - 1) / 2 * w, (v0 + v1 - 1) / 2 * h, 0.0008))
+    cx = (u0 - 0.5) * w if align == 'left' and kind == 'label' else (u0 + u1 - 1) / 2 * w   # Label3D left = origin
+    c = f.at((cx, (v0 + v1 - 1) / 2 * h, 0.0008))
     SLOTS[id] = {'kind': kind, 'position': list(c), 'basis': [list(f.m.col[i]) for i in range(3)],
                  'size': [(u1 - u0) * w, (v1 - v0) * h], 'line_height': size * h, 'ink': ink_col,
                  'align': align, 'default': text}
