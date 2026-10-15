@@ -930,8 +930,8 @@ def export(root, path, at_origin):
     if at_origin:
         root.matrix_world = Matrix.Identity(4)                      # prop root = its pivot
     bpy.context.view_layer.update()
-    for o in bpy.data.objects:
-        o.select_set(o == root or o in root.children_recursive)
+    for o in bpy.data.objects:                                      # props: children only, so the named parts are
+        o.select_set((o == root and not at_origin) or o in root.children_recursive)    # direct children of the scene root
     bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', export_yup=True, use_selection=True,
                               export_cameras=False, export_lights=False, export_image_format='AUTO')
 
