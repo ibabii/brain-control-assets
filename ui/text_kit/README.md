@@ -14,7 +14,8 @@ Built by `scripts/text_kit/build.py` (Blender headless). Contract: `coordination
 **Reveal lower-third:**
 - `lower_third_bar.png`: 512 × 112. As a NinePatchRect, use left margin 120, right 40, top and bottom 0, so it stretches horizontally only.
   - The portrait disc is centred at (58, 62), with room for an icon up to 88 px. Put the matching `icon_*` on it at about 84 px.
-  - Name text: Patrick Hand caps, cream `#F4ECDC`, in the teal area at x 130 to (width − 48), vertically centred at y 66.
+  - Text is the commentary LINE (≤40 chars), not a name; the portrait disc says who. Use Patrick Hand caps, font size 40 (cap ≈20 px at 1080p), cream `#F4ECDC`, in the teal area from x 130 to (width − 48), vertically centred at y 66.
+  - Stretch the bar to fit. A 40-char line is about 475 px, so a bar of about 760 px wide works. See `preview_lower_third.png` (1:1, 1080p pixels).
 - Icons are 128 px with straight alpha and read at 64 px. All four use the same shapes and lit colours as the intercom lamps (brain peach `#EAA78B`): `icon_heart.png`, `icon_stomach.png`, `icon_brain.png` and `icon_gary.png`. 
 
 **Intercom display glyphs:** `cockpit/art/intercom/dotmatrix_5x7.json` (see the intercom section of the contract).

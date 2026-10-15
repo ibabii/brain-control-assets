@@ -210,6 +210,7 @@ def build_icons():
 
 # --- lower-third ---------------------------------------------------------------------------------------
 
+LT_EM = 40            # commentary line em (px at 1080p): caps ~21 px; 40 chars fill ~490 px of a 760 px bar
 LT = (512, 112)       # 9-slice: left 120 (portrait slot), right 40, top/bottom 0 (stretch horizontally only)
 
 
@@ -282,10 +283,8 @@ def preview():
     lt = load('lower_third_bar.png')
     paste(sheet, lt, 640, 60)
     paste(sheet, load('icon_heart.png'), 640 + 18, 60 + 22, 0.66, 0.66)
-    ink.text(sheet, 'HEART', (900 / 1200, 1 - 128 / 560), 46 / 560, '#F4ECDC', weight=1.0)
     paste(sheet, lt, 640, 200)
     paste(sheet, load('icon_stomach.png'), 640 + 18, 200 + 22, 0.66, 0.66)
-    ink.text(sheet, 'STOMACH', (920 / 1200, 1 - 268 / 560), 46 / 560, '#F4ECDC', weight=1.0)
     for i, n in enumerate(('heart', 'stomach', 'brain', 'gary')):
         ic = load('icon_%s.png' % n)
         paste(sheet, ic, 30 + i * 205, 380)
@@ -296,6 +295,19 @@ def preview():
     ink.text(sheet, 'OK. I GOT THIS.', (1010 / 1200, 1 - 395 / 560), 40 / 560, INK, weight=1.0)
     sheet.a[:] = 1
     save(sheet, 'preview_sheet.png')
+    # Lower-third at 1:1 (1080p pixels): bar stretched to 760 px, a 40-char commentary line, no name.
+    lt3 = ink.Canvas(800, 140, '#DCCFB8')
+    bar = load('lower_third_bar.png')
+    xs = np.concatenate([np.arange(120), np.linspace(120, bar.w - 41, 760 - 160).astype(int), np.arange(bar.w - 40, bar.w)])
+    wide = blank(760, bar.h)
+    wide.rgb, wide.a = bar.rgb[:, xs], bar.a[:, xs]
+    paste(lt3, wide, 20, 14)
+    paste(lt3, load('icon_heart.png'), 20 + 16, 14 + 20, 0.66, 0.66)
+    line = 'FIVE STARS FOR EFFORT. ZERO FOR THE MOP.'
+    assert len(line) == 40
+    ink.text(lt3, line, ((20 + 132 + 760 - 48) / 2 / 800, 1 - (14 + 66) / 140), LT_EM / 140, '#F4ECDC', weight=0.6)
+    lt3.a[:] = 1
+    save(lt3, 'preview_lower_third.png')
 
 
 os.makedirs(OUT, exist_ok=True)
