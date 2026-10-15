@@ -58,3 +58,5 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
 
 - `../coordination/interfaces.md` holds the hooks agreed with gameplay: control hooks, note text slots, Hand art, Fly.
 - Changing names, anchors or axes needs gameplay's agreement first; propose by SendMessage and record it there.
+- Gameplay replies to a SYNC line in one report: commits, per-folder checksums, reimport errors, one seat-view contact sheet (16:9 / 4:3 / 21:9), smoke test counts, local changes to upstream.
+- To see art in a live gameplay moment (a press, the swat, a reveal), ask game-mechanics for a probe scenario. Their `-- --probe` + `tools/probe.py` pauses on an exact condition and shoots crops; don't guess timings yourself.
