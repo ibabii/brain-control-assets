@@ -2,7 +2,7 @@ extends Node3D
 ## Bathroom look-dev with the game's greybox lights: room + props at layout.json, a stand-in mirror (SSR),
 ## optionally the Human at the `human` mark and every hidden effect shown.
 ## godot --path . res://previews/bathroom/bathroom_preview.tscn -- --capture NAME [--size 1200x675]
-##   [--human] [--fx] [--shots "name@eye@look[@fov];..."]   (2-column contact sheet in screenshots/NAME.png)
+##   [--human] [--fx] [--fall --t 3] [--shots "name@eye@look[@fov];..."]   (2-column contact sheet in screenshots/NAME.png)
 ## Named views: fp (first-person at the sink), reveal (game reveal mark), door, mirror (from the glass back).
 
 const VIEWS := {
@@ -46,6 +46,12 @@ func _ready() -> void:
 		add_child(human)
 		for n in ['Open', 'Tongue', 'Teeth', 'Grimace', 'GrimaceLine', 'BlushL', 'BlushR']:
 			human.find_child(n, true, false).visible = false
+	if '--fall' in args:                                # rigged Human tipping toward the tub, ragdoll on
+		var fh: Node3D = load('res://human/art/human.tscn').instantiate()
+		fh.position = Vector3(-0.55, 0, 0.75)
+		fh.rotation_degrees = Vector3(0, 0, 12)
+		add_child(fh)
+		_drop.call_deferred(fh)
 	camera = Camera3D.new()
 	camera.near = 0.02
 	add_child(camera)
@@ -54,6 +60,11 @@ func _ready() -> void:
 	var ci := args.find('--capture')
 	if ci >= 0:
 		_capture(args[ci + 1])
+
+
+func _drop(h: Node3D) -> void:
+	await get_tree().physics_frame
+	h.get_node('Rig/Skeleton/Ragdoll').physical_bones_start_simulation()
 
 
 func _lights() -> void:
@@ -126,6 +137,8 @@ func _capture(name: String) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 	for n in 10:
 		await get_tree().process_frame
+	if '--t' in args:
+		await get_tree().create_timer(float(args[args.find('--t') + 1])).timeout
 	var spec := 'fp;reveal;door;mirror'
 	var sh := args.find('--shots')
 	if sh >= 0:

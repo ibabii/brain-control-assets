@@ -18,6 +18,8 @@ import lib  # noqa: E402
 from lib import B, G, Frame  # noqa: E402
 from sculpt import (meta, ell, cap, ball, chain, solid, adopt, Surface, decal, on_curve,  # noqa: E402
                     godot_rot)
+sys.path.insert(0, os.path.dirname(__file__))
+import rig as R  # noqa: E402
 SKIN, NAIL = '#F2A99A', '#F5BCAE'          # same skin as the brain's hands
 HAIR, BROW = '#6A4636', '#573729'
 INK, TONGUE, BLUSH = '#4E2629', '#D9787A', '#E58F86'
@@ -37,8 +39,11 @@ ELBOW = SHOULDER + Vector((math.sin(math.radians(12)), -math.cos(math.radians(12
 FORE = Vector((0.12, -1.0, -0.22)).normalized()
 WRIST = ELBOW + FORE * 0.24
 HIP = Vector((0.10, 0.82, 0.0))
-KNEE = Vector((0.118, 0.46, -0.012))
-ANKLE = Vector((0.135, 0.15, 0.0))
+KNEE = Vector((0.118, 0.46, -0.02))                # a little forward: knees bend the right way for IK
+ANKLE = Vector((0.135, 0.15, 0.0))                 # trouser cuff
+ANKLE_J = Vector((0.135, 0.095, 0.0))              # ankle joint inside the shoe collar
+LANDMARKS = dict(SHOULDER=SHOULDER, ELBOW=ELBOW, WRIST=WRIST, FORE=FORE, HIP=HIP, KNEE=KNEE, ANKLE=ANKLE,
+                 ANKLE_J=ANKLE_J, EYE_Y=EYE_Y)
 
 
 def mirror(v, s):
@@ -118,6 +123,7 @@ def top(cw):
         cap(sl, sh, el, 0.063)
         cap(sl, el, wr - mirror(FORE, s) * 0.105, 0.058)            # rounded end stops short of the cuff
         fams.append(sl)
+    R.PARTS['top'] = {'body': R.meta_tree(body), 'L': R.meta_tree(fams[1]), 'R': R.meta_tree(fams[2])}
     return solid('Top', fams, 0.006, 5000, lib.mat('Top' + cw['top'][1:], cw['top'], 0.9))
 
 
@@ -131,6 +137,7 @@ def pants(cw):
         cap(lg, h, k, 0.084)
         cap(lg, k, a + Vector((0, 0.07, 0)), 0.076)                # rounded end hides inside the cuff
         fams.append(lg)
+    R.PARTS['pants'] = {'body': R.meta_tree(pel), 'L': R.meta_tree(fams[1]), 'R': R.meta_tree(fams[2])}
     return solid('Pants', fams, 0.006, 3500, lib.mat('Pants' + cw['pants'][1:], cw['pants'], 0.88))
 
 
@@ -236,14 +243,41 @@ def hands(parent):
         o_ = (o_ - d * o_.dot(d)).normalized()                          # back of the hand faces out
         M = Matrix((o_.cross(-d), o_, -d)).transposed()                 # columns: local x, y (back), z (sleeve)
         wr = mirror(WRIST, s)
+        place = lambda v: wr + M @ (G(v) * HAND_SCALE)
+        # Finger bones from the brain hand's relaxed pose (the mesh is baked in the same pose).
+        arm = next(x for x in new if x.type == 'ARMATURE')
+        aw = arm.matrix_world
+        side_n = R.side_name(s)
+        R.HAND_BONES[s] = []
+        for pb in arm.pose.bones:
+            hname = R.BRAIN_TO_HUMAN.get(pb.name)
+            if hname is None or pb.name in ('forearm', 'wrist'):
+                continue
+            up = M @ G(aw.to_3x3() @ (pb.matrix.to_3x3() @ Vector((0, 0, 1))))
+            R.HAND_BONES[s].append((hname, place(aw @ pb.head), place(aw @ pb.tail), up.normalized(), None))
         for src, m, nm in (('Hand', skin, 'Hand'), ('Nails', nail, 'Nails')):
             o = next(x for x in new if x.name.startswith(src))
             me = bpy.data.meshes.new_from_object(o.evaluated_get(dg))
             bm = bmesh.new()
             bm.from_mesh(me)
+            dl = bm.verts.layers.deform.active
+            gnames = [g.name for g in o.vertex_groups]
+            ws = []
             for v in bm.verts:
-                v.co = wr + M @ (G(o.matrix_world @ v.co) * HAND_SCALE)
+                w = {}
+                for gi, x in (v[dl].items() if dl else []):
+                    hn = side_n + R.BRAIN_TO_HUMAN.get(gnames[gi], 'Hand')
+                    w[hn] = w.get(hn, 0) + x
+                ws.append(w or {side_n + 'Hand': 1.0})
+                v.co = place(o.matrix_world @ v.co)
+            if dl:                                                     # old group indices would alias the new groups
+                bm.verts.layers.deform.remove(dl)
             h = lib.from_bmesh(nm + side.upper(), bm, m, parent, wr)
+            for i, w in enumerate(ws):                                 # groups before decimation (it keeps them)
+                tot = sum(w.values())
+                for k, x in w.items():
+                    g = h.vertex_groups.get(k) or h.vertex_groups.new(name=k)
+                    g.add([i], x / tot, 'REPLACE')
             if src == 'Hand':                                         # 6k -> 3k: small at mirror/reveal range
                 dec = h.modifiers.new('Dec', 'DECIMATE')
                 dec.ratio = 0.5
@@ -327,7 +361,7 @@ def build(cw_id):
     lib.reset()
     root = lib.empty('Human', (0, 0, 0))
     body = lib.empty('Body', (0, 0, 0), root)
-    head = lib.empty('Head', NECK, root)
+    head = lib.empty('Face', NECK, root)          # head parts (not 'Head': that is the bone)
     skin = adopt(head_skin(), head, NECK)
     hr = adopt(hair(skin), head, NECK)
     face(head, skin)
@@ -363,17 +397,63 @@ def build(cw_id):
           rings=5, depth=0.006)
     shoes(cw, body)
     hands(body)
+    rig_up(root, head)
     lib.count_tris()
     return root
 
 
+SKIN_KIND = [('Top', 'top', 4), ('Pants', 'pants', 4), ('HeadSkin', 'neck', 3), ('Hem', 'torso', 1),
+             ('Collar', 'torso', 1), ('Pocket', 'torso', 1), ('String', 'torso', 1), ('Aglet', 'torso', 0),
+             ('Cuff', 'lowerarm', 0), ('PantCuff', 'lowerleg', 0), ('Sole', 'foot', 0), ('Upper', 'foot', 0),
+             ('Lace', 'foot', 0), ('Stripe', 'foot', 0)]
+
+
+def rig_up(root, head):
+    """Humanoid skeleton, weights, head parts on the Head bone, clips (contract: interfaces.md "Human rig")."""
+    table = R.bone_table(LANDMARKS)
+    rig = R.armature(table, root)
+    for o in [x for x in bpy.data.objects if x.type == 'MESH']:
+        if o.name.startswith(('Hand', 'Nails')):
+            R.skin(o, [], rig)                                        # vertex groups already set in hands()
+            continue
+        kind = next(((k, n) for pre, k, n in SKIN_KIND if o.name.startswith(pre)), None)
+        if kind is None:                                              # hair and face parts ride the Head bone
+            continue
+        ws = R.weights_for(o, kind[0], LANDMARKS)
+        R.skin(o, R.smooth(o, ws, kind[1]) if kind[1] else ws, rig)
+    R.attach(head, rig, 'Head')
+    rig['clips'] = R.clips(rig)
+    body = bpy.data.objects.get('Body')
+    if body and not body.children:
+        bpy.data.objects.remove(body, do_unlink=True)
+    return rig
+
+
 def export(root, path):
-    hidden = [o for o in bpy.data.objects if o.get('hidden')]
-    for o in bpy.data.objects:
-        o.select_set(o == root or o in root.children_recursive)
-    lib.export_glb(filepath=path, export_format='GLB', export_yup=True, use_selection=True,
-                              export_cameras=False, export_lights=False, export_extras=True)
+    hidden = [o.name for o in bpy.data.objects if o.get('hidden')]
+    bpy.context.scene.render.fps, bpy.context.scene.render.fps_base = R.FPS, 1.0
+    for o in bpy.data.objects:                       # without the root empty: the scene root is the Human
+        o.select_set(o in root.children_recursive)
+    lib.export_glb(filepath=path, export_format='GLB', export_yup=True, use_selection=True, export_cameras=False,
+                   export_lights=False, export_extras=True, export_skins=True, export_animation_mode='NLA_TRACKS',
+                   export_force_sampling=True)
     return hidden
+
+
+def rig_json(path, hidden):
+    import json
+    table = R.bone_table(LANDMARKS)
+    s = lambda v: [round(x, 5) for x in v]
+    data = {'markers': R.markers(LANDMARKS), 'ragdoll': R.ragdoll(table), 'hidden': hidden, 'loops': ['idle'],
+            'render_layer': 2, 'ragdoll_layer': 2, 'ragdoll_mask': 1,
+            'ik': {side: {'arm': [side + 'UpperArm', side + 'LowerArm', side + 'Hand'],
+                          'leg': [side + 'UpperLeg', side + 'LowerLeg', side + 'Foot'],
+                          'elbow_pole': s(mirror(ELBOW, -1 if side == 'Left' else 1) + Vector((0, 0, 0.35))),
+                          'knee_pole': s(mirror(KNEE, -1 if side == 'Left' else 1) + Vector((0, 0, -0.45)))}
+                   for side in ('Left', 'Right')},
+            'bones': [b[0] for b in table]}
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=1)
 
 
 def main():
@@ -389,7 +469,8 @@ def main():
         export(root, os.path.join(out_prev, 'human_%s.glb' % cw_id))
         print('HUMAN %s tris=%d' % (cw_id, lib.count_tris()))
         if cw_id == 'A':
-            export(root, os.path.join(out_art, 'human.glb'))
+            hidden = export(root, os.path.join(out_art, 'human.glb'))
+            rig_json(os.path.join(out_art, 'human_rig.json'), hidden)
             os.makedirs(os.path.join(lib.ROOT, 'source', 'human'), exist_ok=True)
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(lib.ROOT, 'source', 'human', 'human.blend'))
     print('HUMAN_BUILT')

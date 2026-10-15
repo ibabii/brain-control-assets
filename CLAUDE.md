@@ -22,5 +22,5 @@ Blender source in `source/<asset>/*.blend` → GLB export to `<asset>/art/` → 
 - Hands: style locked 2026-10-14 (scripts/hands/build.py → hands/art/hand_[rl].glb + .tscn via import script hands/art/hand_import.gd; check scripts/hands/check_hand_rig.gd; preview previews/hands/hand_pose_preview.tscn with the cockpit preview --extra). Blockout clips delivered; next polish clips, then prop pick-ups.
 - Blender builds run headless (`Blender -b --factory-startup --python ...`); import by rescanning the assets editor via MCP, then capture with a separate Godot process.
 - Bathroom v1: 2026-10-15 scripted set + props (scripts/bathroom/, bathroom/art/, contract in interfaces.md "Bathroom"), audit clean; handed to gameplay.
-- Human: design blockout v1 2026-10-15 (docs/human_brief.md, scripts/human/build.py, previews/human/). Awaiting user review; rig after approval.
+- Human: design approved 2026-10-15 (colourway A for now). Rigged: humanoid skeleton, IK-ready, ragdoll (scripts/human/rig.py, human/art/human_import.gd, check scripts/human/check_human_rig.gd, preview previews/human/human_rig_preview.tscn). Next clips: get_up_back/front, sit_floor, sit_tub, faceplant.
 - Initial commit 8629283 pushed to origin/main.

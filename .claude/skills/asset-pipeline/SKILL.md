@@ -32,6 +32,7 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
    - tape lying on surfaces (tape_check.py)
    - the hand rig contract (check_hand_rig.gd)
    - the bathroom (scripts/bathroom/audit.py): clipping between assemblies, z-fighting, things standing on air
+   - the Human rig (scripts/human/check_human_rig.gd): contract, IK reach and poles, ragdoll drop (Jolt)
 5. **Look**, with one run and one image to read:
    ```
    scripts/tools/capture.sh review --size 1200x675 --shots "seat;caps@0.55,1.12,0.35@0.6,0.98,0.12;..."
@@ -61,6 +62,11 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
   (resolved nodes, meshes, materials, animations, floats rounded) is unchanged. Unchanged assets stay byte-identical,
   so gameplay skips reimporting them. Tape walks vary per build (BVH tie-breaking), so `conform_tapes` caches results
   in `source/cockpit/tape_cache.json`. Delete an entry, or the file, to re-roll a tape on purpose.
+- **Skeleton modifiers** (IK, ragdoll): their result is applied only for rendering. Read posed bones inside
+  `Skeleton3D.skeleton_updated`; `get_bone_global_pose` elsewhere returns the unmodified pose.
+- **Baking a skinned mesh:** remove the bmesh deform layer before writing new vertex groups. The old group indices
+  alias the new groups, which shredded the Human's fingers.
+- **Bone vs node names:** a node named like a bone (an empty called "Head") makes Godot rename the bone ("Head_2").
 - **Scene BVH:** build it from triangles (`to_mesh` + `calc_loop_triangles` → `BVHTree.FromPolygons`). Repeated `BMesh.from_mesh` silently drops meshes.
 - **Normals:** mesh normals are not reliably outward. Orient a nearest-point normal by the side you came from.
 - **Godot import:** scene import resamples clips at 30 fps unless `animation/fps=100`. Hit frames and wing beats need 100.

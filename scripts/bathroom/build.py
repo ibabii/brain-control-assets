@@ -942,6 +942,27 @@ def scene_file(path, glb_name, node_name):
                 '[node name="%s" instance=ExtResource("1")]\n' % (glb_name, node_name))
 
 
+def colliders():
+    """Simple boxes for the ragdoll (Collision: StaticBody3D, layer 1, mask 0, built by bathroom_room_import.gd)."""
+    w, d = XR - XL, ZF - ZB
+    cz = (ZB + ZF) / 2
+    tub_x, tub_z = -1.15, 0.55
+    side = (0.8 - 0.62) / 2
+    boxes = [('Floor', (0, -0.05, cz), (w, 0.1, d)), ('Ceiling', (0, H + 0.05, cz), (w, 0.1, d)),
+             ('WallBack', (0, H / 2, ZB - 0.05), (w, H, 0.1)), ('WallFront', (0, H / 2, ZF + 0.05), (w, H, 0.1)),
+             ('WallLeft', (XL - 0.05, H / 2, cz), (0.1, H, d)), ('WallRight', (XR + 0.05, H / 2, cz), (0.1, H, d)),
+             ('Vanity', (0, 0.435, -0.45), (0.96, 0.87, 0.5)),
+             ('TubFloor', (tub_x, 0.06, tub_z), (0.8, 0.12, 1.7)),
+             ('TubSideWall', (tub_x - 0.4 + side / 2, 0.275, tub_z), (side, 0.55, 1.7)),
+             ('TubSideRoom', (tub_x + 0.4 - side / 2, 0.275, tub_z), (side, 0.55, 1.7)),
+             ('TubHead', (tub_x, 0.275, tub_z - 0.85 + side / 2), (0.62, 0.55, side)),
+             ('TubFoot', (tub_x, 0.275, tub_z + 0.85 - side / 2), (0.62, 0.55, side)),
+             ('ToiletBowl', (1.2, 0.2, -0.3), (0.38, 0.42, 0.5)), ('ToiletTank', (1.2, 0.6, -0.6), (0.44, 0.4, 0.2)),
+             ('Etagere', (-1.28, 0.7, -0.55), (0.5, 1.4, 0.3)), ('Basket', (-1.27, 0.22, 2.3), (0.4, 0.44, 0.4)),
+             ('Bin', (1.36, 0.14, 0.3), (0.22, 0.28, 0.22))]
+    return [{'name': n, 'centre': [round(x, 4) for x in c], 'size': [round(x, 4) for x in sz]} for n, c, sz in boxes]
+
+
 def main():
     out = os.path.join(lib.ROOT, 'bathroom', 'art')
     os.makedirs(os.path.join(out, 'props'), exist_ok=True)
@@ -967,7 +988,7 @@ def main():
         r, info = build()
         info.update(node_position=list(PROPS[r.name]), tris=tris(r), file='props/%s.glb' % r.name)
         manifest['props'][r.name] = info
-    layout = {'props': {k: list(v) for k, v in PROPS.items()}, 'towel_bar': list(TOWEL_BAR),
+    layout = {'props': {k: list(v) for k, v in PROPS.items()}, 'towel_bar': list(TOWEL_BAR), 'colliders': colliders(),
               'lamp': [0, H, 0.4], 'mirror_glass': {'center': [0, 1.58, -0.665], 'size': [0.74, 0.6]}}
     os.makedirs(os.path.join(lib.ROOT, 'source', 'bathroom'), exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(lib.ROOT, 'source', 'bathroom', 'bathroom.blend'))
