@@ -235,9 +235,92 @@ def brush_loop(rig):
     return keys
 
 
-FULL_EXTRA = {'stumble': stumble, 'climb_out_tub': climb_out_tub}
+WALK = {'stride': 1.0, 'cycle': 1.0, 'speed': 1.0}       # m per full cycle (two steps), s, m/s
+
+
+def _foot(phase, side):
+    """Ankle (z, lift, pitch) of one foot at gait phase in [0, 1): stance first half (left), swing second half."""
+    half = WALK['stride'] / 4                               # foot travels +-half around the hips
+    u = (phase + (0.0 if side < 0 else 0.5)) % 1.0
+    if u < 0.5:                                             # stance: slides back under the body at walk speed
+        v = u / 0.5
+        z = -half + 2 * half * v
+        pitch = 15 * max(0.0, 1 - v / 0.15) - 25 * max(0.0, (v - 0.75) / 0.25)   # heel strike .. push-off
+        lift = 0.0
+    else:                                                   # swing: forward and up
+        v = (u - 0.5) / 0.5
+        e = v * v * (3 - 2 * v)
+        z = half - 2 * half * e
+        pitch = -25 + 40 * e
+        lift = 0.07 * math.sin(math.pi * v)
+    y = ANK + lift + (0.15 * math.sin(math.radians(-pitch)) if pitch < 0 else 0.06 * math.sin(math.radians(pitch)))
+    return z, y, pitch
+
+
+def walk_loop():
+    """In-place walk, one cycle (left step, right step). The feet slide back at WALK speed while planted; gameplay
+    moves the root at that speed so they stick to the floor."""
+    n = round(WALK['cycle'] * 30)
+    keys = []
+    for f in range(0, n + 1, 2):
+        ph = f / n
+        c, sn = math.cos(2 * math.pi * ph), math.sin(2 * math.pi * ph)
+        ik, world = {}, {}
+        for s in (-1, 1):
+            nm = 'Left' if s < 0 else 'Right'
+            z, y, pitch = _foot(ph, s)
+            ik[nm + 'Leg'] = ((0.12 * s, y, z), (0.12 * s, 0.5, z - 0.6))
+            world[nm + 'Foot'] = (pitch, 0, 0)
+        hips = ((-0.015 * sn, 0.795 - 0.012 * math.cos(4 * math.pi * ph), 0), (-3, -5 * c, 2 * sn))
+        rot = merge(arms(-20 * c, 4, 20 * c, 4, 14), {'Chest': (0, 8 * c, 0), 'Head': (3, -3 * c, 0),
+                                                      'Spine': (-2, 0, -1.5 * sn)})
+        keys.append((f, {'hips': hips, 'ik': ik, 'world': world, 'rot': rot}))
+    return keys
+
+
+def _turn(sign):
+    """90 degrees in place in two steps, leading with the foot on the turning side (sign +1 = left)."""
+    lead, trail = (-1, 1) if sign > 0 else (1, -1)
+
+    def foot(s, yaw):
+        r = lib.rot((0, yaw, 0))
+        p = r @ Vector((0.135 * s, ANK, 0))
+        return (p, p + r @ Vector((0, 0.4, -0.6)))
+
+    def k(yaw_hips, yaw_lead, yaw_trail, dip=0.0):
+        ik, world = {}, {}
+        for s, yaw in ((lead, yaw_lead), (trail, yaw_trail)):
+            nm = 'Left' if s < 0 else 'Right'
+            ik[nm + 'Leg'] = foot(s, yaw)
+            world[nm + 'Foot'] = (0, yaw, 0)
+        return {'hips': ((0, 0.83 - dip, 0), (-2, yaw_hips, 0)), 'ik': ik, 'world': world,
+                'rot': merge(arms(3, 8, 3, 8, 10), {'Head': (0, 10 * sign, 0)})}
+    t = 90 * sign
+    return [(0, k(0, 0, 0)), (8, k(0.4 * t, 0.55 * t, 0, 0.02)), (16, k(0.8 * t, 0.55 * t, t, 0.02)),
+            (22, k(t, t, t, 0.01)), (28, k(t, t, t))]
+
+
+def turn_L():
+    return _turn(1)
+
+
+def turn_R():
+    return _turn(-1)
+
+
+def step():
+    """One short step forward (0.3 m): left, then the right foot joins. The Hips end 0.3 m forward (json end)."""
+    def k(zl, zr, zh, dip=0.0, pitch=-2):
+        return {'hips': ((0, 0.83 - dip, zh), (pitch, 0, 0)), 'ik': stand_feet(zl, zr), 'world': FLAT,
+                'rot': arms(3 - 12 * (zl - zr) / 0.3, 6, 3 + 12 * (zl - zr) / 0.3, 6, 10)}
+    return [(0, k(0, 0, 0)), (12, k(-0.3, 0, -0.15, 0.025, -4)), (22, k(-0.3, -0.3, -0.3, 0.01)),
+            (30, k(-0.3, -0.3, -0.3))]
+
+
+FULL_EXTRA = {'stumble': stumble, 'climb_out_tub': climb_out_tub, 'walk_loop': walk_loop, 'turn_L': turn_L,
+              'turn_R': turn_R, 'step': step}
 UPPER = {'brush_loop': (brush_loop, 1)}
-LOOPS = ['brush_loop']
+LOOPS = ['brush_loop', 'walk_loop']
 
 
 FULL = {'faceplant': faceplant, 'sit_tub': sit_tub, 'get_up_back': get_up_back, 'get_up_front': get_up_front,

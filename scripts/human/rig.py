@@ -461,6 +461,9 @@ def body_clip(rig, name, keys, layer='full', side=None, boxes=None):
     tr.strips.new(name, 0, act)
     CLIPS[name] = {'layer': layer, 'bones': bones, 'start': ends[0], 'end': ends[-1],
                    'length': round(keys[-1][0] / FPS, 3)}
+    import body_clips
+    if name == 'walk_loop':
+        CLIPS[name]['locomotion'] = dict(body_clips.WALK)
     return name
 
 

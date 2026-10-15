@@ -760,7 +760,8 @@
  ],
  "loops": [
   "idle",
-  "brush_loop"
+  "brush_loop",
+  "walk_loop"
  ],
  "clips": {
   "RESET": {
@@ -1169,6 +1170,195 @@
     "yaw": 0.0
    },
    "length": 2.2
+  },
+  "walk_loop": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.783,
+     -0.0
+    ],
+    "pitch": -3.0,
+    "yaw": -5.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.783,
+     -0.0
+    ],
+    "pitch": -3.0,
+    "yaw": -5.0
+   },
+   "length": 1.0,
+   "locomotion": {
+    "stride": 1.0,
+    "cycle": 1.0,
+    "speed": 1.0
+   }
+  },
+  "turn_L": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -2.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 90.0
+   },
+   "length": 0.933
+  },
+  "turn_R": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -2.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": 0.0,
+    "yaw": -90.0
+   },
+   "length": 0.933
+  },
+  "step": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -2.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.3
+    ],
+    "pitch": -2.0,
+    "yaw": 0.0
+   },
+   "length": 1.0
   },
   "brush_loop": {
    "layer": "upper",
