@@ -1,0 +1,170 @@
+{
+ "r": {
+  "markers": [
+   {
+    "name": "Contact_Finger",
+    "bone": "index_3",
+    "clip": "press_finger",
+    "time": 0.05,
+    "pos": [
+     -0.04184524342417717,
+     -0.07718075066804886,
+     -0.11917334794998169
+    ]
+   },
+   {
+    "name": "Contact_Fingers",
+    "bone": "middle_3",
+    "clip": "press_fingers",
+    "time": 0.05,
+    "pos": [
+     -0.020931052044034004,
+     -0.08328904211521149,
+     -0.11902092397212982
+    ]
+   },
+   {
+    "name": "Contact_Palm",
+    "bone": "palm",
+    "clip": "press_palm",
+    "time": 0.06,
+    "pos": [
+     -0.0009767342125996947,
+     -0.05795348435640335,
+     -0.1479950100183487
+    ]
+   },
+   {
+    "name": "Contact_Fist",
+    "bone": "middle_2",
+    "clip": "press_fist",
+    "time": 0.06,
+    "pos": [
+     -0.0316377654671669,
+     -0.07118459045886993,
+     -0.0483744740486145
+    ]
+   },
+   {
+    "name": "Grip",
+    "bone": "palm",
+    "clip": "grip",
+    "time": 0.0,
+    "pos": [
+     0.0,
+     -0.041782692074775696,
+     -0.10110653936862946
+    ]
+   },
+   {
+    "name": "Contact_Thumb",
+    "bone": "thumb_3",
+    "clip": "relaxed",
+    "time": 0.0,
+    "pos": [
+     -0.050898630172014236,
+     -0.04247167333960533,
+     -0.1060226708650589
+    ]
+   }
+  ],
+  "hit": {
+   "press_finger": 0.05,
+   "press_fingers": 0.05,
+   "press_palm": 0.06,
+   "press_fist": 0.06
+  },
+  "loops": [
+   "grip_tight",
+   "idle_hover_ripple",
+   "idle_hover_tap",
+   "idle_grip_thumbtap",
+   "idle_grip_drum"
+  ],
+  "rest_lift": 0.055194295942783356
+ },
+ "l": {
+  "markers": [
+   {
+    "name": "Contact_Finger",
+    "bone": "index_3",
+    "clip": "press_finger",
+    "time": 0.05,
+    "pos": [
+     0.04184524342417717,
+     -0.07718075066804886,
+     -0.11917334794998169
+    ]
+   },
+   {
+    "name": "Contact_Fingers",
+    "bone": "middle_3",
+    "clip": "press_fingers",
+    "time": 0.05,
+    "pos": [
+     0.020931052044034004,
+     -0.08328904211521149,
+     -0.11902092397212982
+    ]
+   },
+   {
+    "name": "Contact_Palm",
+    "bone": "palm",
+    "clip": "press_palm",
+    "time": 0.06,
+    "pos": [
+     0.0009767342125996947,
+     -0.05795348435640335,
+     -0.1479950100183487
+    ]
+   },
+   {
+    "name": "Contact_Fist",
+    "bone": "middle_2",
+    "clip": "press_fist",
+    "time": 0.06,
+    "pos": [
+     0.0316377654671669,
+     -0.07118459045886993,
+     -0.0483744740486145
+    ]
+   },
+   {
+    "name": "Grip",
+    "bone": "palm",
+    "clip": "grip",
+    "time": 0.0,
+    "pos": [
+     0.0,
+     -0.041782692074775696,
+     -0.10110653936862946
+    ]
+   },
+   {
+    "name": "Contact_Thumb",
+    "bone": "thumb_3",
+    "clip": "relaxed",
+    "time": 0.0,
+    "pos": [
+     0.050898630172014236,
+     -0.04247167333960533,
+     -0.1060226708650589
+    ]
+   }
+  ],
+  "hit": {
+   "press_finger": 0.05,
+   "press_fingers": 0.05,
+   "press_palm": 0.06,
+   "press_fist": 0.06
+  },
+  "loops": [
+   "grip_tight",
+   "idle_hover_ripple",
+   "idle_hover_tap",
+   "idle_grip_thumbtap",
+   "idle_grip_drum"
+  ],
+  "rest_lift": 0.055194295942783356
+ }
+}

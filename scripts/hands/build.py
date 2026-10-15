@@ -34,6 +34,11 @@ CHAINS = {
               (0.036, 0.026, 0.020), 0.0120),
 }
 THUMB_UP = Vector((-0.85, 0.0, 0.5))       # thumb nail faces sideways-out, ~60 deg from the finger nails
+SIDE = 1                                   # 1 = right hand, -1 = left (mirrored joints; bones stay right-handed)
+
+
+def thumb_up():
+    return Vector((THUMB_UP.x * SIDE, THUMB_UP.y, THUMB_UP.z))
 
 
 def joints(name):
@@ -41,7 +46,7 @@ def joints(name):
     pts = [Vector(start)]
     for d, l in zip(dirs, lens):
         pts.append(pts[-1] + Vector(d).normalized() * l)
-    return pts
+    return [Vector((p.x * SIDE, p.y, p.z)) for p in pts]
 
 
 # --- metaball modelling -------------------------------------------------------------------------
@@ -183,7 +188,7 @@ def nails():
         pts = joints(name)
         r = CHAINS[name][3]
         d = (pts[3] - pts[2]).normalized()
-        up = (THUMB_UP if name == 'thumb' else Vector((0, 0, 1)))
+        up = (thumb_up() if name == 'thumb' else Vector((0, 0, 1)))
         up = (up - d * up.dot(d)).normalized()
         side = d.cross(up)
         c = pts[3] - d * r * 0.05 + up * r * 1.05            # just proud of the ball tip (1.12 r)
@@ -320,7 +325,7 @@ def armature():
     bone('palm', (0, 0.014, 0), (0, 0.068, 0), 'wrist')
     for name in CHAINS:
         pts = joints(name)
-        up = THUMB_UP if name == 'thumb' else Vector((0, 0, 1))
+        up = thumb_up() if name == 'thumb' else Vector((0, 0, 1))
         for i in range(3):
             bone('%s_%d' % (name, i + 1), pts[i], pts[i + 1], 'palm' if i == 0 else '%s_%d' % (name, i), up)
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -432,6 +437,11 @@ POSES = {
     'point': {'index': (32, 8, 4), 'middle': (85, 100, 60), 'ring': (88, 100, 60), 'thumb': (25, 30, 30, 30)},
     'fist': {'index': (82, 100, 65), 'middle': (85, 102, 65), 'ring': (88, 100, 62), 'thumb': (28, 40, 35, 35)},
     'grip': {'index': (62, 62, 30), 'middle': (66, 64, 30), 'ring': (70, 64, 30), 'thumb': (20, 30, 25, 40)},
+    # press shapes (anxious jab: index + middle down; palm slap: flat hand) and idle shapes
+    'fingers': {'index': (38, 18, 8), 'middle': (36, 18, 8), 'ring': (80, 95, 55)},
+    'flat': {'index': (4, 2, 0), 'middle': (4, 2, 0), 'ring': (6, 2, 0), 'thumb': (-30, -5, 0, -6)},  # thumb lifted clear
+    'slap': {'index': (-22, 2, 0), 'middle': (-22, 2, 0), 'ring': (-20, 2, 0), 'thumb': (-30, -5, 0, -6)},
+    'nails': {'index': (55, 70, 25), 'middle': (58, 72, 25), 'ring': (62, 72, 25)},
 }
 
 
@@ -443,7 +453,7 @@ def pose(rig, name):
     for chain, angles in p.items():
         if chain == 'thumb':
             f1, f2, f3, across = angles
-            rig.pose.bones['thumb_1'].rotation_euler = (-math.radians(f1), 0, -math.radians(across))
+            rig.pose.bones['thumb_1'].rotation_euler = (-math.radians(f1), 0, -math.radians(across) * SIDE)
             rig.pose.bones['thumb_2'].rotation_euler = (-math.radians(f2), 0, 0)
             rig.pose.bones['thumb_3'].rotation_euler = (-math.radians(f3), 0, 0)
         else:
@@ -451,13 +461,23 @@ def pose(rig, name):
                 rig.pose.bones['%s_%d' % (chain, i + 1)].rotation_euler = (-math.radians(a), 0, 0)
     bpy.context.view_layer.update()
     if name in THUMB_OVER:
-        solve_thumb(rig, THUMB_OVER[name])
+        key = (SIDE, name)
+        if key not in THUMB_CACHE:
+            solve_thumb(rig, THUMB_OVER[name])
+            THUMB_CACHE[key] = [tuple(rig.pose.bones['thumb_%d' % i].rotation_euler) for i in (1, 2, 3)]
+        for i, e in zip((1, 2, 3), THUMB_CACHE[key]):
+            rig.pose.bones['thumb_%d' % i].rotation_euler = e
+        bpy.context.view_layer.update()
+
+
+THUMB_CACHE = {}
 
 
 # The thumb is solved, not hand-typed, with only its real joints: thumb_1 swings (flex across the palm + spread),
 # thumb_2/3 are hinges. Target: tip pad on the backs of the curled fingers (fist), against the curled middle
 # finger (point), on the side of the ball (grip). Never inside a finger or the palm.
-THUMB_OVER = {'point': 'point', 'fist': 'fist', 'grip': 'grip', 'grip_fit': 'grip'}
+THUMB_OVER = {'point': 'point', 'fist': 'fist', 'grip': 'grip', 'grip_fit': 'grip', 'grip_tight': 'grip',
+              'fingers': 'fingers', 'nails': 'fist'}
 
 
 def _seg_dist(a, b, c, d):
@@ -474,13 +494,13 @@ def thumb_target(rig, mode):
     S = SCALE
     rt = CHAINS['thumb'][3] * S
     if mode == 'grip':
-        return grip_local(rig) + Vector((-0.036, 0.002, 0.006)) * S
+        return grip_local(rig) + Vector((-0.036 * SIDE, 0.002, 0.006)) * S
     tip = Vector()
-    over = ('index', 'middle') if mode == 'fist' else ('middle',)
+    over = {'fist': ('index', 'middle'), 'point': ('middle',), 'fingers': ('ring',)}[mode]
     for ch in over:
         b2 = rig.pose.bones[ch + '_2']
         m = b2.matrix.to_3x3()
-        back, side = m @ Vector((0, 0, 1)), m @ Vector((-1, 0, 0))
+        back, side = m @ Vector((0, 0, 1)), m @ Vector((-SIDE, 0, 0))
         out = back if mode == 'fist' else (back * 0.4 + side).normalized()   # point: against its thumb-side
         tip += (b2.head + b2.tail) / 2 + out.normalized() * (CHAINS[ch][3] * S + rt) * 0.95
     return tip / len(over)
@@ -683,6 +703,239 @@ def sheet(rig, meshes):
         export(baked, os.path.join(out, view + '.glb'))
 
 
+# --- clips (contract: coordination/interfaces.md "Hand art") -------------------------------------------------
+# Rig space = Blender coords of the hand root (Godot: x, z, -y). Press = straight down rig -Z (Godot local -Y).
+FPS = 100
+HIT = {'finger': 0.05, 'fingers': 0.05, 'palm': 0.06, 'fist': 0.06}           # real speed; gameplay scales
+PRESS = {  # type: (pose, wrist pitch at hit (deg, + = back of hand up), hover raise (m), extra hover pitch)
+    'finger': ('point', -12, 0.020, 0),
+    'fingers': ('fingers', -10, 0.024, 0),
+    'palm': ('slap', -26, 0.030, 4),            # hand tipped down past the cuff, fingers level
+    'fist': ('fist', -16, 0.070, 16),          # panic: fist hovers high and cocked back = the wind-up
+}
+LOOPS = ['grip_tight', 'idle_hover_ripple', 'idle_hover_tap', 'idle_grip_thumbtap', 'idle_grip_drum']
+CONTACT_BONE = {'finger': 'index_3', 'fingers': 'middle_3', 'palm': 'palm', 'fist': 'middle_2'}
+
+
+def state(rig, name, wrist=(0, 0, 0), loc=(0, 0, 0), add=None):
+    """Pose + wrist (pitch, roll, yaw deg) + forearm offset (rig space, m) + per-bone extra (deg; X = flex)."""
+    pose(rig, name)
+    w = rig.pose.bones['wrist']
+    w.rotation_euler = (math.radians(wrist[0]), math.radians(wrist[1]) * SIDE, math.radians(wrist[2]) * SIDE)
+    rig.pose.bones['forearm'].location = (loc[0] * SIDE, loc[1], loc[2])
+    for b, (fx, fy, fz) in (add or {}).items():
+        pb = rig.pose.bones[b]
+        e = pb.rotation_euler
+        pb.rotation_euler = (e.x - math.radians(fx), e.y + math.radians(fy) * SIDE, e.z + math.radians(fz) * SIDE)
+    bpy.context.view_layer.update()
+
+
+def _verts(o):
+    dg = bpy.context.evaluated_depsgraph_get()
+    e = o.evaluated_get(dg)
+    me = e.to_mesh()
+    out = [v.co.copy() for v in me.vertices]
+    e.to_mesh_clear()
+    return out
+
+
+def contact_ids(hand, kind):
+    """Vertex ids defining the contact in the current (hit) pose: the lowest skin of the pressing part(s)."""
+    ids = hand.data.attributes['part'].data
+    vs = _verts(hand)
+    parts = {'finger': ['index'], 'fingers': ['index', 'middle'], 'palm': None, 'fist': None}[kind]   # palm: whole flat hand
+    if parts is None:
+        return [min(range(len(vs)), key=lambda i: vs[i].z)]
+    return [min((i for i in range(len(vs)) if PART_IDS[ids[i].value] == p), key=lambda i: vs[i].z) for p in parts]
+
+
+def contact_at(hand, idx):
+    vs = _verts(hand)
+    c = sum((vs[i] for i in idx), Vector()) / len(idx)
+    c.z = min(vs[i].z for i in idx)
+    return c
+
+
+def lowest(objs, near_y=-0.12):
+    return min(v.z for o in objs for v in _verts(o) if v.y > near_y * SCALE)
+
+
+def plan_presses(rig, hand, objs):
+    """Hit/hover states per press type; hover keeps the contact straight above the hit contact."""
+    out = {}
+    for kind, (pname, pitch, raise_, extra) in PRESS.items():
+        hit = dict(name=pname, wrist=(pitch, 0, 0))
+        state(rig, **hit)
+        idx = contact_ids(hand, kind)
+        c_hit = contact_at(hand, idx)
+        low = lowest(objs)
+        if c_hit.z > low + 0.0005:
+            vs = {o.name: min(v.z for v in _verts(o)) for o in objs}
+            ids = hand.data.attributes['part'].data
+            hv = _verts(hand)
+            j = min(range(len(hv)), key=lambda i: hv[i].z)
+            raise AssertionError('%s: contact %.4f not lowest; per object %s; lowest hand part %s' % (
+                kind, c_hit.z, vs, PART_IDS[ids[j].value]))
+        hover = dict(name=pname, wrist=(pitch + extra, 0, 0))
+        state(rig, **hover)
+        d = contact_at(hand, idx) - c_hit
+        hover['loc'] = (-d.x * SIDE, -d.y, raise_ - d.z)
+        state(rig, **hover)
+        drift = contact_at(hand, idx) - c_hit
+        print('PRESS %-7s contact %s  hover drift %.1f mm  raise %.0f mm' % (
+            kind, tuple(round(x, 3) for x in lib.G(c_hit)), Vector((drift.x, drift.y)).length * 1000, drift.z * 1000))
+        out[kind] = dict(hit=hit, hover=hover, contact=c_hit)
+    return out
+
+
+def clips(rig, hand, objs):
+    """name -> [(t, state kwargs)]. Holds are two equal keys 0.1 s apart."""
+    P = plan_presses(rig, hand, objs)
+    rel = dict(name='relaxed')
+    grip = dict(name='grip_fit')
+    tight = dict(name='grip_tight')
+    C = {'relaxed': [(0, rel), (0.1, rel)], 'grip': [(0, grip), (0.1, grip)]}
+    for k, v in P.items():
+        C['hover_' + k] = [(0, v['hover']), (0.1, v['hover'])]
+        C['press_' + k] = [(0, v['hover']), (HIT[k], v['hit'])]
+        C['release_' + k] = [(0, v['hit']), (0.12, v['hover'])]
+    rnd = np.random.default_rng(3)
+    C['grip_tight'] = [(i * 0.05, dict(tight, wrist=tuple(rnd.uniform(-2, 2, 3)) if 0 < i < 8 else (0, 0, 0)))
+                       for i in range(9)]
+    C['grip_yank'] = [(0, tight), (0.12, dict(tight, wrist=(8, 0, 0))), (0.35, tight)]
+    hf = P['finger']['hover']
+
+    def hov(add):
+        return dict(hf, add=add)
+    C['idle_hover_ripple'] = [(0, hf), (0.3, hov({'middle_1': (10, 0, 0), 'ring_1': (-8, 0, 0), 'thumb_2': (6, 0, 0)})),
+                              (0.6, hov({'middle_1': (-8, 0, 0), 'ring_1': (10, 0, 0), 'thumb_2': (-6, 0, 0)})),
+                              (0.9, hov({'middle_1': (6, 0, 0), 'ring_1': (-6, 0, 0)})), (1.2, hf)]
+    tap = hov({'index_1': (12, 0, 0)})
+    C['idle_hover_tap'] = [(0, hf), (0.12, tap), (0.24, hf), (0.36, tap), (0.48, hf), (0.8, hf)]
+    thumb_up_ = dict(grip, add={'thumb_1': (-15, 0, 0), 'thumb_2': (-10, 0, 0)})
+    C['idle_grip_thumbtap'] = [(0, grip), (0.15, thumb_up_), (0.3, grip), (0.45, thumb_up_), (0.6, grip), (0.9, grip)]
+    lift = lambda f: dict(grip, add={f + '_1': (-22, 0, 0), f + '_2': (-10, 0, 0)})
+    C['idle_grip_drum'] = [(0, grip), (0.1, lift('ring')), (0.2, lift('middle')), (0.3, lift('index')), (0.4, grip),
+                           (1.0, grip)]
+    curl = dict(rel, add={'index_1': (4, 0, 0), 'middle_1': (4, 0, 0), 'ring_1': (5, 0, 0)})
+    C['idle_rest'] = [(0, rel), (1.5, curl), (3.0, rel)]
+    dl = lambda f: dict(rel, add={f + '_1': (-25, 0, 0), f + '_2': (-5, 0, 0)})
+    drum = []
+    for r in range(3):
+        t0 = 0.15 + r * 0.6
+        drum += [(t0, dl('ring')), (t0 + 0.1, dl('middle')), (t0 + 0.2, dl('index')), (t0 + 0.3, rel)]
+    C['idle_drum'] = [(0, rel)] + drum + [(2.0, rel)]
+    spread = {'index_1': (-18, 0, 9), 'middle_1': (-18, 0, 0), 'ring_1': (-18, 0, -9), 'thumb_1': (-15, 0, 10)}
+    stretch = dict(name='flat', wrist=(18, 0, 0), add=spread)
+    C['idle_stretch'] = [(0, rel), (0.6, stretch), (1.2, stretch), (1.6, dict(name='fist')), (2.0, dict(name='fist')),
+                         (2.5, rel)]
+    look = dict(name='nails', wrist=(40, 0, 0), loc=(0, -0.01, 0.06))
+    C['idle_nails'] = [(0, rel), (0.6, look), (1.4, dict(look, wrist=(44, 0, 6))), (2.2, look), (3.0, rel)]
+    up = dict(name='flat', wrist=(55, 0, 0), loc=(0, -0.02, 0.08))
+    C['idle_wave'] = [(0, rel), (0.4, up)] + [(0.7 + i * 0.3, dict(up, wrist=(55, 0, 20 if i % 2 == 0 else -20)))
+                                              for i in range(4)] + [(1.9, up), (2.2, rel)]
+    return C, P
+
+
+def author(rig, C):
+    """One action + NLA track per clip (glTF exports each track as a named animation)."""
+    scene = bpy.context.scene
+    scene.render.fps = FPS
+    rig.animation_data_create()
+    for name, keys in C.items():
+        act = bpy.data.actions.new(name)
+        rig.animation_data.action = act
+        for t, st in keys:
+            state(rig, **st)
+            f = round(t * FPS)
+            for pb in rig.pose.bones:
+                pb.keyframe_insert('rotation_euler', frame=f, group=pb.name)
+            rig.pose.bones['forearm'].keyframe_insert('location', frame=f, group='forearm')
+        rig.animation_data.action = None
+        tr = rig.animation_data.nla_tracks.new()
+        tr.name = name
+        tr.strips.new(name, 0, act)
+
+
+def rig_scene_data(rig, hand, objs, P):
+    """Marker targets for the Godot scene builder (Godot root space), hit times, loops, rest lift."""
+    markers = []
+    for k, v in P.items():
+        markers.append(dict(name='Contact_' + k.title() if k != 'fingers' else 'Contact_Fingers',
+                            bone=CONTACT_BONE[k], clip='press_' + k, time=HIT[k], pos=list(lib.G(v['contact']))))
+    markers[0]['name'] = 'Contact_Finger'
+    state(rig, 'grip_fit')
+    markers.append(dict(name='Grip', bone='palm', clip='grip', time=0.0, pos=list(lib.G(grip_local(rig)))))
+    state(rig, 'relaxed')
+    markers.append(dict(name='Contact_Thumb', bone='thumb_3', clip='relaxed', time=0.0,
+                        pos=list(lib.G(tip_local(rig, 'thumb')))))
+    lift = -lowest(objs, near_y=-0.06)
+    return dict(markers=markers, hit={'press_' + k: t for k, t in HIT.items()}, loops=LOOPS, rest_lift=lift)
+
+
+def export_hand(rig, objs, path):
+    for o in bpy.data.objects:
+        o.select_set(o in [rig, *objs])
+    bpy.context.view_layer.objects.active = rig
+    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', export_yup=True, use_selection=True,
+                              export_cameras=False, export_lights=False, export_image_format='AUTO',
+                              export_animation_mode='NLA_TRACKS', export_force_sampling=True, export_skins=True)
+
+
+def mirror_copy(objs, rig_l):
+    """Left-hand meshes: mirrored geometry (weights carried by vertex-group names), on the left skeleton."""
+    out = []
+    for o in objs:
+        c = o.copy()
+        c.data = o.data.copy()
+        bpy.context.scene.collection.objects.link(c)
+        bm = bmesh.new()
+        bm.from_mesh(c.data)
+        bmesh.ops.scale(bm, vec=(-1, 1, 1), verts=bm.verts)
+        bmesh.ops.reverse_faces(bm, faces=bm.faces)
+        bm.to_mesh(c.data)
+        bm.free()
+        c.parent = rig_l
+        c.modifiers['Armature'].object = rig_l
+        out.append(c)
+    return out
+
+
+def build_rigs(rig, hand, nl, sleeve_obj):
+    import json
+    global SIDE
+    out = os.path.join(lib.ROOT, 'hands', 'art')
+    os.makedirs(out, exist_ok=True)
+    data = {}
+    objs = [hand, nl, sleeve_obj]
+    for side in ('r', 'l'):
+        SIDE = 1 if side == 'r' else -1
+        if side == 'l':
+            rig_l = armature()
+            rig_l.data.transform(Matrix.Scale(SCALE, 4))
+            objs = mirror_copy(objs, rig_l)
+            for o in [rig, hand, nl, sleeve_obj]:
+                bpy.data.objects.remove(o, do_unlink=True)
+            rig, hand = rig_l, objs[0]
+            for o, n in zip([rig, *objs], ('Skeleton', 'Hand', 'Nails', 'Sleeve')):
+                o.name = n
+        else:
+            sleeve_obj.name = 'Sleeve'
+        fit_grip(rig, 0.068)                           # joystick ball (r 0.034)
+        POSES['grip_tight'] = {ch: tuple(a * 1.12 for a in v) for ch, v in POSES['grip_fit'].items()}
+        C, P = clips(rig, hand, objs)
+        author(rig, C)
+        data[side] = rig_scene_data(rig, hand, objs, P)
+        for pb in rig.pose.bones:
+            pb.rotation_euler = (0, 0, 0)
+            pb.location = (0, 0, 0)
+        export_hand(rig, objs, os.path.join(out, 'hand_%s.glb' % side))
+        print('RIG %s exported, %d clips' % (side, len(C)))
+    with open(os.path.join(out, 'hand_rig.json'), 'w') as f:
+        json.dump(data, f, indent=1)
+    SIDE = 1
+
+
 def main():
     for o in list(bpy.data.objects):
         bpy.data.objects.remove(o, do_unlink=True)
@@ -712,8 +965,10 @@ def main():
     hi = [max(v.co[i] for v in hand.data.vertices) for i in range(3)]
     print('HAND tris=%d  x %.3f..%.3f  y %.3f..%.3f  z %.3f..%.3f' % (
         sum(len(p.vertices) - 2 for p in hand.data.polygons), lo[0], hi[0], lo[1], hi[1], lo[2], hi[2]))
-    sheet(rig, {'hand': hand, 'nails': nl, 'sleeves': sleeves})
+    if '--no-sheet' not in sys.argv:
+        sheet(rig, {'hand': hand, 'nails': nl, 'sleeves': sleeves})
     pose(rig, 'relaxed')
+    build_rigs(rig, hand, nl, sleeves['teal'])
     os.makedirs(os.path.join(lib.ROOT, 'source', 'hands'), exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(lib.ROOT, 'source', 'hands', 'hands.blend'))
     print('HANDS_BUILT')
