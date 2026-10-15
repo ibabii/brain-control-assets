@@ -4,6 +4,7 @@ rest frame, two-bone IK limbs (target + pole) and world-oriented hands/feet. God
 Pose dict (all optional):
   hips   (pos, euler)        Hips head position and body rotation (Godot euler, degrees)
   rot    {bone: euler}       rotation at the bone's head in the rest frame, carried by the parent
+  local  {bone: euler}       Blender bone-local XYZ euler (degrees) on top of the rest (finger poses)
                              (UpperArm is relative to the hanging design pose)
   ik     {limb: (target, pole)}  limb = LeftArm|RightArm|LeftLeg|RightLeg; target = wrist/ankle, pole = elbow/knee side
   world  {bone: euler|Matrix} bone orientation = rest orientation turned by this in world space (hands, feet)
@@ -12,7 +13,7 @@ Pose dict (all optional):
 import math
 
 import bpy
-from mathutils import Matrix, Quaternion, Vector
+from mathutils import Euler, Matrix, Quaternion, Vector
 
 import lib
 from lib import B, G
@@ -21,6 +22,7 @@ C = Matrix(((1, 0, 0), (0, 0, -1), (0, 1, 0)))            # Godot -> Blender bas
 LIMBS = {'LeftArm': ('LeftUpperArm', 'LeftLowerArm', -1), 'RightArm': ('RightUpperArm', 'RightLowerArm', -1),
          'LeftLeg': ('LeftUpperLeg', 'LeftLowerLeg', 1), 'RightLeg': ('RightUpperLeg', 'RightLowerLeg', 1)}
 ARM_UP = 0.0                                             # set by the build (bind A-pose angle)
+MARKERS = {}                                             # name -> marker dict (rig.markers), set by the build
 
 
 def grot(deg):
@@ -59,6 +61,7 @@ def solve(rig, pose):
     rot = pose.get('rot', {})
     ik = pose.get('ik', {})
     world = pose.get('world', {})
+    local = pose.get('local', {})
     upper_ik = {LIMBS[k][0]: k for k in ik}
     P = {}
     for b in _order(rig):
@@ -70,10 +73,12 @@ def solve(rig, pose):
         D = grot(rot[b.name]) if b.name in rot else Matrix.Identity(4)
         D = D @ _down(b.name)
         if b.name == 'Hips' and 'hips' in pose:
-            pos, e = pose['hips']
+            pos, e = pose['hips']                                 # e: Godot euler or 3x3 turn
             P[b.name] = Matrix.Translation(B(pos)) @ grot(e) @ Matrix.Translation(-head) @ R
             continue
         P[b.name] = carry @ about(D, head) @ R
+        if b.name in local:
+            P[b.name] = P[b.name] @ Euler([math.radians(a) for a in local[b.name]], 'XYZ').to_matrix().to_4x4()
         if b.name in upper_ik:
             _limb(rig, P, upper_ik[b.name], *ik[upper_ik[b.name]])
         if b.name in world:
@@ -167,11 +172,30 @@ def key(rig, frame, bones, prev):
 
 
 def hips_info(P):
-    """Hips head position (Godot) and pitch (degrees, + = leaning back) for the json."""
+    """Hips head position (Godot), pitch (degrees, + = leaning back) and yaw (+ = turned left) for the json."""
     m = P['Hips']
     up = G(m.to_3x3() @ Vector((0, 1, 0)))
+    fwd = G(m.to_3x3() @ Vector((0, 0, 1)))                # the Hips bone's Z is the body's forward at rest
     pitch = math.degrees(math.atan2(up.z, up.y))
-    return {'pos': [round(x, 4) for x in G(m.to_translation())], 'pitch': round(pitch, 1)}
+    yaw = math.degrees(math.atan2(-fwd.x, -fwd.z))
+    return {'pos': [round(x, 4) for x in G(m.to_translation())], 'pitch': round(pitch, 1), 'yaw': round(yaw, 1)}
+
+
+def grip(rig, side, pos, basis):
+    """IK target (wrist) and world turn for the hand so marker Grip_<L|R> lands at `pos` with `basis` (Godot 3x3,
+    columns = marker X, Y, Z)."""
+    n = 'Left' if side < 0 else 'Right'
+    m = MARKERS['Grip_' + ('L' if side < 0 else 'R')]
+    mk = Matrix([m['basis'][0], m['basis'][1], m['basis'][2]]).transposed()      # rest marker frame (Godot)
+    rest_m = mk.to_4x4()
+    rest_m.translation = Vector(m['pos'])
+    want = Matrix(basis).to_4x4()
+    want.translation = Vector(pos)
+    Rh = rig.data.bones[n + 'Hand'].matrix_local
+    Cm = C.to_4x4()
+    hand = Cm @ want @ rest_m.inverted() @ Cm.inverted() @ Rh            # posed hand bone (Blender armature space)
+    turn = C.inverted() @ (hand.to_3x3() @ Rh.to_3x3().inverted()) @ C
+    return G(hand.to_translation()), turn
 
 
 def penetration(rig, boxes, tol=0.01):
@@ -198,3 +222,72 @@ def penetration(rig, boxes, tol=0.01):
                         w[1], w[2] = d, [round(x, 2) for x in p]
         ev.to_mesh_clear()
     return n, worst, where
+
+
+# --- in-betweens: blend the pose targets, not the joint rotations (planted hands/feet stay planted) --------
+
+LIMB_BONES = {'LeftUpperArm', 'LeftLowerArm', 'RightUpperArm', 'RightLowerArm', 'LeftUpperLeg', 'LeftLowerLeg',
+              'RightUpperLeg', 'RightLowerLeg', 'LeftHand', 'RightHand', 'LeftFoot', 'RightFoot'}
+
+
+def _turn(rig, P, bone):
+    R = rig.data.bones[bone].matrix_local
+    return C.inverted() @ (P[bone].to_3x3() @ R.to_3x3().inverted()) @ C
+
+
+def normalize(rig, pose, P):
+    """The solved pose as targets: Hips placement, IK wrists/ankles + poles for all limbs, world hands/feet."""
+    hips_r = rig.data.bones['Hips'].matrix_local
+    head = hips_r.to_translation()
+    turn = P['Hips'].to_3x3() @ hips_r.to_3x3().inverted()
+    pos = G(P['Hips'].to_translation())
+    ik = {}
+    for limb, (up, lo, sign) in LIMBS.items():
+        e = G(P[lo].to_translation())
+        w = G(P[lo] @ Vector((0, rig.data.bones[lo].length, 0)))
+        z = G(P[up].to_3x3() @ Vector((0, 0, 1)))                    # the bend plane, even for a straight limb
+        ik[limb] = (w, e + z * (0.3 * sign))
+    world = {b: _turn(rig, P, b) for b in ('LeftHand', 'RightHand', 'LeftFoot', 'RightFoot')}
+    rot = {k: v for k, v in pose.get('rot', {}).items() if k not in LIMB_BONES}
+    return {'hips': (pos, C.inverted() @ turn @ C), 'ik': ik, 'world': world, 'rot': rot,
+            'local': dict(pose.get('local', {})), 'ground': pose.get('ground', False), 'lift': pose.get('lift', 0.0)}
+
+
+def _cr(p0, p1, p2, p3, t):
+    """Catmull-Rom between p1 and p2."""
+    t2, t3 = t * t, t * t * t
+    return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3)
+
+
+def _slerp(m0, m1, t):
+    q0, q1 = m0.to_quaternion(), m1.to_quaternion()
+    if q0.dot(q1) < 0:
+        q1.negate()
+    return q0.slerp(q1, t).to_matrix()
+
+
+def between(n0, n1, n2, n3, t):
+    """Targets at t in [0, 1] between normalized keys n1 and n2 (n0, n3: neighbours for the position spline)."""
+    s = t * t * (3 - 2 * t)                                              # rotations ease
+    pos = _cr(n0['hips'][0], n1['hips'][0], n2['hips'][0], n3['hips'][0], t)
+    ik = {}
+    for k in n1['ik']:
+        w = _cr(n0['ik'][k][0], n1['ik'][k][0], n2['ik'][k][0], n3['ik'][k][0], t)
+        move = (n2['ik'][k][0] - n1['ik'][k][0]).length
+        if move < 0.03:                                                  # planted or shuffling: no spline overshoot
+            w = n1['ik'][k][0].lerp(n2['ik'][k][0], s)
+        if k.endswith('Leg') and move > 0.03:                            # a stepping foot clears the floor
+            w = w + Vector((0, 4 * t * (1 - t) * min(0.09, 0.4 * move), 0))
+        ik[k] = (w, n1['ik'][k][1].lerp(n2['ik'][k][1], s))
+    world = {k: _slerp(n1['world'][k], n2['world'][k], s) for k in n1['world']}
+    rot = {}
+    for k in set(n1['rot']) | set(n2['rot']):
+        a, b = Vector(n1['rot'].get(k, (0, 0, 0))), Vector(n2['rot'].get(k, (0, 0, 0)))
+        rot[k] = tuple(a.lerp(b, s))
+    local = {}
+    for k in set(n1['local']) | set(n2['local']):
+        a, b = Vector(n1['local'].get(k, (0, 0, 0))), Vector(n2['local'].get(k, (0, 0, 0)))
+        local[k] = tuple(a.lerp(b, s))
+    return {'hips': (pos, _slerp(n1['hips'][1], n2['hips'][1], s)), 'ik': ik, 'world': world, 'rot': rot,
+            'local': local, 'ground': n1['ground'] and n2['ground'],
+            'lift': n1['lift'] + (n2['lift'] - n1['lift']) * s}

@@ -16,6 +16,9 @@ func _post_import(scene: Node) -> Object:
 	var anim: AnimationPlayer = scene.get_node("AnimationPlayer")
 	anim.name = "Anim"
 	var lib := anim.get_animation_library("")
+	for clip in lib.get_animation_list():           # the glTF importer strips a "_loop" suffix; keep the contract name
+		if not data.clips.has(clip) and data.clips.has(clip + "_loop"):
+			lib.rename_animation(clip, clip + "_loop")
 	for clip in lib.get_animation_list():
 		var a := lib.get_animation(clip)
 		for t in a.get_track_count():

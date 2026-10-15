@@ -315,6 +315,19 @@ def finger_pose(side, kind):
     return r
 
 
+def squeeze(side):
+    """Grip -> clench (fingers curl in, thumb presses, wrist flexes) -> hold -> back to grip, 0.8 s."""
+    n = side_name(side)
+    g = finger_pose(side, 'grip')
+    tight = {}
+    for b, (x, y, z) in g.items():
+        tight[b] = (x - (6 if 'Thumb' in b else 12), y, z)
+    tight[n + 'ThumbDistal'] = (g[n + 'ThumbDistal'][0] - 20, 0, 0)
+    tight[n + 'Hand'] = (-12, 0, 0)
+    rest_hand = {n + 'Hand': (0, 0, 0)}
+    return [(0, dict(g, **rest_hand)), (6, tight), (16, tight), (24, dict(g, **rest_hand))]
+
+
 def _arms_down(rig, arm_up, frame):
     """Key the upper arms from the bind A-pose down to the hanging pose (rotation about the body's forward axis)."""
     from mathutils import Quaternion
@@ -347,7 +360,7 @@ def clip_bones(rig, layer, side=None, wrist=False):
     return [b for b in names if b.startswith(n) and is_finger(b)] + ([n + 'Hand'] if wrist else [])
 
 
-def clips(rig, arm_up):
+def clips(rig, arm_up, landmarks):
     """NLA tracks (glTF exports one animation each): RESET/rest, idle (arms hanging), hand_{grip,relaxed,spread}_{L,R}."""
     bpy.context.scene.render.fps = FPS
     rig.animation_data_create()
@@ -381,12 +394,17 @@ def clips(rig, arm_up):
     import body_clips
     import pose as PZ
     PZ.ARM_UP = arm_up
+    PZ.MARKERS = {m['name']: m for m in markers(landmarks)}
     for name, fn in body_clips.FULL.items():
         names.append(body_clip(rig, name, fn(), boxes=body_clips.BOXES.get(name)))
+    for name, (fn, side) in body_clips.UPPER.items():
+        names.append(body_clip(rig, name, fn(rig), layer='upper', side=side))
+    LOOPS.extend(n for n in body_clips.LOOPS if n not in LOOPS)
     for s in (-1, 1):
         for kind in ('grip', 'relaxed', 'spread'):
             p = finger_pose(s, kind)
             clip('hand_%s_%s' % (kind, 'L' if s < 0 else 'R'), [(0, p), (1, p)], layer='hand', side=s)
+        clip('squeeze_%s' % ('L' if s < 0 else 'R'), squeeze(s), layer='hand', side=s, wrist=True)
     return names
 
 
@@ -399,7 +417,8 @@ def body_clip(rig, name, keys, layer='full', side=None, boxes=None):
     bones = clip_bones(rig, layer, side)
     prev, ends = {}, []
     scene = bpy.context.scene
-    for f, p in keys:                       # measured on the keyed frame (what the export samples)
+    norms = []
+    for f, p in keys:                       # 1: the keys, grounded and measured on the keyed frame
         P = PZ.pose_at(rig, p)
         PZ.key(rig, f, bones, prev)
         scene.frame_set(f)
@@ -408,9 +427,30 @@ def body_clip(rig, name, keys, layer='full', side=None, boxes=None):
             PZ.key(rig, f, bones, prev)
             scene.frame_set(f)
         low = PZ.lowest(rig)
-        hit = PZ.penetration(rig, (boxes or []) + [((-5, -1, -5), (5, 0, 5))])     # + the floor
+        hit = PZ.penetration(rig, boxes or [((-5, -1, -5), (5, 0, 5))])
         print('CLIP %s f%d lowest %.3f inside %d (%.3f m) %s' % (name, f, low, hit[0], hit[1], hit[2] or ''))
         ends.append(PZ.hips_info(P))
+        norms.append(PZ.normalize(rig, p, P))
+    for i in range(len(keys) - 1):          # 2: in-betweens every 2 frames from the blended targets
+        f1, f2 = keys[i][0], keys[i + 1][0]
+        n0, n3 = norms[max(i - 1, 0)], norms[min(i + 2, len(keys) - 1)]
+        for f in range(f1 + 2, f2 - 1, 2):
+            q = PZ.between(n0, norms[i], norms[i + 1], n3, (f - f1) / (f2 - f1))
+            PZ.pose_at(rig, q)
+            PZ.key(rig, f, bones, prev)
+            if q['ground']:
+                scene.frame_set(f)
+                PZ.pose_at(rig, q, q['lift'] - PZ.lowest(rig))
+                PZ.key(rig, f, bones, prev)
+    worst = (0, 0.0, -1, {})                                 # in-betweens too: every second frame
+    for f in range(0, keys[-1][0] + 1, 2):
+        scene.frame_set(f)
+        n, d, where = PZ.penetration(rig, boxes or [((-5, -1, -5), (5, 0, 5))])
+        if d > 0.02:
+            print('CLIP %s f%d %.3f m %s' % (name, f, d, {k: round(v[1], 3) for k, v in where.items()}))
+        if d > worst[1]:
+            worst = (n, d, f, where)
+    print('CLIP %s sampled worst %.3f m (%d verts) at f%d' % (name, worst[1], worst[0], worst[2]))
     rig.animation_data.action = None
     rig.animation_data.use_nla = True
     scene.frame_set(0)

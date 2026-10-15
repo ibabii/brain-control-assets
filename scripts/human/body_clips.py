@@ -6,6 +6,8 @@ import math
 
 from mathutils import Matrix, Vector
 
+import rig as R
+
 import lib
 import pose as PZ
 
@@ -60,7 +62,7 @@ def faceplant():
 # The tub in Seat space (bathroom `tub` prop: Seat on the outer rim edge, -Z toward the room, rim at y 0).
 TUB = [((-0.85, -0.55, 0.0), (0.85, 0.0, 0.09)), ((-0.85, -0.55, 0.71), (0.85, 0.0, 0.8)),
        ((-0.85, -0.55, 0.0), (-0.76, 0.0, 0.8)), ((0.76, -0.55, 0.0), (0.85, 0.0, 0.8)),
-       ((-0.85, -0.55, 0.0), (0.85, -0.425, 0.8))]
+       ((-0.85, -0.55, 0.0), (0.85, -0.425, 0.8)), ((-3, -1.5, -3), (3, -0.55, 3))]     # + the room floor
 
 
 def sit_tub():
@@ -79,6 +81,39 @@ def sit_tub():
                                                           'RightFoot': (-25, 0, 0)})}
     return [(0, p(0.05, 50, -20, 0.0, False)), (8, p(-0.01, 62, -30, 0.03, False)), (20, p(0.0, 60, -26, 0.0, True)),
             (40, p(0.005, 59, -25, 0.02, True)), (60, p(0.0, 60, -26, 0.0, True))]
+
+
+def climb_out_tub():
+    """From sit_tub's end: sits up and grabs the near rim, swings the right leg out to the floor, hauls over, brings
+    the left leg out and stands in front of the tub facing the room. Seat space (root = tub Seat, floor at -0.55)."""
+    fl = -0.55
+    rim_hands = {'LeftArm': ((-0.28, 0.045, 0.05), (-0.7, 0.3, 0.4)), 'RightArm': ((0.28, 0.045, 0.05), (0.7, 0.3, 0.4))}
+    hooked = {}
+    for s in (-1, 1):
+        n = 'Left' if s < 0 else 'Right'
+        hooked[n + 'Leg'] = ((0.11 * s, -0.07, -0.25), (0.11 * s, 0.6, -0.1))
+    end = sit_tub()[-1][1]
+    return [
+        (0, end),
+        (14, {'hips': ((0, -0.16, 0.3), (18, 0, 0)), 'ik': merge(hooked, rim_hands), 'world': palms(),
+              'rot': {'Spine': (-10, 0, 0), 'Head': (-8, 0, 0)}}),
+        (26, {'hips': ((0, 0.06, 0.2), (-22, 0, 0)), 'ik': merge(rim_hands, {
+            'LeftLeg': hooked['LeftLeg'], 'RightLeg': ((0.16, 0.1, -0.28), (0.3, 0.9, -0.5))}),
+              'world': merge(palms(), {'RightFoot': (-20, -20, 0)}), 'rot': {'Head': (15, 0, 0)}}),
+        (36, {'hips': ((0, 0.12, 0.02), (-35, 0, 0)), 'ik': merge(rim_hands, {
+            'LeftLeg': ((-0.11, 0.0, -0.2), (-0.11, 0.8, -0.3)), 'RightLeg': ((0.16, fl + ANK, -0.3), (0.3, 0.2, -0.8))}),
+              'world': merge(palms(), {'RightFoot': (0, -20, 0)}), 'rot': {'Head': (20, 0, 0)}}),
+        (44, {'hips': ((0, 0.1, -0.12), (-40, 0, 0)), 'ik': merge(rim_hands, {
+            'LeftLeg': ((-0.13, 0.12, -0.2), (-0.3, 0.8, -0.6)), 'RightLeg': ((0.16, fl + ANK, -0.3), (0.3, 0.2, -0.8))}),
+              'world': merge(palms(), {'RightFoot': (0, -20, 0), 'LeftFoot': (-30, 0, 0)}), 'rot': {'Head': (20, 0, 0)}}),
+        (54, {'hips': ((0, fl + 0.7, -0.3), (-24, 0, 0)), 'ik': {
+            'LeftLeg': ((-0.13, fl + ANK, -0.34), (-0.13, 0.2, -1.0)), 'RightLeg': ((0.16, fl + ANK, -0.3), (0.3, 0.2, -0.9)),
+            'LeftArm': ((-0.18, fl + 0.62, -0.5), (-0.6, 0.3, 0)), 'RightArm': ((0.2, fl + 0.62, -0.5), (0.6, 0.3, 0))},
+              'world': {'RightFoot': (0, -20, 0), 'LeftFoot': (0, 0, 0)}, 'rot': {'Head': (12, 0, 0)}}),
+        (66, {'hips': ((0, fl + 0.83, -0.32), (-3, 0, 0)), 'ik': {
+            'LeftLeg': ((-0.135, fl + ANK, -0.32), (-0.135, 0.2, -1.0)), 'RightLeg': ((0.135, fl + ANK, -0.32), (0.135, 0.2, -1.0))},
+              'world': FLAT, 'rot': arms(3, 6, 3, 6, 8)}),
+    ]
 
 
 ANK = 0.095                       # ankle joint height when the foot is flat
@@ -154,5 +189,57 @@ def get_up_back():
     ]
 
 
-FULL = {'faceplant': faceplant, 'sit_tub': sit_tub, 'get_up_back': get_up_back, 'get_up_front': get_up_front}
-BOXES = {'sit_tub': TUB}
+def stumble():
+    """Trips on the right foot: lurches forward over three scrambling steps, arms windmilling; ends off-balance
+    forward (chain into faceplant, or blend back to idle). The Hips travel forward about 0.6 m (json `end`)."""
+    def feet(lz, ly, rz, ry, lt=0, rt=0):
+        ly, ry = ly + 0.0016 * abs(lt), ry + 0.0016 * abs(rt)          # a tilted foot rides on its heel or toes
+        return ({'LeftLeg': ((-0.135, ANK + ly, lz), (-0.135, 0.6, lz - 0.6)),
+                 'RightLeg': ((0.135, ANK + ry, rz), (0.135, 0.6, rz - 0.6))},
+                {'LeftFoot': (lt, 0, 0), 'RightFoot': (rt, 0, 0)})
+
+    def k(hips, pitch, f, arm, head=10, spine=-8):
+        ik, w = f
+        return {'hips': (hips, (pitch, 0, 0)), 'ik': ik, 'world': w,
+                'rot': merge(arm, {'Spine': (spine, 0, 0), 'Head': (head, 0, 0)})}
+    return [
+        (0, k((0, 0.83, 0), 0, feet(0, 0, 0, 0), arms(3, 6, 3, 6, 8), 0, 0)),
+        (5, k((0, 0.82, -0.1), -16, feet(-0.06, 0.12, 0.06, 0, -25, 10), arms(25, 60, 15, 65, 20), 20)),
+        (11, k((0, 0.8, -0.26), -26, feet(-0.36, 0, 0.08, 0.06, 10, -25), arms(120, 40, -40, 50, 30), 24)),
+        (17, k((0, 0.81, -0.42), -26, feet(-0.32, 0.08, -0.56, 0, -20, 10), arms(-40, 50, 130, 40, 30), 22)),
+        (23, k((0, 0.78, -0.58), -36, feet(-0.74, 0, -0.46, 0.06, 8, -30), arms(140, 70, 70, 80, 20), 28, -12)),
+        (30, k((0, 0.78, -0.72), -42, feet(-0.66, 0.03, -0.8, 0.02, 0, -10), arms(60, 85, 150, 60, 15), 32, -14)),
+        (36, k((0, 0.76, -0.86), -50, feet(-0.7, 0.06, -0.8, 0, -30, 0), arms(110, 90, 90, 90, 10), 36, -16)),
+    ]
+
+
+def brush_loop(rig):
+    """Right arm brushing the front teeth: bristles at the mouth (Foam), handle out to the right, palm toward the
+    face; one side-to-side stroke cycle in 0.5 s. Keys the right arm and hand only (upper layer)."""
+    import pose as PZ
+    mouth = Vector(PZ.MARKERS['Foam']['pos'])
+    gx = Vector((-0.78, 0.08, 0.62)).normalized()                  # grip -> bristles: from front-right into the mouth
+    gy = Vector((0, 0.25, -1))                                     # back of the hand forward, bristles to the teeth
+    gy = (gy - gx * gy.dot(gx)).normalized()
+    basis = Matrix((gx, gy, gx.cross(gy))).transposed()
+    fingers = R.finger_pose(1, 'grip')
+    keys = []
+    for f in (0, 4, 8, 11, 15):
+        a = math.sin(2 * math.pi * f / 15)
+        head = mouth + Vector((0.025 * a, -0.008 + 0.005 * abs(a), -0.022))      # bristles scrub side to side
+        b = lib.rot((0, 5 * a, 0)) @ basis
+        pos = head - (b @ Vector((1, 0, 0))) * 0.17 - (b @ Vector((0, 1, 0))) * 0.01
+        wrist, turn = PZ.grip(rig, 1, pos, b)
+        keys.append((f, {'ik': {'RightArm': (wrist, (0.6, 1.0, 0.3))}, 'world': {'RightHand': turn},
+                         'local': fingers}))
+    return keys
+
+
+FULL_EXTRA = {'stumble': stumble, 'climb_out_tub': climb_out_tub}
+UPPER = {'brush_loop': (brush_loop, 1)}
+LOOPS = ['brush_loop']
+
+
+FULL = {'faceplant': faceplant, 'sit_tub': sit_tub, 'get_up_back': get_up_back, 'get_up_front': get_up_front,
+        **FULL_EXTRA}
+BOXES = {'sit_tub': TUB, 'climb_out_tub': TUB}

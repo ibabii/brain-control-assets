@@ -430,7 +430,7 @@ def rig_up(root, head):
         ws = R.weights_for(o, kind[0], LANDMARKS)
         R.skin(o, R.smooth(o, ws, kind[1]) if kind[1] else ws, rig)
     R.attach(head, rig, 'Head')
-    rig['clips'] = R.clips(rig, ARM_UP)
+    rig['clips'] = R.clips(rig, ARM_UP, LANDMARKS)
     body = bpy.data.objects.get('Body')
     if body and not body.children:
         bpy.data.objects.remove(body, do_unlink=True)

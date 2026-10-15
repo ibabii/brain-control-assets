@@ -60,6 +60,16 @@ func _ready() -> void:
 			_ragdoll()
 		'clip':
 			var h := _human(Vector3.ZERO)
+			if '--prop' in args:                      # held in the right hand: prop = Grip_R * (prop Grips/Right)^-1
+				var prop: Node3D = load(args[args.find('--prop') + 1]).instantiate()
+				var g: Node3D = h.find_child('Grip_R', true, false)
+				g.add_child(prop)
+				var gr: Node3D = prop.find_child('Grips', true, false).get_node('Right')
+				prop.transform = (g.global_transform.affine_inverse() * gr.global_transform).affine_inverse()
+				for v in prop.find_children('*', 'VisualInstance3D', true, false):
+					v.layers = 1
+				if prop.has_node('Paste'):
+					prop.get_node('Paste').visible = true
 			if '--tub' in args:                       # in the bathroom, root on the tub's Seat
 				add_child(load('res://bathroom/art/bathroom_room.tscn').instantiate())
 				var tub: Node3D = load('res://bathroom/art/props/tub.tscn').instantiate()
