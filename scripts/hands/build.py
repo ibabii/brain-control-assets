@@ -706,6 +706,7 @@ def sheet(rig, meshes):
 # --- clips (contract: coordination/interfaces.md "Hand art") -------------------------------------------------
 # Rig space = Blender coords of the hand root (Godot: x, z, -y). Press = straight down rig -Z (Godot local -Y).
 FPS = 100
+SWAT_HIT = 1.12                                                               # idle_swat slap ('hit' marker)
 HIT = {'finger': 0.05, 'fingers': 0.05, 'palm': 0.06, 'fist': 0.06}           # real speed; gameplay scales
 PRESS = {  # type: (pose, wrist pitch at hit (deg, + = back of hand up), hover raise (m), extra hover pitch)
     'finger': ('point', -12, 0.020, 0),
@@ -839,8 +840,12 @@ def clips(rig, hand, objs):
     sw = [(0.28, swing)]
     for i, (dx, yaw) in enumerate(((0.05, -32), (-0.05, 32), (0.06, -36), (-0.03, 26))):
         sw.append((0.4 + i * 0.13, dict(swing, wrist=(30, 0, yaw), loc=(dx, -0.02, 0.12 + 0.01 * (i % 2)))))
-    slap = dict(name='flat', wrist=(-6, 0, 0), loc=(0.02, 0.01, 0.002))
-    C['idle_swat'] = [(0, rel)] + sw + [(1.04, dict(swing, loc=(0.02, 0.0, 0.13))), (1.12, slap), (1.5, slap),
+    # Slap = the palm-press hit pose lowered so its contact (lowest point) is at desk level from the rest root.
+    state(rig, 'relaxed')
+    desk = lowest(objs, near_y=-0.06)
+    ph = P['palm']['hit']
+    slap = dict(ph, loc=(0.02, 0.01, desk - P['palm']['contact'].z))
+    C['idle_swat'] = [(0, rel)] + sw + [(1.04, dict(swing, loc=(0.02, 0.0, 0.13))), (SWAT_HIT, slap), (1.5, slap),
                                          (1.9, rel)]
     return C, P
 
@@ -878,10 +883,14 @@ def rig_scene_data(rig, hand, objs, P):
     markers.append(dict(name='Contact_Thumb', bone='thumb_3', clip='relaxed', time=0.0,
                         pos=list(lib.G(tip_local(rig, 'thumb')))))
     lift = -lowest(objs, near_y=-0.06)
-    return dict(markers=markers, hit={'press_' + k: t for k, t in HIT.items()}, loops=LOOPS, rest_lift=lift)
+    hit = {'press_' + k: t for k, t in HIT.items()}
+    hit['idle_swat'] = SWAT_HIT
+    return dict(markers=markers, hit=hit, loops=LOOPS, rest_lift=lift)
 
 
 def export_hand(rig, objs, path):
+    bpy.context.scene.render.fps, bpy.context.scene.render.fps_base = FPS, 1.0   # sample keys at 100 fps (hits on frame)
+    print('EXPORT fps', bpy.context.scene.render.fps)
     for o in bpy.data.objects:
         o.select_set(o in [rig, *objs])
     bpy.context.view_layer.objects.active = rig

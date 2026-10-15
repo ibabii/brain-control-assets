@@ -72,7 +72,8 @@
    "press_finger": 0.05,
    "press_fingers": 0.05,
    "press_palm": 0.06,
-   "press_fist": 0.06
+   "press_fist": 0.06,
+   "idle_swat": 1.12
   },
   "loops": [
    "grip_tight",
@@ -156,7 +157,8 @@
    "press_finger": 0.05,
    "press_fingers": 0.05,
    "press_palm": 0.06,
-   "press_fist": 0.06
+   "press_fist": 0.06,
+   "idle_swat": 1.12
   },
   "loops": [
    "grip_tight",
