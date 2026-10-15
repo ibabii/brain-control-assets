@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://cockpit/art/answering_machine/answering_machine.glb" id="1"]
+
+[node name="AnsweringMachine" instance=ExtResource("1")]
+
+[node name="Speaker" type="Marker3D" parent="."]
+position = Vector3(0.05, 0.062, 0.012)

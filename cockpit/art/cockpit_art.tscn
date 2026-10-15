@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" path="res://cockpit/art/cockpit_art.glb" id="1"]
 [ext_resource type="PackedScene" path="res://cockpit/art/notes/cockpit_notes.tscn" id="notes"]
+[ext_resource type="PackedScene" path="res://cockpit/art/intercom/intercom.tscn" id="intercom"]
+[ext_resource type="PackedScene" path="res://cockpit/art/answering_machine/answering_machine.tscn" id="machine"]
 
 [node name="CockpitArtScene" type="Node3D"]
 
@@ -9,8 +11,15 @@
 
 [node name="NoteText" parent="." instance=ExtResource("notes")]
 
+[node name="Intercom" parent="." instance=ExtResource("intercom")]
+position = Vector3(0, 1.055, -0.5495)
+
+[node name="AnsweringMachine" parent="." instance=ExtResource("machine")]
+position = Vector3(0.8303, 0.95, -0.1992)
+rotation_degrees = Vector3(0, -25, 0)
+
 [node name="GaugeLabels" type="Node3D" parent="."]
-position = Vector3(0, 0.862, -0.5838)
+position = Vector3(0, 0.837, -0.5838)
 
 [node name="Coordination" type="Label3D" parent="GaugeLabels"]
 position = Vector3(-0.48, 0, 0)

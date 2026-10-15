@@ -17,8 +17,8 @@ _GAME_SIDES = {
 LAYOUTS = {
     # Exactly the current game anchors (src/cockpit/cockpit.tscn).
     'game': {'FrontScreen': {'pos': (0.0, 1.43, -0.58), 'size': (1.28, 0.72), 'deg': (0, 0, 0)}, **_GAME_SIDES},
-    # 16:9 like the game, a bit smaller, bottom edge unchanged: leaves room for the trinket shelf.
-    'middle': {'FrontScreen': {'pos': (0.0, 1.385, -0.58), 'size': (1.12, 0.63), 'deg': (0, 0, 0)}, **_GAME_SIDES},
+    # 16:9 like the game, a bit smaller; raised 3.5 cm 2026-10-15 (was 1.385) for the intercom strip.
+    'middle': {'FrontScreen': {'pos': (0.0, 1.42, -0.58), 'size': (1.12, 0.63), 'deg': (0, 0, 0)}, **_GAME_SIDES},
     # Fitted to the concept render (2.3:1 main screen).
     'concept': {
         'FrontScreen': {'pos': (0.0, 1.33, -0.58), 'size': (1.12, 0.49), 'deg': (0, 0, 0)},
@@ -39,12 +39,13 @@ def frame_top(name):
     return spec['pos'][1] + spec['size'][1] / 2 + (0.06 if name == 'FrontScreen' else 0.034)
 
 
+CHIN = 0.10          # main screen's bottom border: the intercom is built into it (intercom.py)
 CONSOLE = Frame((0, 0.95, 0.1), (18, 0, 0))     # game Console node
 # Control module anchors in Console space (game src/cockpit/cockpit.tscn).
 # Spread out 2026-10-14 (user: controls too close); proposed to gameplay, was LeftKeys -0.27, Panic (0.02, 0, -0.06), RightSlot 0.3.
 ANCHORS = {'LeftKeys': (-0.38, 0, 0), 'PanicButton': (0.0, 0, -0.05), 'RightSlot': (0.33, 0, 0)}
 SLOT_X = ANCHORS['RightSlot'][0]
-DIALS = Frame((0, 0.955, -0.59))                  # game GaugeDials node
+DIALS = Frame((0, 0.93, -0.59))                   # game GaugeDials node (was 0.955 before the intercom, 2026-10-15)
 DIAL_X = [-0.48, -0.24, 0.0, 0.24, 0.48]
 LABEL_Y = -0.093                                 # label paper centre, below the dial (r 0.07)
 GAUGES = ['Coordination', 'Confidence', 'Balance', 'Focus', 'Embarrassment']
@@ -84,7 +85,7 @@ def screen_housing(root, name, main=False):
     group['screen_size'] = list(spec['size'])
     group['screen_rotation_deg'] = list(spec['deg'])
     if main:
-        side, top, bottom, depth = 0.075, 0.06, 0.035, 0.075
+        side, top, bottom, depth = 0.075, 0.06, CHIN, 0.075
         frame_mat, back_mat = M('housing', 0.5), M('housing_dark', 0.6)
     else:
         side, top, bottom, depth = 0.034, 0.034, 0.034, 0.055
@@ -95,6 +96,8 @@ def screen_housing(root, name, main=False):
     inner = list(reversed(rrect(w + 0.004, h + 0.004, 0.022 if main else 0.016, 5)))
     ring = min(side, top, bottom) - 0.002
     bevel = min(0.016, ring / 2 - 0.004)          # wider than half the ring and the slab inset eats the front face
+    if main:
+        bevel = 0.008                             # keeps the chin front flat for the intercom faceplate
     frame = lib.slab(name + 'Frame', outer, depth, bevel, frame_mat, f.child((0, 0, -depth + 0.022)), group, holes=[inner])
     # Deep back shell so the monitor reads as a chunky box; side monitors show a dark casing rim around the bezel.
     back_d = 0.12 if main else 0.17
@@ -104,7 +107,7 @@ def screen_housing(root, name, main=False):
     # Dark glass bezel just behind the live screen plane (never in front of it).
     lib.box(name + 'Glass', (w + 0.01, h + 0.01, 0.004), M('screen', 0.3), f.child((0, 0, -0.006)), group)
     for sx in (-1, 1):
-        for sy in (-1, 1):
+        for sy in ((1,) if main else (-1, 1)):      # main: the intercom faceplate has its own screws
             screw(group, f, (sx * (w / 2 + side / 2), sy * (h / 2 + (top if sy > 0 else bottom) / 2) + 0, 0.022),
                   0.0075 if main else 0.006, on=frame, sink=0.0006 if main else 0.0025)   # side border is all bevel
     return group, f
@@ -269,7 +272,7 @@ def desk(root):
     # Dark tray in front of the console where the notebook and list lie.
     lib.slab('Tray', rrect(1.35, 0.34, 0.04, 4), 0.03, 0.01, M('tray', 0.65), Frame((0.0, 0.86, 0.36), UPF), group)
     # Deck connecting the console back to the gauge panel (hidden from the seat, seen in the reveal).
-    lib.slab('Deck', rrect(1.3, 0.46, 0.04, 4), 0.04, 0.01, M('housing_dark', 0.7), Frame((0, 0.795, -0.36), UPF), group)   # bottom 5 mm under the desk bottom (flush z-fought)
+    lib.slab('Deck', rrect(1.3, 0.43, 0.04, 4), 0.04, 0.01, M('housing_dark', 0.7), Frame((0, 0.795, -0.345), UPF), group)   # back edge clear of the dial labels (dials lowered 2026-10-15)   # bottom 5 mm under the desk bottom (flush z-fought)
     return group
 
 

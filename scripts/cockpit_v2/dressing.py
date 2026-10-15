@@ -9,6 +9,7 @@ import random
 import bmesh
 from mathutils import Vector
 
+import answering_machine
 import brain
 import hardware as hw
 import lib
@@ -239,6 +240,8 @@ def monitor_top(name, along=0.0, back=0.06):
 
 
 DESK_TOP, TRAY_TOP = 0.86, 0.89
+AM_SHIFT, AM_YAW = 0.03, -25.0       # answering machine: x offset from the pal's old spot, yaw (deg)
+MACHINE = None
 
 
 def support(x, z):
@@ -301,10 +304,17 @@ def desk_props(parent):
     ob, ow, oh = on_ground((1140, 458, 1312, 590), 0.95, 0.95)
     pb, pw, ph = on_ground((1302, 497, 1378, 612), 0.95, 0.95)
     ob, pb = ob + Vector((0.05, 0, -0.08)), pb + Vector((0.11, 0, -0.08))
-    props.crate('Crate', Vector(((ob.x + pb.x) / 2, DESK_TOP + 0.0005, (ob.z + pb.z) / 2 - 0.015)),
-                abs(pb.x - ob.x) + 0.22, 0.2, ob.y - DESK_TOP - 0.0005, g)
+    # The answering machine takes the voxel pal's spot on the crate (2026-10-15); the pal stands on the machine.
+    am_base = Vector((pb.x + AM_SHIFT, ob.y, pb.z - 0.02))
+    props.crate('Crate', Vector(((ob.x + am_base.x + 0.1) / 2 - 0.02, DESK_TOP + 0.0005, am_base.z - 0.035)),
+                abs(am_base.x + 0.1 - ob.x) + 0.15, 0.25, ob.y - DESK_TOP - 0.0005, g)
     props.octopus('Octopus', ob, ow * 0.88, g)
-    props.pixel_pal('PixelPal', pb, ph, g)
+    global MACHINE
+    MACHINE = answering_machine.build(g, am_base, AM_YAW)[0], am_base, AM_YAW
+    a = math.radians(AM_YAW)
+    lx, lz = 0.055, -0.05                                  # back-right of the machine top
+    props.pixel_pal('PixelPal', am_base + Vector((lx * math.cos(a) + lz * math.sin(a), answering_machine.H,
+                                                  -lx * math.sin(a) + lz * math.cos(a))), ph * 0.85, g)
     base, w, h = on_ground((1140, 897, 1193, 941), 0.89)
     props.badge('SmileyBadge', seat(Vector((0.55, 0, 0.47)), w * 0.42), w, g)
     for i, (bbox, seed, shift) in enumerate([((100, 580, 197, 676), 1, (0, 0, 0)), ((1372, 715, 1480, 830), 2, (0.19, 0, 0.22))]):

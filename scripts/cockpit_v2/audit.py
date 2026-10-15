@@ -28,7 +28,8 @@ ALLOW = [('ConsoleSlab', 'ConsoleRim'), ('ConsoleSlab', 'ConsoleSkirt'), ('Conso
          ('DeskTop', 'Console'), ('Tray', 'Console'), ('DeskTop', 'BrainFolds'), ('Deck', 'BrainFolds'),
          ('GaugePanel', 'Screw'), ('GaugePanel', 'Bezel'), ('Bezel', 'Face'), ('GaugePanel', 'Paper'),
          ('Frame', 'Screw'), ('Frame', 'Glass'), ('Back', 'Glass'), ('Shelf', 'Frame'), ('Shelf', 'Back'),
-         ('Shelf', 'BrainFolds'), ('Deck', 'GaugePanel'), ('Deck', 'Console')]
+         ('Shelf', 'BrainFolds'), ('Deck', 'GaugePanel'), ('Deck', 'Console'),
+         ('IntercomBody', 'IntercomFace')]
 
 
 def allowed(a, b):
@@ -45,7 +46,7 @@ def _m(name, pat):
 SKIP = ('Tape', 'Pin', 'Needle', 'Cable', 'Bundle', 'Fairy', 'Bulb', 'Wire', 'String', 'Antenna', 'Crumb',
         'CoffeeRing', 'Preview')
 GROUPS = ('Notes', 'Notebook', 'Books', 'Trinkets', 'DeskProps', 'EdgeDressing', 'GaugeHousing', 'ConsoleHousing',
-          'Desk', 'Shell', 'FrontScreen', 'LeftPanel', 'RightPanel', 'Controls')
+          'Desk', 'Shell', 'FrontScreen', 'LeftPanel', 'RightPanel', 'Controls', 'Intercom')
 ALONE = ('ConsoleHousing', 'GaugeHousing', 'Desk')      # each part is its own assembly
 PROP_GROUPS = ('Books', 'Trinkets', 'DeskProps', 'EdgeDressing')
 SLOT_MODULES = ('joystick', 'simon_pad', 'lever', 'arrow_keys')

@@ -8,10 +8,12 @@
     "layout": "cockpit/art/layout.json",
     "note_text": "cockpit/art/notes/cockpit_notes.tscn (instanced as NoteText in cockpit_art.tscn)",
     "note_defaults": "cockpit/art/notes/notes_text.json",
-    "font": "cockpit/art/notes/fonts/PatrickHand-Regular.ttf (SIL OFL 1.1, OFL.txt alongside)"
+    "font": "cockpit/art/notes/fonts/PatrickHand-Regular.ttf (SIL OFL 1.1, OFL.txt alongside)",
+    "intercom": "cockpit/art/intercom/intercom.tscn (instanced as Intercom in cockpit_art.tscn) + intercom.glb, dotmatrix_5x7.json",
+    "answering_machine": "cockpit/art/answering_machine/answering_machine.tscn (instanced as AnsweringMachine in cockpit_art.tscn) + .glb"
   },
-  "model_sha256": "bbfb4c71571e71366fb1ba27716792c992d5743a5dd405381e83c7878dfbebb2",
-  "triangles": 308324,
+  "model_sha256": "5809cc476caa1806c0e815c9393ee5066a26954364f6950985646931f2f5b8b8",
+  "triangles": 321882,
   "source": "source/cockpit/cockpit_v2.blend",
   "rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build.py",
   "gameplay_hooks": {
@@ -21,7 +23,9 @@
     "ScreenHousings/*": "frames only; live screens render at layout.json anchors",
     "Controls": "moved out of cockpit_art.glb into cockpit/art/controls/*.glb (see coordination/interfaces.md)",
     "NoteText/<Id> (Label3D)": "sticky-note wording; set .text at runtime. Ids: YouGotThis, ItsFine, Chaos, MopFloor, SameBrain, HeartSticky, SmallSteps, DoTheThing, TodoList, Polaroid",
-    "NoteText/Today": "notebook TODAY list: Page/List/Title.text; Page/List/Item0..5 (.visible, Text.text BBCode, Box/Tick.visible)"
+    "NoteText/Today": "notebook TODAY list: Page/List/Title.text; Page/List/Item0..5 (.visible, Text.text BBCode, Box/Tick.visible)",
+    "Intercom (tscn)": "Display (dot-matrix material_override), Lamps/Heart|Stomach|Gary, ThoughtAnchor; see interfaces.md",
+    "AnsweringMachine (tscn)": "Lamp, Tape/ReelL|R (spin about local Y), Button_Play (press -Y 0.006), Speaker; see interfaces.md"
   },
   "printed_from_concept": "none: every prop is modelled and textured in Blender (paper.py, props.py)",
   "proposed_game_changes": {
@@ -100,5 +104,15 @@
   "third_party": [
     "cockpit/art/notes/fonts/PatrickHand-Regular.ttf: SIL OFL 1.1 (OFL.txt)"
   ],
-  "clipping_audit": "Blender -b source/cockpit/cockpit_v2.blend --python scripts/cockpit_v2/audit.py (0 pairs at 2026-10-14; checks all slot modules at layout.json console.anchors)"
+  "clipping_audit": "Blender -b source/cockpit/cockpit_v2.blend --python scripts/cockpit_v2/audit.py (0 pairs at 2026-10-14; checks all slot modules at layout.json console.anchors)",
+  "modules": {
+    "intercom": {
+      "file": "cockpit/art/intercom/intercom.glb",
+      "sha256": "6b6e8b348310b20373e26a4602afead3c69a03672800eec7edc6849d860b310f"
+    },
+    "answering_machine": {
+      "file": "cockpit/art/answering_machine/answering_machine.glb",
+      "sha256": "ab9c16507096f037023705463367288cf30357386a05b110ee85ae0692f72228"
+    }
+  }
 }

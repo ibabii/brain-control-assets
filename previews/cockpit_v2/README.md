@@ -11,3 +11,5 @@ Everything is modelled and textured in Blender: paper notes (`paper.py`, live wo
 Screen content here is a preview stand-in; the game renders live screens at the anchors in `layout.json`.
 
 Clipping: after every build run `Blender -b source/cockpit/cockpit_v2.blend --python scripts/cockpit_v2/audit.py`; it must report 0 pairs (it also flags flush surfaces that z-fight and screws that float or overhang).
+
+Intercom and answering machine: `--extra res://previews/cockpit_v2/intercom_demo.tscn [--ic-text ..] [--ic-lamp Heart|Stomach|Gary] [--ic-cells 20]` fills the display with the 5x7 glyphs and lights a caller lamp plus the message LED (preview only).

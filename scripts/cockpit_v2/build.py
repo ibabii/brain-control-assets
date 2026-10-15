@@ -14,6 +14,7 @@ import bpy  # noqa: E402
 import brain  # noqa: E402
 import dressing  # noqa: E402
 import hardware  # noqa: E402
+import intercom  # noqa: E402
 import lib  # noqa: E402
 import notes_scene  # noqa: E402
 import paper  # noqa: E402
@@ -26,13 +27,28 @@ shell = lib.empty('Shell', (0, 1.5, -0.3), root)
 brain.build(shell)
 shelf_top = hardware.build(root)
 bulbs = dressing.build(root, shelf_top)
+ic, ic_layout = intercom.build(root)
 lib.conform_tapes()                       # after everything exists: drape tape onto what it holds
 
 os.makedirs(lib.ROOT + '/cockpit/art', exist_ok=True)
 glb = lib.ROOT + '/cockpit/art/cockpit_art.glb'
-lib.export_glb(filepath=glb, export_format='GLB', export_yup=True, export_apply=True,
+# Modules with their own scene (instanced by cockpit_art.tscn) stay out of the main GLB.
+modules = {ic: 'intercom/intercom.glb', dressing.MACHINE[0]: 'answering_machine/answering_machine.glb'}
+own = {o for m in modules for o in [m, *m.children_recursive]}
+for o in bpy.data.objects:
+    o.select_set(o.name in lib.COLL.objects and o not in own)
+lib.export_glb(filepath=glb, export_format='GLB', export_yup=True, export_apply=True, use_selection=True,
                           export_cameras=False, export_lights=False, export_extras=True,
                           export_image_format='AUTO')
+for m, path in modules.items():
+    os.makedirs(os.path.dirname(lib.ROOT + '/cockpit/art/' + path), exist_ok=True)
+    mw = m.matrix_world.copy()
+    m.matrix_world = mw.Identity(4)                # module origin = its local origin
+    for o in bpy.data.objects:
+        o.select_set(o in m.children_recursive)      # children only: they are the scene's top nodes
+    lib.export_glb(filepath=lib.ROOT + '/cockpit/art/' + path, export_format='GLB', export_yup=True,
+                   export_apply=True, use_selection=True, export_cameras=False, export_lights=False)
+    m.matrix_world = mw
 for o in bpy.data.objects:
     o.select_set(False)
 screens = hardware.preview_screens()
@@ -52,6 +68,8 @@ layout = {
     'shelf_top_y': shelf_top,
     'fairy_bulbs': [list(p) for p in bulbs],
     'notes': paper.SLOTS,
+    'intercom': ic_layout,
+    'answering_machine': {'position': list(dressing.MACHINE[1]), 'yaw_deg': dressing.MACHINE[2]},
 }
 with open(lib.ROOT + '/cockpit/art/layout.json', 'w') as f:
     json.dump(layout, f, indent=2, default=float)
@@ -64,7 +82,7 @@ if os.path.exists(manifest_path):
     with open(glb, 'rb') as f:
         manifest['model_sha256'] = hashlib.sha256(f.read()).hexdigest()
     manifest['triangles'] = lib.count_tris()
-    for c in manifest.get('controls', {}).values():           # controls export separately; keep their hashes current
+    for c in [*manifest.get('controls', {}).values(), *manifest.get('modules', {}).values()]:           # controls export separately; keep their hashes current
         with open(lib.ROOT + '/' + c['file'], 'rb') as f:
             c['sha256'] = hashlib.sha256(f.read()).hexdigest()
     with open(manifest_path, 'w') as f:
