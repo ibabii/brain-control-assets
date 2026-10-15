@@ -44,6 +44,7 @@ func _ready() -> void:
 		human = load('res://previews/human/human_A.glb').instantiate()
 		human.position = Vector3(0, 0, 0.2)
 		add_child(human)
+		_rest_pose(human)
 		for n in ['Open', 'Tongue', 'Teeth', 'Grimace', 'GrimaceLine', 'BlushL', 'BlushR']:
 			human.find_child(n, true, false).visible = false
 	if '--fall' in args:                                # rigged Human tipping toward the tub, ragdoll on
@@ -51,6 +52,7 @@ func _ready() -> void:
 		fh.position = Vector3(-0.55, 0, 0.75)
 		fh.rotation_degrees = Vector3(0, 0, 12)
 		add_child(fh)
+		_rest_pose(fh)
 		_drop.call_deferred(fh)
 	camera = Camera3D.new()
 	camera.near = 0.02
@@ -60,6 +62,12 @@ func _ready() -> void:
 	var ci := args.find('--capture')
 	if ci >= 0:
 		_capture(args[ci + 1])
+
+
+func _rest_pose(h: Node) -> void:                  # arms are bound in an A-pose; `rest` hangs them
+	for ap in h.find_children('*', 'AnimationPlayer', true, false):
+		ap.play('rest')
+		ap.seek(0.0, true)
 
 
 func _drop(h: Node3D) -> void:

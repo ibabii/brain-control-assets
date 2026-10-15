@@ -41,13 +41,16 @@ func _initialize() -> void:
 		_ok(not (h.find_child(n, true, false) as Node3D).visible, n + " starts hidden")
 	var wrong := h.find_children("*", "VisualInstance3D", true, false).filter(func(v): return v.layers != 2)
 	_ok(wrong.is_empty(), "every mesh on render layer 2 (%d not)" % wrong.size())
-	var grip: Marker3D = h.find_child("Grip_R", true, false)
-	var gb := grip.global_basis
-	_ok(gb.x.cross(gb.y).dot(gb.z) > 0.99, "Grip_R basis right-handed")
-	_ok(gb.y.dot(Vector3(1, 0, 0)) > 0.8, "Grip_R +Y = back of the hand (out, +X at rest)")
-	var gl: Marker3D = h.find_child("Grip_L", true, false)
-	_ok(gl.global_basis.y.dot(Vector3(-1, 0, 0)) > 0.8 and gl.global_basis.x.cross(gl.global_basis.y).dot(gl.global_basis.z) > 0.99,
-		"Grip_L back of the hand -X, right-handed")
+	for side in ["L", "R"]:                          # Grip basis: +Y = back of the hand, +X out of the thumb side
+		var g: Marker3D = h.find_child("Grip_" + side, true, false)
+		var gb := g.global_basis
+		var n := "Left" if side == "L" else "Right"
+		var hand := skel.global_transform * skel.get_bone_global_rest(skel.find_bone(n + "Hand"))
+		var thumb := (skel.global_transform * skel.get_bone_global_rest(skel.find_bone(n + "ThumbDistal"))).origin
+		_ok(gb.x.cross(gb.y).dot(gb.z) > 0.99, "Grip_%s right-handed" % side)
+		_ok(gb.y.dot(hand.basis.z.normalized()) > 0.8, "Grip_%s +Y = back of the hand (%.2f)" % [side, gb.y.dot(hand.basis.z.normalized())])
+		_ok(gb.x.dot((thumb - g.global_position).normalized()) > 0.3, "Grip_%s +X toward the thumb (%.2f)" % [
+			side, gb.x.dot((thumb - g.global_position).normalized())])
 	await _ik(h, skel, data)
 	await _ragdoll(h, skel)
 	print("HUMAN RIG CHECK ", "PASS" if fails == 0 else "FAIL (%d)" % fails)

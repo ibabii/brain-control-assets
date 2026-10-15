@@ -7,6 +7,7 @@ extends Node3D
 ## godot --path . res://previews/human/human_rig_preview.tscn -- --capture NAME --mode pose [--shots "name@eye@look[@fov];..."]
 
 const POSES := {   # bone: [local axis, degrees] applied on top of the rest pose
+	'tpose': {},       # filled in _tpose: arms horizontal, forearms straight, fingers spread
 	'arms_up': {'RightUpperArm': [Vector3.FORWARD, -100], 'LeftUpperArm': [Vector3.RIGHT, -110], 'LeftLowerArm': [Vector3.RIGHT, -60],
 		'Head': [Vector3.UP, 30], 'Spine': [Vector3.RIGHT, -12]},
 	'sit': {'LeftUpperLeg': [Vector3.RIGHT, -85], 'RightUpperLeg': [Vector3.RIGHT, -85], 'LeftLowerLeg': [Vector3.RIGHT, 90],
@@ -32,9 +33,14 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	var mode := args[args.find('--mode') + 1] if '--mode' in args else 'pose'
 	match mode:
+		'tpose':
+			var h := _human(Vector3.ZERO)
+			_tpose(h)
 		'pose':
 			var i := 0
 			for p in POSES:
+				if p == 'tpose':
+					continue
 				var h := _human(Vector3((1 - i) * 1.0, 0, 0))
 				_pose(h, POSES[p])
 				i += 1
@@ -44,6 +50,7 @@ func _ready() -> void:
 			var i := 0
 			for c in ['grip', 'relaxed', 'spread']:
 				var h := _human(Vector3((1 - i) * 0.7, 0, 0))
+				_clip(h, 'rest')
 				_clip(h, 'hand_%s_L' % c)
 				_clip(h, 'hand_%s_R' % c)
 				i += 1
@@ -75,6 +82,27 @@ func _pose(h: Node3D, pose: Dictionary) -> void:
 		sk.set_bone_pose_rotation(i, sk.get_bone_rest(i).basis.get_rotation_quaternion() * q)
 
 
+## Arms straight out to the sides, palms down, fingers spread: aim each arm bone along +-X in world space.
+func _tpose(h: Node3D) -> void:
+	var sk := _skel(h)
+	var args := OS.get_cmdline_user_args()
+	var f: String = args[args.find('--fingers') + 1] if '--fingers' in args else 'spread'
+	_clip(h, 'hand_%s_L' % f)
+	_clip(h, 'hand_%s_R' % f)
+	for side in ['Left', 'Right']:
+		var s := -1.0 if side == 'Left' else 1.0
+		for b in [side + 'UpperArm', side + 'LowerArm', side + 'Hand']:
+			var i := sk.find_bone(b)
+			var parent_g := sk.get_bone_global_pose(sk.get_bone_parent(i))
+			var rest_g := parent_g * sk.get_bone_rest(i)
+			var cur := rest_g.basis.y.normalized()                     # bone axis now
+			var want := Vector3(s, 0, 0)
+			var turn := Quaternion(cur, want) if cur.dot(want) < 0.9999 else Quaternion()
+			var g := Basis(turn) * rest_g.basis
+			sk.set_bone_pose_rotation(i, (parent_g.basis.inverse() * g).get_rotation_quaternion())
+			sk.force_update_all_bone_transforms()
+
+
 func _clip(h: Node3D, clip: String) -> void:
 	var sk := _skel(h)
 	var a: Animation = h.get_node('Anim').get_animation(clip)
@@ -92,6 +120,7 @@ func _v(a: Array) -> Vector3:
 func _ik_scene() -> void:
 	for k in 2:
 		var h := _human(Vector3((0.5 - k) * 1.0, 0, 0))
+		_clip(h, 'rest')
 		var sk := _skel(h)
 		var ik := TwoBoneIK3D.new()
 		sk.add_child(ik)
@@ -132,6 +161,7 @@ func _ik_scene() -> void:
 
 func _ragdoll() -> void:
 	var h := _human(Vector3.ZERO)
+	_clip(h, 'rest')
 	h.rotation_degrees = Vector3(10, 25, 0)
 	var floor := StaticBody3D.new()
 	var col := CollisionShape3D.new()

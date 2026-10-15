@@ -94,8 +94,8 @@ def to_mesh(o):
 def model_parts():
     """Palm block and one mesh per finger (separate metaball families so fingers never fuse)."""
     mb, o = _meta('PartPalm', 0.0026)
-    ellipsoid(mb, (0, 0.042, 0.0), (0.040, 0.034, 0.0155))
-    ellipsoid(mb, (0, 0.065, 0.003), (0.034, 0.013, 0.0145))     # knuckle ridge, inside the palm outline
+    ellipsoid(mb, (0, 0.038, 0.0), (0.040, 0.029, 0.0155))         # ends at the knuckles (no web past them)
+    ellipsoid(mb, (0, 0.058, 0.003), (0.034, 0.010, 0.0145))     # knuckle ridge, inside the palm outline
     ellipsoid(mb, (-0.024, 0.018, -0.009), (0.018, 0.024, 0.0135))  # thumb mound (around thumb_1)
     ellipsoid(mb, (0, 0.004, 0.0), (0.029, 0.026, 0.0190))        # wrist
     capsule(mb, (0, -0.06, 0), (0, -0.012, 0), 0.020)              # forearm (inside the cuff)
@@ -146,11 +146,11 @@ def union(parts):
     seam = set()
     for v in bm.verts:
         order, d = nearest(v.co)
-        if 'palm' in order[:2] and d[order[1]] < 0.006:      # finger/palm join only
+        if 'palm' in order[:2] and d[order[1]] < 0.004:      # finger/palm join only
             seam.add(v)
-    for _ in range(2):                                       # widen the fillet band
+    for _ in range(1):                                       # widen the fillet band (narrow: no web between fingers)
         seam |= {e.other_vert(v) for v in list(seam) for e in v.link_edges}
-    for _ in range(14):
+    for _ in range(8):
         bmesh.ops.smooth_vert(bm, verts=list(seam), factor=0.5, use_axis_x=True, use_axis_y=True, use_axis_z=True)
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)

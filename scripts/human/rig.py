@@ -229,6 +229,46 @@ def smooth(o, ws, passes=4):
     return out
 
 
+def soften_knuckles(o, side, passes=4):
+    """The skin between the fingers is weighted to the palm, so spread or curled fingers stretch it into a web.
+    Smooth weights in a band around the knuckles (+-2 cm) so that skin follows the fingers on both sides."""
+    n = side_name(side)
+    hb = {b[0]: b for b in HAND_BONES[side]}
+    knuckles = [hb[f + 'Proximal'][1] for f in ('Index', 'Middle', 'Ring')]
+    k0 = sum(knuckles, Vector()) / 3
+    axis = (hb['Hand'][2] - hb['Hand'][1]).normalized()
+    mw = o.matrix_world
+    me = o.data
+    idx = {g.index: g.name for g in o.vertex_groups}
+    ws = [{idx[g.group]: g.weight for g in v.groups} for v in me.vertices]
+    band = [abs((G(mw @ v.co) - k0).dot(axis)) < 0.02 for v in me.vertices]
+    nb = [[] for _ in me.vertices]
+    for e in me.edges:
+        a, b = e.vertices
+        nb[a].append(b)
+        nb[b].append(a)
+    for _ in range(passes):
+        new = list(ws)
+        for i in range(len(ws)):
+            if not band[i]:
+                continue
+            acc = dict(ws[i])
+            for j in nb[i]:
+                for k, x in ws[j].items():
+                    acc[k] = acc.get(k, 0) + x
+            tot = sum(acc.values())
+            new[i] = {k: x / tot for k, x in acc.items()}
+        ws = new
+    for g in list(o.vertex_groups):
+        o.vertex_groups.remove(g)
+    for i, w in enumerate(ws):
+        top4 = sorted(w.items(), key=lambda kv: -kv[1])[:4]
+        tot = sum(x for _, x in top4)
+        for k, x in top4:
+            g = o.vertex_groups.get(k) or o.vertex_groups.new(name=k)
+            g.add([i], x / tot, 'REPLACE')
+
+
 def skin(o, ws, rig):
     for i, w in enumerate(ws):
         for k, x in w.items():
@@ -268,38 +308,54 @@ def finger_pose(side, kind):
                 spread = 0.0
             elif kind == 'spread':  # flailing: straight and fanned out
                 a = 8.0 if f != 'Thumb' else 0.0
-                spread = {'Index': 12, 'Middle': 0, 'Ring': -12, 'Thumb': 18}[f] if i == 0 else 0.0
+                spread = {'Index': 6, 'Middle': 0, 'Ring': -6, 'Thumb': 12}[f] if i == 0 else 0.0
             else:
                 a, spread = 0.0, 0.0
             r[n + f + sg] = (a, 0.0, spread * side * (1 if f != 'Thumb' else -1))
     return r
 
 
-def clips(rig):
-    """NLA tracks (glTF exports one animation each): rest, idle, hand_{grip,relaxed,spread}_{L,R}."""
+def _arms_down(rig, arm_up, frame):
+    """Key the upper arms from the bind A-pose down to the hanging pose (rotation about the body's forward axis)."""
+    from mathutils import Quaternion
+    for s, n in ((-1, 'Left'), (1, 'Right')):
+        pb = rig.pose.bones[n + 'UpperArm']
+        rest = rig.data.bones[n + 'UpperArm'].matrix_local.to_quaternion()
+        q = Quaternion(B((0, 0, 1)), math.radians(-s * arm_up))
+        pb.rotation_mode = 'QUATERNION'
+        pb.rotation_quaternion = rest.inverted() @ q @ rest
+        pb.keyframe_insert('rotation_quaternion', frame=frame)
+
+
+def clips(rig, arm_up):
+    """NLA tracks (glTF exports one animation each): rest, idle (arms hanging), hand_{grip,relaxed,spread}_{L,R}."""
     bpy.context.scene.render.fps = FPS
     rig.animation_data_create()
     names = []
 
-    def clip(name, frames):
+    def clip(name, frames, arms=False):
         act = bpy.data.actions.new(name)
         rig.animation_data.action = act
         for f, rots in frames:
             _key(rig, f, rots)
+            if arms:
+                _arms_down(rig, arm_up, f)
         rig.animation_data.action = None
+        for pb in rig.pose.bones:
+            pb.rotation_quaternion = (1, 0, 0, 0)
         tr = rig.animation_data.nla_tracks.new()
         tr.name = name
         tr.strips.new(name, 0, act)
         for pb in rig.pose.bones:
             pb.rotation_euler = (0, 0, 0)
         names.append(name)
-    clip('rest', [(0, {'Hips': (0, 0, 0)}), (1, {'Hips': (0, 0, 0)})])
+    clip('rest', [(0, {'Hips': (0, 0, 0)}), (1, {'Hips': (0, 0, 0)})], arms=True)
     idle = []
     for k in range(0, 91, 10):                                   # 3 s breathing loop
         a = math.sin(2 * math.pi * k / 90)
         idle.append((k, {'Chest': (-1.4 * a, 0, 0), 'UpperChest': (-1.0 * a, 0, 0), 'Head': (1.6 * a, 0, 0),
                          'LeftShoulder': (0, 0, 1.2 * a), 'RightShoulder': (0, 0, -1.2 * a)}))
-    clip('idle', idle)
+    clip('idle', idle, arms=True)
     for s in (-1, 1):
         for kind in ('grip', 'relaxed', 'spread'):
             p = finger_pose(s, kind)
@@ -314,7 +370,7 @@ def markers(L):
     for s in (-1, 1):
         n, sfx = side_name(s), ('L' if s < 0 else 'R')
         d = Vector((L['FORE'].x * s, L['FORE'].y, L['FORE'].z))
-        back = Vector((s, 0, 0))
+        back = Vector((L['BACK'].x * s, L['BACK'].y, L['BACK'].z))
         back = (back - d * back.dot(d)).normalized()
         thumb = back.cross(d) if s > 0 else d.cross(back)        # out of the thumb side (forward at rest)
         if thumb.z > 0:

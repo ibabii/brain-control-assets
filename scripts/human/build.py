@@ -35,15 +35,21 @@ HAND_SCALE = 1.12                          # on top of the brain hand's own 1.2
 EYE_Y = 1.625
 NECK = Vector((0, 1.47, 0.0))
 SHOULDER = Vector((0.20, 1.355, 0.0))
-ELBOW = SHOULDER + Vector((math.sin(math.radians(12)), -math.cos(math.radians(12)), 0.0)) * 0.27
-FORE = Vector((0.12, -1.0, -0.22)).normalized()
+# The arms are modelled and bound in an A-pose (ARM_UP more than they hang), so the voxel union can't fuse sleeve and
+# torso; the `rest` and `idle` clips lower them to the hanging pose the design shows.
+ARM_UP = 33.0
+_UP = Matrix.Rotation(math.radians(ARM_UP), 3, 'Z')                  # Godot Z: lifts the right arm outward
+_HANG = Vector((math.sin(math.radians(12)), -math.cos(math.radians(12)), 0.0))
+ELBOW = SHOULDER + _UP @ _HANG * 0.27
+FORE = (_UP @ Vector((0.12, -1.0, -0.22))).normalized()
 WRIST = ELBOW + FORE * 0.24
+BACK = _UP @ Vector((1, 0, 0))                                         # back of the right hand at bind
 HIP = Vector((0.10, 0.82, 0.0))
 KNEE = Vector((0.118, 0.46, -0.02))                # a little forward: knees bend the right way for IK
 ANKLE = Vector((0.135, 0.15, 0.0))                 # trouser cuff
 ANKLE_J = Vector((0.135, 0.095, 0.0))              # ankle joint inside the shoe collar
-LANDMARKS = dict(SHOULDER=SHOULDER, ELBOW=ELBOW, WRIST=WRIST, FORE=FORE, HIP=HIP, KNEE=KNEE, ANKLE=ANKLE,
-                 ANKLE_J=ANKLE_J, EYE_Y=EYE_Y)
+LANDMARKS = dict(SHOULDER=SHOULDER, ELBOW=ELBOW, WRIST=WRIST, FORE=FORE, BACK=BACK, HIP=HIP, KNEE=KNEE,
+                 ANKLE=ANKLE, ANKLE_J=ANKLE_J, EYE_Y=EYE_Y, ARM_UP=ARM_UP)
 
 
 def mirror(v, s):
@@ -239,7 +245,7 @@ def hands(parent):
         bpy.context.scene.frame_set(0)
         dg = bpy.context.evaluated_depsgraph_get()
         d = mirror(FORE, s)
-        o_ = Vector((s, 0, 0))
+        o_ = mirror(BACK, s)
         o_ = (o_ - d * o_.dot(d)).normalized()                          # back of the hand faces out
         M = Matrix((o_.cross(-d), o_, -d)).transposed()                 # columns: local x, y (back), z (sleeve)
         wr = mirror(WRIST, s)
@@ -414,6 +420,8 @@ def rig_up(root, head):
     rig = R.armature(table, root)
     for o in [x for x in bpy.data.objects if x.type == 'MESH']:
         if o.name.startswith(('Hand', 'Nails')):
+            if o.name.startswith('Hand'):
+                R.soften_knuckles(o, -1 if o.name.endswith('L') else 1)
             R.skin(o, [], rig)                                        # vertex groups already set in hands()
             continue
         kind = next(((k, n) for pre, k, n in SKIN_KIND if o.name.startswith(pre)), None)
@@ -422,7 +430,7 @@ def rig_up(root, head):
         ws = R.weights_for(o, kind[0], LANDMARKS)
         R.skin(o, R.smooth(o, ws, kind[1]) if kind[1] else ws, rig)
     R.attach(head, rig, 'Head')
-    rig['clips'] = R.clips(rig)
+    rig['clips'] = R.clips(rig, ARM_UP)
     body = bpy.data.objects.get('Body')
     if body and not body.children:
         bpy.data.objects.remove(body, do_unlink=True)

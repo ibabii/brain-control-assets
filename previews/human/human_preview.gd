@@ -57,6 +57,7 @@ func _add(path: String, pos: Vector3, expr: String) -> void:
 	h.position = pos
 	add_child(h)
 	humans.append(h)
+	_rest_pose(h)
 	_expression(h, expr)
 
 
@@ -84,6 +85,13 @@ func _expression(h: Node3D, name: String) -> void:
 	var m: float = e.get('mouth', 1.0)
 	for n in ['Open', 'Tongue']:
 		_find(h, n).scale = Vector3(m, m * 1.25, 1.0) if m != 1.0 else Vector3.ONE
+
+
+## The arms are bound in an A-pose; the `rest` clip hangs them (the design pose).
+func _rest_pose(h: Node) -> void:
+	for ap in h.find_children('*', 'AnimationPlayer', true, false):
+		ap.play('rest')
+		ap.seek(0.0, true)
 
 
 func _find(h: Node, n: String) -> Node3D:
