@@ -14,6 +14,9 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
    - cockpit: `scripts/cockpit_v2/`
    - hands: `scripts/hands/build.py`
    - fly: `scripts/fly/build.py`
+   - bathroom: `scripts/bathroom/build.py` (room + one GLB per prop); the Human: `scripts/human/build.py`
+   - shared: `scripts/cockpit_v2/lib.py` (slabs, tubes, frames) and `sculpt.py` (metaball families → voxel union,
+     surface rays, projected decals)
 2. **Build** (~8 s each):
    ```
    B=/Applications/Blender.app/Contents/MacOS/Blender
@@ -28,12 +31,15 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
    - clipping, z-fighting and floating screws (audit.py)
    - tape lying on surfaces (tape_check.py)
    - the hand rig contract (check_hand_rig.gd)
+   - the bathroom (scripts/bathroom/audit.py): clipping between assemblies, z-fighting, things standing on air
 5. **Look**, with one run and one image to read:
    ```
    scripts/tools/capture.sh review --size 1200x675 --shots "seat;caps@0.55,1.12,0.35@0.6,0.98,0.12;..."
    ```
    - Read `previews/cockpit_v2/screenshots/review.png`, a 2-column contact sheet.
    - Always include `seat` plus oblique views of what changed: side, top, thumb-side for hands. Don't trust the seat view alone.
+   - Bathroom: `scripts/tools/capture_bathroom.sh NAME [--human] [--fx] --shots "fp;reveal;door;mirror;tub;toilet"`
+     (`--fx` shows the hidden effects). Human: `scripts/tools/capture_human.sh NAME [--mode lineup|faces]`.
    - Hands and props in the cockpit: `--extra res://previews/hands/hand_pose_preview.tscn --left press_finger --right grip --t 1.0`; fly: `--extra res://previews/fly/fly_preview.tscn`.
    - Full-resolution single shots only when a detail needs it. Delete throwaway screenshots before committing.
 6. **Commit + push**, then hand off:
@@ -47,6 +53,10 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
 ## Gotchas (each cost real time once)
 
 - **Slab bevels:** `lib.slab` insets the outline by the bevel. A bevel of half the ring width or more eats the face. Cap the bevel below half the ring.
+- **Small rounded boxes:** `lib.box` bevel over about ¼ of the smallest side collapses the inset outline into spikes
+  (a 3 cm soap bar came out 19 cm tall). The bathroom's `rbox` caps it.
+- **Audits:** inside/outside (ray parity) only means something against closed meshes. Skip open sheets like puddles,
+  lofts and wall quads, or the audit reports false clipping.
 - **Scene BVH:** build it from triangles (`to_mesh` + `calc_loop_triangles` → `BVHTree.FromPolygons`). Repeated `BMesh.from_mesh` silently drops meshes.
 - **Normals:** mesh normals are not reliably outward. Orient a nearest-point normal by the side you came from.
 - **Godot import:** scene import resamples clips at 30 fps unless `animation/fps=100`. Hit frames and wing beats need 100.

@@ -1,0 +1,103 @@
+{
+ "asset_id": "bathroom_v1",
+ "style_id": "warm_ceramic_v1",
+ "date": "2026-10-15",
+ "style_deviations": [
+  "water #9CCFE0 alpha 0.85",
+  "faucet brushed nickel #A8A49B",
+  "plant leaves #6E8F5E (Kenney Furniture Kit plantSmall1/2, CC0)",
+  "window sky #E4F1EF emissive",
+  "rubber duck #E8B84C"
+ ],
+ "room": {
+  "tris": 40447,
+  "file": "bathroom_room.glb"
+ },
+ "props": {
+  "cup": {
+   "lying_half_thickness": 0.038,
+   "height": 0.108,
+   "node_position": [
+    0.33,
+    0.87,
+    -0.56
+   ],
+   "tris": 336,
+   "file": "props/cup.glb"
+  },
+  "lotion": {
+   "lying_half_thickness": 0.031,
+   "height": 0.166,
+   "node_position": [
+    0.21,
+    0.87,
+    -0.64
+   ],
+   "tris": 980,
+   "file": "props/lotion.glb"
+  },
+  "soap": {
+   "lying_half_thickness": 0.02,
+   "height": 0.04,
+   "node_position": [
+    -0.2,
+    0.87,
+    -0.62
+   ],
+   "tris": 712,
+   "file": "props/soap.glb"
+  },
+  "toothpaste": {
+   "node_position": [
+    -0.35,
+    0.889,
+    -0.4
+   ],
+   "tris": 2974,
+   "file": "props/toothpaste.glb"
+  },
+  "smudge": {
+   "node_position": [
+    0,
+    1.55,
+    -0.657
+   ],
+   "tris": 28,
+   "file": "props/smudge.glb"
+  },
+  "faucet": {
+   "node_position": [
+    0,
+    0.95,
+    -0.64
+   ],
+   "tris": 3040,
+   "file": "props/faucet.glb"
+  },
+  "tub": {
+   "node_position": [
+    -1.15,
+    0.5,
+    0.55
+   ],
+   "tris": 1228,
+   "file": "props/tub.glb"
+  },
+  "towel": {
+   "lying_half_thickness": 0.015,
+   "bar": [
+    -0.7200000286102295,
+    1.4249999523162842,
+    -0.6549999713897705
+   ],
+   "hangs_from": "TowelBar (room)",
+   "node_position": [
+    -0.72,
+    1.2,
+    -0.67
+   ],
+   "tris": 1244,
+   "file": "props/towel.glb"
+  }
+ }
+}
