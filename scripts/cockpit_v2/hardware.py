@@ -93,7 +93,9 @@ def screen_housing(root, name, main=False):
     oy = (top - bottom) / 2
     outer = [(x, y + oy) for x, y in rrect(ow, oh, 0.045 if main else 0.03, 6)]
     inner = list(reversed(rrect(w + 0.004, h + 0.004, 0.022 if main else 0.016, 5)))
-    frame = lib.slab(name + 'Frame', outer, depth, 0.016, frame_mat, f.child((0, 0, -depth + 0.022)), group, holes=[inner])
+    ring = min(side, top, bottom) - 0.002
+    bevel = min(0.016, ring / 2 - 0.004)          # wider than half the ring and the slab inset eats the front face
+    frame = lib.slab(name + 'Frame', outer, depth, bevel, frame_mat, f.child((0, 0, -depth + 0.022)), group, holes=[inner])
     # Deep back shell so the monitor reads as a chunky box; side monitors show a dark casing rim around the bezel.
     back_d = 0.12 if main else 0.17
     grow = 0.0 if main else 0.035

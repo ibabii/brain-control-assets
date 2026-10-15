@@ -442,59 +442,118 @@ def tape_strip(name, frame, size, parent, seed=0, nx=14, ny=4):
     transform_bm(bm, frame)
     o = from_bmesh(name, bm, tape_mat(), parent, pivot=frame.o, smooth=True)
     o['tape_normal'] = list(B(frame.dir((0, 0, 1))))
+    o['tape_axis'] = list(B(frame.dir((1, 0, 0))))
+    o['tape_centre'] = list(B(frame.o))
+    o['tape_seed'] = abs(int(seed))
     return o
 
 
-def conform_tapes(offset=0.0005, reach=0.05, wrap=0.03):
-    """Drape every tape strip onto the surfaces under it: ray along -normal; where a ray misses (strip hangs
-    past an edge) snap to the nearest surface so the tape wraps around rims and bezels."""
+def _orient(nrm, outside):
+    return nrm if nrm.dot(outside) >= 0 else -nrm
+
+
+def _walk(t, start, n0, d0, length, step=0.0015, hug=0.0012):
+    """Roll the tape centre line from `start` along `d0` like pressing tape down: each step turns the direction (in
+    the plane of travel and normal) by the smallest angle that keeps the tape on a surface, so it folds over convex
+    edges and into concave corners and never jumps a gap. With no surface in reach the end hangs on straight.
+    Returns [(s, point, normal, tangent)]."""
+    from mathutils import Matrix
+    p, nrm, d = start, n0, d0
+    out = [(0.0, p, nrm, d)]
+    s_ = 0.0
+    angles = [0]
+    for k in range(1, 13):
+        angles += [12 * k, -12 * k]                        # + folds over (toward -normal), - climbs a corner
+    while s_ < length:
+        axis = d.cross(-nrm).normalized()
+        found = None
+        for ang in angles:
+            dd = Matrix.Rotation(math.radians(ang), 3, axis) @ d
+            q = p + dd * step
+            loc, m, _, dist = t.find_nearest(q, hug * 3)
+            if loc is None:
+                continue
+            m = _orient(m, p - loc)                        # mesh normals aren't reliable: outside = where we came from
+            if (q - loc).dot(m) < -1e-5 and dist > 1e-4:   # crossed into the surface
+                continue
+            if dist <= hug:
+                found = (loc + m * 0.0002, m, dd)
+                break
+        if found is None:
+            q = p + d * step
+            p, s_ = q, s_ + step
+            out.append((s_, p, nrm, d))
+            continue
+        q, m, dd = found
+        d = (q - p).normalized()
+        p, nrm = q, m
+        s_ += step
+        out.append((s_, p, nrm, d))
+    return out
+
+
+def _at(path, s_):
+    for (s0, p0, n0, d0), (s1, p1, n1, d1) in zip(path, path[1:]):
+        if s1 >= s_:
+            f = (s_ - s0) / max(s1 - s0, 1e-9)
+            return p0.lerp(p1, f), n0.lerp(n1, f).normalized(), d0.lerp(d1, f).normalized()
+    s0, p0, n0, d0 = path[-1]
+    return p0 + d0 * (s_ - s0), n0, d0
+
+
+def conform_tapes(offset=0.0005):
+    """Apply every tape strip like real tape: pressed on at its middle, then smoothed outward along its length over
+    the surfaces it meets, dropping onto lower surfaces and folding round rims and bezel edges (never floating)."""
     from mathutils.bvhtree import BVHTree
     bpy.context.view_layer.update()
     dg = bpy.context.evaluated_depsgraph_get()
     tapes = [o for o in COLL.all_objects if 'tape_normal' in o]
-    world = bmesh.new()
+    verts, tris = [], []
     for o in COLL.all_objects:
         if o.type != 'MESH' or 'tape_normal' in o or 'Preview' in o.name:
             continue
-        b = bmesh.new()
-        b.from_object(o, dg)
-        b.transform(o.matrix_world)
-        me = bpy.data.meshes.new('tmp')
-        b.to_mesh(me)
-        b.free()
-        world.from_mesh(me)
-        bpy.data.meshes.remove(me)
-    t = BVHTree.FromBMesh(world)
-    world.free()
+        e = o.evaluated_get(dg)
+        me = e.to_mesh()
+        me.calc_loop_triangles()
+        base = len(verts)
+        mw = o.matrix_world
+        verts += [mw @ v.co for v in me.vertices]
+        tris += [tuple(base + i for i in lt.vertices) for lt in me.loop_triangles]
+        e.to_mesh_clear()
+    t = BVHTree.FromPolygons(verts, tris)
     for o in tapes:
         n = Vector(o['tape_normal']).normalized()
+        ax = Vector(o['tape_axis']).normalized()
+        c = Vector(o['tape_centre'])
+        side = n.cross(ax)
+        rng = np.random.default_rng(o['tape_seed'])
         mw = o.matrix_world
-        inv = mw.inverted()
         me = o.data
-        pos = [mw @ v.co for v in me.vertices]
-        new, hit = list(pos), [False] * len(pos)
-        for i, p in enumerate(pos):
-            loc, nrm, _, _ = t.ray_cast(p + n * 0.012, -n, reach)
+        flat = [mw @ v.co for v in me.vertices]
+        xs = [(p - c).dot(ax) for p in flat]
+        ys = [(p - c).dot(side) for p in flat]
+        hit = t.ray_cast(c + n * 0.012, -n, 0.05)
+        if hit[0] is not None:
+            c0, n0 = hit[0], _orient(hit[1], n)
+        else:
+            loc, m, _, _ = t.find_nearest(c, 0.05)
+            c0, n0 = (loc, _orient(m, n)) if loc is not None else (c, n)
+        a0 = (ax - n0 * ax.dot(n0)).normalized()
+        span = max(abs(x) for x in xs) + 0.002
+        fwd, back = _walk(t, c0, n0, a0, span), _walk(t, c0, n0, -a0, span)
+        inv = mw.inverted()
+        for v, x, y in zip(me.vertices, xs, ys):
+            p, nrm, d = _at(fwd, x) if x >= 0 else _at(back, -x)
+            if x < 0:
+                d = -d
+            q = p + nrm.cross(d).normalized() * y               # across the width
+            loc, m, _, dist = t.find_nearest(q, 0.006)
             if loc is not None:
-                nrm = nrm if nrm.dot(n) > 0 else -nrm
-                new[i], hit[i] = loc + nrm * offset, True
-        nbrs = [[] for _ in pos]
-        for e in me.edges:
-            a, b = e.vertices
-            nbrs[a].append(b)
-            nbrs[b].append(a)
-        for _ in range(6):                                   # misses: follow hit neighbours, then wrap the edge
-            for i in range(len(pos)):
-                if hit[i]:
-                    continue
-                hn = [j for j in nbrs[i] if hit[j]]
-                if hn:
-                    guess = sum((new[j] for j in hn), Vector()) / len(hn) + (pos[i] - sum((pos[j] for j in hn), Vector()) / len(hn))
-                    loc, nrm, _, d = t.find_nearest(guess, wrap)
-                    new[i] = loc + nrm * offset if loc is not None else guess
-                    hit[i] = True
-        for v, p in zip(me.vertices, new):
-            v.co = inv @ p
+                m = _orient(m, p + nrm * 0.01 - loc)
+                q = loc
+                nrm = m
+            new = q + nrm * (offset + rng.uniform(0, 0.00045))         # tiny wrinkles
+            v.co = inv @ new
         me.update()
 
 

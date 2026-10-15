@@ -162,18 +162,16 @@ def floating(dg):
     """Mounted parts whose underside (centre + rim) is more than 1 mm off any surface."""
     others = [o for o in bpy.data.objects if o.type == 'MESH' and o.visible_get()
               and not any(s in o.name for s in MOUNTED + ('Preview',))]
-    bm = bmesh.new()
-    for o in others:
-        b = bmesh.new()
-        b.from_object(o, dg)
-        b.transform(o.matrix_world)
-        me = bpy.data.meshes.new('tmp')
-        b.to_mesh(me)
-        b.free()
-        bm.from_mesh(me)
-        bpy.data.meshes.remove(me)
-    world = BVHTree.FromBMesh(bm)
-    bm.free()
+    verts, tris = [], []
+    for o in others:                       # (appending meshes into one BMesh silently drops some of them)
+        e = o.evaluated_get(dg)
+        me = e.to_mesh()
+        me.calc_loop_triangles()
+        base = len(verts)
+        verts += [o.matrix_world @ v.co for v in me.vertices]
+        tris += [tuple(base + i for i in lt.vertices) for lt in me.loop_triangles]
+        e.to_mesh_clear()
+    world = BVHTree.FromPolygons(verts, tris)
     bad = []
     for o in bpy.data.objects:
         if o.type != 'MESH' or not any(s in o.name for s in MOUNTED) or not o.visible_get():
