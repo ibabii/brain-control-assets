@@ -1,5 +1,5 @@
 extends SceneTree
-## Human rig contract check (coordination/interfaces.md "Human rig"), headless:
+## Human rig contract check (coordination/interfaces.md "Character rig v1"), headless:
 ## names, clips, markers, render layer 2, hidden face parts; TwoBoneIK3D reach + pole side for both arms and legs;
 ## a ragdoll drop onto a floor that must settle without exploding.
 ## godot --headless --path . -s scripts/human/check_human_rig.gd

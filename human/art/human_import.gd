@@ -1,6 +1,6 @@
 @tool
 extends EditorScenePostImport
-## Post-import for human/art/human.glb (contract: coordination/interfaces.md "Human rig").
+## Post-import for human/art/human.glb (contract: coordination/interfaces.md "Character rig v1").
 ## Rig/Skeleton + Anim names, idle loop, hidden face parts, every mesh on render layer 2, markers on bones and the
 ## Ragdoll (PhysicalBoneSimulator3D, inactive) from human/art/human_rig.json written by scripts/human/build.py.
 
