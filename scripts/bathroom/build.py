@@ -607,7 +607,7 @@ def toilet(parent):
     adopt(solid('ToiletBowl', [mb], 0.006, 2400, por), p, (1.2, 0.2, -0.35))
     seat_o = [(x * 0.36 / 0.36, y) for x, y in lib.rrect(0.36, 0.45, 0.17, 8)]
     cream = M('Seat', 'cream', 'painted')
-    lib.slab('Seat', seat_o, 0.025, 0.01, cream, Frame((1.2, 0.395, -0.29), UPF), p, holes=[lib.rrect(0.22, 0.28, 0.1, 8)[::-1]])
+    lib.slab('ToiletSeat', seat_o, 0.025, 0.01, cream, Frame((1.2, 0.395, -0.29), UPF), p, holes=[lib.rrect(0.22, 0.28, 0.1, 8)[::-1]])
     lib.slab('Lid', seat_o, 0.022, 0.01, M('Teal', 'teal'), Frame((1.2, 0.422, -0.29), UPF), p)
     rbox('Tank', (0.42, 0.36, 0.17), por, Frame((1.2, 0.6, -0.6)), p, 0.03)
     lib.slab('TankLid', lib.rrect(0.45, 0.2, 0.03, 4), 0.03, 0.012, por, Frame((1.2, 0.78, -0.6), UPF), p)
@@ -752,7 +752,8 @@ def p_toothpaste():
     for ring_, flip in ((vs[0], True), (vs[-1], False)):
         f = bm.faces.new(ring_[::-1] if flip else ring_)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    lib.from_bmesh('TubeBody', bm, [por, teal], tube_n, base)
+    squeeze(lib.from_bmesh('TubeBody', bm, [por, teal], tube_n, base))
+    grips(tube_n, base + Vector((-0.02, 0, 0)), (0, 0, 0))            # thumb side toward the cap, back of the hand +Y
     rbox('Crimp', (0.012, 0.01, 0.058), por, Frame(base + Vector((-0.083, 0, 0))), tube_n, 0.003)
     cap_n = lib.empty('Cap', base + Vector((0.09, 0, 0)), tube_n)
     lathe('CapMesh', [(0, -0.012), (0.015, -0.012), (0.016, -0.01), (0.016, 0.011), (0.014, 0.013), (0, 0.013)], teal,
@@ -779,6 +780,25 @@ def p_toothpaste():
             ell(mb, c + Vector((math.cos(a) * d * sc[0], math.sin(a) * d * sc[1], 0.002)), (0.009, 0.009, 0.003))
         adopt(solid('SplatMesh%d' % (i + 1), [mb], 0.0025, 500, paste), sp, c)
     return r, {}
+
+
+def squeeze(o):
+    """`Squeeze` blend shape: the middle of the tube pinched flat (where the fist closes)."""
+    o.shape_key_add(name='Basis')
+    k = o.shape_key_add(name='Squeeze', from_mix=False)
+    for v in k.data:
+        x, y, z = v.co.x, v.co.z, -v.co.y                            # Godot local
+        w = max(0.0, 1 - ((x + 0.015) / 0.055) ** 2) ** 2
+        y *= 1 - 0.65 * w
+        z *= 1 + 0.18 * w
+        v.co = B((x, y, z))
+
+
+def grips(parent, pos, rot):
+    """`Grips/Left|Right` (Character rig v1): same basis as the hand's Grip_L/R; Godot euler `rot`."""
+    g = lib.empty('Grips', pos, parent)
+    for side in ('Left', 'Right'):
+        godot_rot(lib.empty(side, pos, g), rot)
 
 
 def p_smudge():
@@ -878,6 +898,8 @@ def p_tub():
     water = water_mat()
     w = lib.empty('Water', o, r)
     lib.slab('WaterMesh', lib.rrect(0.6, 1.47, 0.19, 6), 0.01, 0.004, water, Frame(o + Vector((0, -0.01, 0)), UPF), w)
+    seat = lib.empty('Seat', o + Vector((0.4, 0.05, 0)), r)          # outer rim edge at 0.55; faces the room (+X)
+    godot_rot(seat, (0, -90, 0))
     drops = lib.empty('Drops', o, r)
     for i, off in enumerate(((-0.2, 0.05, -0.4), (-0.1, 0.05, -0.2), (0, 0.05, 0), (0.1, 0.05, 0.2), (0.2, 0.05, 0.4),
                              (-0.2, 0.05, 0.6))):

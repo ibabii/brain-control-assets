@@ -4,7 +4,7 @@ extends SceneTree
 ## a ragdoll drop onto a floor that must settle without exploding.
 ## godot --headless --path . -s scripts/human/check_human_rig.gd
 
-const CLIPS := ["rest", "idle", "hand_grip_L", "hand_grip_R", "hand_relaxed_L", "hand_relaxed_R", "hand_spread_L",
+const CLIPS := ["RESET", "rest", "idle", "hand_grip_L", "hand_grip_R", "hand_relaxed_L", "hand_relaxed_R", "hand_spread_L",
 	"hand_spread_R"]
 const MARKERS := ["Grip_L", "Grip_R", "Sole_L", "Sole_R", "EyeCam", "Foam"]
 const FACE := ["EyeL", "EyeR", "LookL", "LookR", "LidL", "LidR", "BrowL", "BrowR", "Mouth", "Smile", "Open", "Tongue",
@@ -26,13 +26,22 @@ func _initialize() -> void:
 	for c in CLIPS:
 		_ok(anim.has_animation(c), "clip " + c)
 	_ok(anim.get_animation("idle").loop_mode == Animation.LOOP_LINEAR, "idle loops")
-	for c in CLIPS.slice(2):
+	for c in anim.get_animation_list():                 # tracks = the json bone set (rotation; Hips also position)
+		_ok(data.clips.has(c), "clip %s in json clips" % c)
+		var want: Array = data.clips.get(c, {}).get("bones", [])
+		var got := {}
 		var a := anim.get_animation(c)
-		var only_fingers := true
 		for t in a.get_track_count():
-			var bn := a.track_get_path(t).get_concatenated_subnames()
-			only_fingers = only_fingers and ["Thumb", "Index", "Middle", "Ring"].any(func(f): return f in bn)
-		_ok(only_fingers, "%s keys finger bones only" % c)
+			got[a.track_get_path(t).get_concatenated_subnames()] = true
+		var layer: String = data.clips.get(c, {}).get("layer", "")
+		_ok(got.size() == want.size() and want.all(func(b): return got.has(b)), "%s keys its %s bone set (%d of %d)" % [
+			c, layer, got.size(), want.size()])
+		if layer == "full":
+			_ok(not got.keys().any(func(b): return ["Thumb", "Index", "Middle", "Ring"].any(func(f): return f in b)),
+				"%s keys no fingers" % c)
+		elif layer == "hand":
+			_ok(got.keys().all(func(b): return ["Thumb", "Index", "Middle", "Ring", "Hand"].any(func(f): return f in b)),
+				"%s keys only one hand" % c)
 	for m in MARKERS:
 		_ok(h.find_child(m, true, false) is Marker3D, "marker " + m)
 	for f in FACE:
@@ -41,12 +50,12 @@ func _initialize() -> void:
 		_ok(not (h.find_child(n, true, false) as Node3D).visible, n + " starts hidden")
 	var wrong := h.find_children("*", "VisualInstance3D", true, false).filter(func(v): return v.layers != 2)
 	_ok(wrong.is_empty(), "every mesh on render layer 2 (%d not)" % wrong.size())
-	for side in ["L", "R"]:                          # Grip basis: +Y = back of the hand, +X out of the thumb side
+	for side in ["L", "R"]:                          # (in the current pose: RESET applies on import) Grip basis: +Y = back of the hand, +X out of the thumb side
 		var g: Marker3D = h.find_child("Grip_" + side, true, false)
 		var gb := g.global_basis
 		var n := "Left" if side == "L" else "Right"
-		var hand := skel.global_transform * skel.get_bone_global_rest(skel.find_bone(n + "Hand"))
-		var thumb := (skel.global_transform * skel.get_bone_global_rest(skel.find_bone(n + "ThumbDistal"))).origin
+		var hand := skel.global_transform * skel.get_bone_global_pose(skel.find_bone(n + "Hand"))
+		var thumb := (skel.global_transform * skel.get_bone_global_pose(skel.find_bone(n + "ThumbDistal"))).origin
 		_ok(gb.x.cross(gb.y).dot(gb.z) > 0.99, "Grip_%s right-handed" % side)
 		_ok(gb.y.dot(hand.basis.z.normalized()) > 0.8, "Grip_%s +Y = back of the hand (%.2f)" % [side, gb.y.dot(hand.basis.z.normalized())])
 		_ok(gb.x.dot((thumb - g.global_position).normalized()) > 0.3, "Grip_%s +X toward the thumb (%.2f)" % [

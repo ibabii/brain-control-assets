@@ -327,13 +327,34 @@ def _arms_down(rig, arm_up, frame):
         pb.keyframe_insert('rotation_quaternion', frame=frame)
 
 
+CLIPS = {}          # clip -> {'layer': full|upper|hand, 'bones': [...]} (human_rig.json; the import trims to these)
+LOOPS = ['idle']
+
+
+def is_finger(b):
+    return any(f in b for f in FINGERS)
+
+
+def clip_bones(rig, layer, side=None, wrist=False):
+    names = [b.name for b in rig.data.bones]
+    if layer == 'all':
+        return names
+    if layer == 'full':
+        return [b for b in names if not is_finger(b) and b != 'Root']
+    n = side_name(side)
+    if layer == 'upper':
+        return [b for b in names if b.startswith(n) and ('Shoulder' in b or 'Arm' in b or 'Hand' in b or is_finger(b))]
+    return [b for b in names if b.startswith(n) and is_finger(b)] + ([n + 'Hand'] if wrist else [])
+
+
 def clips(rig, arm_up):
-    """NLA tracks (glTF exports one animation each): rest, idle (arms hanging), hand_{grip,relaxed,spread}_{L,R}."""
+    """NLA tracks (glTF exports one animation each): RESET/rest, idle (arms hanging), hand_{grip,relaxed,spread}_{L,R}."""
     bpy.context.scene.render.fps = FPS
     rig.animation_data_create()
     names = []
 
-    def clip(name, frames, arms=False):
+    def clip(name, frames, arms=False, layer='full', side=None, wrist=False):
+        CLIPS[name] = {'layer': layer, 'bones': clip_bones(rig, layer, side, wrist)}
         act = bpy.data.actions.new(name)
         rig.animation_data.action = act
         for f, rots in frames:
@@ -349,7 +370,8 @@ def clips(rig, arm_up):
         for pb in rig.pose.bones:
             pb.rotation_euler = (0, 0, 0)
         names.append(name)
-    clip('rest', [(0, {'Hips': (0, 0, 0)}), (1, {'Hips': (0, 0, 0)})], arms=True)
+    for n in ('RESET', 'rest'):                                  # the design pose (arms hanging), every bone
+        clip(n, [(0, {'Hips': (0, 0, 0)}), (1, {'Hips': (0, 0, 0)})], arms=True, layer='all')
     idle = []
     for k in range(0, 91, 10):                                   # 3 s breathing loop
         a = math.sin(2 * math.pi * k / 90)
@@ -359,7 +381,7 @@ def clips(rig, arm_up):
     for s in (-1, 1):
         for kind in ('grip', 'relaxed', 'spread'):
             p = finger_pose(s, kind)
-            clip('hand_%s_%s' % (kind, 'L' if s < 0 else 'R'), [(0, p), (1, p)])
+            clip('hand_%s_%s' % (kind, 'L' if s < 0 else 'R'), [(0, p), (1, p)], layer='hand', side=s)
     return names
 
 

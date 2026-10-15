@@ -452,7 +452,10 @@ def rig_json(path, hidden):
     import json
     table = R.bone_table(LANDMARKS)
     s = lambda v: [round(x, 5) for x in v]
-    data = {'markers': R.markers(LANDMARKS), 'ragdoll': R.ragdoll(table), 'hidden': hidden, 'loops': ['idle'],
+    data = {'markers': R.markers(LANDMARKS), 'ragdoll': R.ragdoll(table), 'hidden': hidden, 'loops': R.LOOPS,
+            'clips': R.CLIPS,
+            'look': {'neck': 'Neck', 'head': 'Head', 'share': [0.35, 0.65], 'yaw': 70, 'pitch': [-40, 30],
+                     'eyes': ['LookL', 'LookR'], 'eye_yaw': 25, 'eye_pitch': 15},
             'render_layer': 2, 'ragdoll_layer': 2, 'ragdoll_mask': 1,
             'ik': {side: {'arm': [side + 'UpperArm', side + 'LowerArm', side + 'Hand'],
                           'leg': [side + 'UpperLeg', side + 'LowerLeg', side + 'Foot'],

@@ -8,6 +8,15 @@
 [node name="Body" parent="." instance=ExtResource("1_body")]
 
 [node name="Paste" parent="." instance=ExtResource("2_paste")]
+visible = false
 
 [node name="GripPoint" type="Marker3D" parent="."]
 position = Vector3(0.17, -0.01, 0)
+
+[node name="Grips" type="Node3D" parent="."]
+
+[node name="Right" type="Marker3D" parent="Grips"]
+transform = Transform3D(-1, 0, 0, 0, -1, 0, 0, 0, 1, 0.17, -0.01, 0)
+
+[node name="Left" type="Marker3D" parent="Grips"]
+transform = Transform3D(-1, 0, 0, 0, -1, 0, 0, 0, 1, 0.17, -0.01, 0)

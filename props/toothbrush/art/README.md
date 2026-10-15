@@ -6,7 +6,7 @@ Built 2026-10-14. Art baseline: `warm_ceramic_v1`. Muted clay handle, deep teal 
 
 Copy only `toothbrush_art.tscn`, `toothbrush_body.glb`, and `toothbrush_paste.glb` into the game's `props/toothbrush/art/`. Let Godot generate its own imports; do not copy `.godot/` or `.import` sidecars. Instance `toothbrush_art.tscn` inside the existing gameplay wrapper, with an identity local transform. Keep the existing gameplay script, grips, motion, and camera-layer logic in the wrapper.
 
-The root is `ToothbrushArt`. Direct children are `Body`, `Paste`, and `GripPoint`. Hide/show `ToothbrushArt/Paste` to control both paste meshes. Update the wrapper's paste node reference explicitly; nesting this scene does not preserve a previous `$Paste` path. `GripPoint` is a reference marker; continue using the wrapper's `Grips/Right` for gameplay.
+The root is `ToothbrushArt`. Direct children are `Body`, `Paste` (starts hidden since 2026-10-15), `GripPoint` and `Grips/Left|Right` (Character rig v1 basis: +X toward the head, +Y away from the bristles). Hide/show `ToothbrushArt/Paste` to control both paste meshes. Update the wrapper's paste node reference explicitly; nesting this scene does not preserve a previous `$Paste` path. `GripPoint` is a reference marker; continue using the wrapper's `Grips/Right` for gameplay.
 
 No scripts, collision, animation, particles, lights, or cameras are inside the art scene. Meshes use layer 1. Both GLBs embed their materials and have no external dependencies. The TSCN references them with relative paths, without project-specific UIDs.
 

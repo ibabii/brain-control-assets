@@ -22,7 +22,7 @@ func _post_import(scene: Node) -> Object:
 			a.track_set_path(t, NodePath(String(a.track_get_path(t)).replace(SKEL_FROM, SKEL_TO)))
 		if clip in data.loops:
 			a.loop_mode = Animation.LOOP_LINEAR
-		_trim(a, clip, skel)
+		_trim(a, clip, data, skel)
 	for n in data.hidden:
 		var h := scene.find_child(n, true, false)
 		if h:
@@ -46,41 +46,27 @@ func _post_import(scene: Node) -> Object:
 	return scene
 
 
-## The exporter samples every bone into every clip. Finger clips keep only that hand's finger tracks (they layer over
-## IK); other clips drop tracks that never leave the rest pose. `rest` keeps everything (it resets the pose).
-func _trim(a: Animation, clip: String, skel: Skeleton3D) -> void:
-	if clip == "rest":
-		return
+## The exporter samples every bone into every clip. Keep only the bones the json `clips` table lists for the clip
+## (full: every non-finger bone, so blends never drift toward the A-pose bind; upper: one arm; hand: one hand's
+## fingers), rotation tracks only, plus the Hips position.
+func _trim(a: Animation, clip: String, data: Dictionary, skel: Skeleton3D) -> void:
+	var bones: Array = data.clips[clip].bones if data.clips.has(clip) else []
 	for t in range(a.get_track_count() - 1, -1, -1):
 		var bone := a.track_get_path(t).get_concatenated_subnames()
-		var keep: bool
-		if clip.begins_with("hand_"):
-			var side := "Left" if clip.ends_with("_L") else "Right"
-			keep = bone.begins_with(side) and ["Thumb", "Index", "Middle", "Ring"].any(func(f): return f in bone)
-			keep = keep and a.track_get_type(t) == Animation.TYPE_ROTATION_3D
-		else:
-			keep = not _at_rest(a, t, skel.find_bone(bone), skel)
+		var type := a.track_get_type(t)
+		var keep := bone in bones and (type == Animation.TYPE_ROTATION_3D or (type == Animation.TYPE_POSITION_3D
+			and bone == "Hips"))
 		if not keep:
 			a.remove_track(t)
-
-
-func _at_rest(a: Animation, t: int, bone: int, skel: Skeleton3D) -> bool:
-	if bone < 0:
-		return true
-	var rest := skel.get_bone_rest(bone)
-	for k in a.track_get_key_count(t):
-		var v = a.track_get_key_value(t, k)
-		match a.track_get_type(t):
-			Animation.TYPE_ROTATION_3D:
-				if not (v as Quaternion).is_equal_approx(rest.basis.get_rotation_quaternion()):
-					return false
-			Animation.TYPE_POSITION_3D:
-				if not (v as Vector3).is_equal_approx(rest.origin):
-					return false
-			Animation.TYPE_SCALE_3D:
-				if not (v as Vector3).is_equal_approx(rest.basis.get_scale()):
-					return false
-	return true
+	var have := {}
+	for t in a.get_track_count():
+		if a.track_get_type(t) == Animation.TYPE_ROTATION_3D:
+			have[a.track_get_path(t).get_concatenated_subnames()] = true
+	for b in bones:                                   # the exporter drops channels at the bind rest: key them back
+		if not have.has(b):
+			var t := a.add_track(Animation.TYPE_ROTATION_3D)
+			a.track_set_path(t, NodePath("%s:%s" % [SKEL_TO, b]))
+			a.rotation_track_insert_key(t, 0.0, skel.get_bone_rest(skel.find_bone(b)).basis.get_rotation_quaternion())
 
 
 func _ragdoll(scene: Node, skel: Skeleton3D, to_skel: Transform3D, data: Dictionary) -> void:
