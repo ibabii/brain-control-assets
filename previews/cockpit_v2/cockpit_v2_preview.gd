@@ -3,6 +3,7 @@ extends Node3D
 ## O cycles overlay (off / 50% / 100%), S toggles preview screen content, T toggles the task label.
 ## Capture: godot --path . res://previews/cockpit_v2/cockpit_v2_preview.tscn -- --capture <name> [--size 1672x941] [--fit adaptive|height]
 ##   [--eye x,y,z --look x,y,z]  inspect from another point (no overlay).
+##   [--extra res://path.glb]  add a scene (e.g. previews/hands/sheet_teal.glb).
 ## Fit "adaptive" (recommended for the game): keep the 16:9 framing whole; narrower windows reveal more top/bottom,
 ## wider ones more sides. "height" is Godot's default (narrow windows crop the sides).
 
@@ -31,6 +32,9 @@ func _ready() -> void:
 	get_window().content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
 	add_child(LIGHTING.instantiate())
 	add_child(ART.instantiate())
+	var xa := OS.get_cmdline_user_args().find('--extra')
+	if xa >= 0:
+		add_child(load(OS.get_cmdline_user_args()[xa + 1]).instantiate())
 	var console := Node3D.new()
 	console.position = Vector3(0, 0.95, 0.1)
 	console.rotation_degrees = Vector3(18, 0, 0)
