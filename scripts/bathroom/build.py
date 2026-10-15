@@ -757,7 +757,7 @@ def p_toothpaste():
     cap_n = lib.empty('Cap', base + Vector((0.09, 0, 0)), tube_n)
     lathe('CapMesh', [(0, -0.012), (0.015, -0.012), (0.016, -0.01), (0.016, 0.011), (0.014, 0.013), (0, 0.013)], teal,
           Frame(base + Vector((0.09, 0, 0)), (0, 0, -90)), cap_n, seg=18)
-    paste = M('Paste', 'porcelain', 'paste')
+    paste = M('PasteMint', '#A9D9C6', 'paste')                       # mint, so splats read on the glass and the wall behind
     glob = lib.empty('Glob', base + Vector((0.11, 0.01, 0)), r)
     mb = meta('Glob', 0.002)
     g = base + Vector((0.11, 0.01, 0))
@@ -960,7 +960,7 @@ def main():
     manifest = {'asset_id': 'bathroom_v1', 'style_id': 'warm_ceramic_v1', 'date': '2026-10-15',
                 'style_deviations': ['water %s alpha 0.85' % WATER, 'faucet brushed nickel %s' % STEEL,
                                      'plant leaves #6E8F5E (Kenney Furniture Kit plantSmall1/2, CC0)',
-                                     'window sky %s emissive' % SKY, 'rubber duck #E8B84C'],
+                                     'window sky %s emissive' % SKY, 'rubber duck #E8B84C', 'toothpaste mint #A9D9C6'],
                 'room': {'tris': tris(root), 'file': 'bathroom_room.glb'}, 'props': {}}
     room_objs = {root, *root.children_recursive}
     for build in PROP_BUILDERS:
