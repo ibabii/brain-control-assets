@@ -1,7 +1,7 @@
 extends Node3D
 ## Places both hands on the console from their markers (like gameplay) and holds a clip frame.
 ## Use with the cockpit preview: --extra res://previews/hands/hand_pose_preview.tscn
-##   [--left press_finger] [--right grip] [--t 1.0 (fraction of the clip)] [--lx -0.078 (left target x shift; A key)]
+##   [--left press_finger] [--right grip] [--t 1.0 (fraction of the clip, or "hit")] [--lx -0.078 (left target x shift; A key)]
 
 const CAP_S := Vector3(-0.329, 0.988, 0.112)      # S key cap top (left_keys at the LeftKeys anchor)
 const KNOB := Vector3(0.39, 1.102, 0.149)         # joystick ball centre
@@ -12,7 +12,7 @@ const SHOULDER := {"l": Vector3(-0.42, 1.0, 0.7), "r": Vector3(0.42, 1.0, 0.7)} 
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
-	var frac := float(_arg(args, "--t", "1.0"))
+	var frac := -1.0 if _arg(args, "--t", "1.0") == "hit" else float(_arg(args, "--t", "1.0"))
 	_place("l", _arg(args, "--left", "press_finger"), CAP_S + Vector3(float(_arg(args, "--lx", "0")), 0, 0), frac)
 	_place("r", _arg(args, "--right", "grip"), KNOB, frac)
 
@@ -40,7 +40,8 @@ func _place(side: String, clip: String, target: Vector3, frac: float) -> void:
 	if rest and (clip == "relaxed" or clip in ["idle_rest", "idle_drum", "idle_stretch", "idle_nails", "idle_wave", "idle_swat"]):
 		hand.global_transform = rest.global_transform             # away idles: wrist on the desk rest spot
 	anim.play(clip)
-	anim.seek(anim.get_animation(clip).length * frac, true)
+	var ca := anim.get_animation(clip)
+	anim.seek(ca.get_marker_time("hit") if frac < 0 and ca.has_marker("hit") else ca.length * maxf(frac, 0.0), true)
 	anim.pause()
 
 
