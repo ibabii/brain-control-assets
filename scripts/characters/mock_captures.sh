@@ -8,7 +8,7 @@ P=res://previews/characters/mock_preview.tscn
 ALL=male_slim,bernard_b,male_heavy,female_slim,female,female_heavy
 B4=male_slim,male_heavy,female_slim,female_heavy
 T='#F1C6AC,#E2A184,#B9784F,#6E4330'
-run() { perl -e 'alarm 240; exec @ARGV' $G --path . "$@" 2>&1 | grep -E "SCRIPT ERROR|_SHEET" | sed 's/.*screenshots\//  /'; }
+run() { scripts/tools/godot_bg.sh --timeout 240 --path . "$@" 2>&1 | grep -E "SCRIPT ERROR|_SHEET" | sed 's/.*screenshots\//  /'; }
 mp() { run $P -- "$@"; }
 head() { echo "front@0,$1,-1.1@0,$1,0@26;q@-0.85,$(($1+0.1)),-0.85@0,$(($1+0.02)),0@26;side@-1.15,$(($1+0.04)),0@0,$(($1+0.04)),0@26;back@0.8,$(($1+0.18)),0.85@0,$(($1+0.08)),0@26"; }
 

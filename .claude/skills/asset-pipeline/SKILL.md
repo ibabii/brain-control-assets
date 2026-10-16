@@ -39,6 +39,8 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
    ```
    - Read `previews/cockpit_v2/screenshots/review.png`, a 2-column contact sheet.
    - Always include `seat` plus oblique views of what changed: side, top, thumb-side for hands. Don't trust the seat view alone.
+   - Renders never steal the user's focus: windowed Godot runs go through `scripts/tools/godot_bg.sh` (background
+     `open -g`, off-screen); everything without pixels runs `Godot --headless`.
    - Bathroom: `scripts/tools/capture_bathroom.sh NAME [--human] [--fx] --shots "fp;reveal;door;mirror;tub;toilet"`
      (`--fx` shows the hidden effects). Human: `scripts/tools/capture_human.sh NAME [--mode lineup|faces]`.
    - Hands and props in the cockpit: `--extra res://previews/hands/hand_pose_preview.tscn --left press_finger --right grip --t 1.0`; fly: `--extra res://previews/fly/fly_preview.tscn`.

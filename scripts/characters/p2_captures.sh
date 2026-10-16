@@ -4,7 +4,7 @@
 cd "${0:A:h}/../.."
 G=/Applications/Godot.app/Contents/MacOS/Godot
 D=previews/characters/screenshots
-mp() { perl -e 'alarm 240; exec @ARGV' $G --path . res://previews/characters/mock_preview.tscn -- "$@" 2>&1 | grep -E "SCRIPT ERROR|_SHEET" | sed 's/.*screenshots\//  /'; }
+mp() { scripts/tools/godot_bg.sh --timeout 240 --path . res://previews/characters/mock_preview.tscn -- "$@" 2>&1 | grep -E "SCRIPT ERROR|_SHEET" | sed 's/.*screenshots\//  /'; }
 N=":top=:bottom=:shoes="
 B4="male_base:Build_Slim=1,male_base:Build_Heavy=1,female_base:Build_Slim=1,female_base:Build_Heavy=1"
 L="male_base:Build_Slim=1:top=tshirt_m:c.skin=F1C6AC:c.hair=C98B4F:c.top=9BC59D:c.rib=83A785:c.bottom=B8A57E,male_base,male_base:Build_Heavy=1:c.skin=6E4330:c.hair=2A1E1A:c.top=E8765E:c.rib=C5644F:c.bottom=454C48,female_base:Build_Slim=1:c.skin=B9784F:c.hair=2A1E1A:c.top=F1E4CF:c.rib=CCC1AF:c.bottom=2F4560,female_base,female_base:Build_Heavy=1:Chest_Size=1:top=hoodie_f:c.skin=4E2F22:c.hair=2A1E1A:c.top=BAC6B2:c.rib=9EA897:c.bottom=4A6A8C"   # crowd presets from characters/presets.json; the yellow hoodie is the Human

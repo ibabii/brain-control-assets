@@ -4,6 +4,6 @@
 # Writes previews/bathroom/screenshots/NAME.png (2-column contact sheet).
 cd "${0:A:h}/../.."
 LOG=${TMPDIR:-/tmp}/bathroom_capture.log
-perl -e 'alarm 150; exec @ARGV' /Applications/Godot.app/Contents/MacOS/Godot --path . \
+scripts/tools/godot_bg.sh --timeout 150 --path . \
   res://previews/bathroom/bathroom_preview.tscn -- --capture "$1" "${@:2}" > $LOG 2>&1
 grep -E "BATHROOM_SHEET|SCRIPT ERROR|ERROR: [^R]|Assertion" $LOG | grep -v "RID\|leaked" | head -20

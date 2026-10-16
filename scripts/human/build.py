@@ -924,11 +924,17 @@ def _cap(r):
     return max(0.0, math.sqrt(max(0.0, rb * rb - r * r)) - (rb - BUST_H)) * _ss((BUST_A + 0.02 - r) / 0.06)
 
 
+def _smax(a, b, k=0.012):
+    """Smooth max (no crease where two shapes meet)."""
+    h = max(0.0, min(1.0, 0.5 + 0.5 * (a - b) / k))
+    return b + (a - b) * h + k * h * (1 - h) * 0.5
+
+
 def bust(p, bridge=True):
     """Chest key in canonical space: (influence 0..1, offset at size 1). A round cap per side, a little fuller below
-    the centre; with `bridge` (clothes) the middle fills in and the cloth drapes down from the fullest line (no
-    tuck under), the bare body keeps its round underside. User 2026-10-16: bigger,
-    rounder, less peaky."""
+    the centre. With `bridge` (clothes): a lower saddle between them and a short drape under each, so the two rounds
+    still read from the front; the bare body keeps its round underside. Shapes join by a smooth max (no crease).
+    User 2026-10-16: bigger, rounder, less peaky; front view must show two rounds, not a wide torso."""
     if p.z > -0.02:
         return 0.0, Vector()
     dy = p.y - BUST.y
@@ -937,13 +943,13 @@ def bust(p, bridge=True):
     for s in (-1, 1):
         dx = p.x - s * BUST.x
         c = _cap(math.hypot(dx, ry))
-        if bridge and ry < 0:                                         # cloth drapes down from the fullest line
-            c = max(c, _cap(abs(dx)) * _ss(1 + ry / 0.24))
-        h = max(h, c)
+        if bridge and ry < 0:                                         # cloth follows the underside partway
+            c = _smax(c, 0.7 * _cap(abs(dx)) * _ss(1 + ry / 0.13))
+        h = _smax(h, c)
         lat += 0.25 * c * s * max(0.0, s * dx) / BUST_A              # spreads outward only: no fold in the middle
-    if bridge and abs(p.x) < BUST.x:                                  # a saddle between them, not a shelf
-        mid = (BUST.x - abs(p.x)) * 0.55
-        h = max(h, _cap(math.hypot(mid, ry)), _cap(mid) * _ss(1 + ry / 0.24) if ry < 0 else 0.0)
+    if bridge and abs(p.x) < BUST.x:                                  # a low saddle: the two rounds separate
+        mid = (BUST.x - abs(p.x)) * 0.9
+        h = _smax(h, 0.8 * _cap(math.hypot(mid, ry)), 0.02)
     k = _ss((-0.02 - p.z) / 0.06)
     h, lat = h * k, lat * k
     return h / BUST_H, Vector((lat, 0.0, -h))

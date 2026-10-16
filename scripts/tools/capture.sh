@@ -4,6 +4,6 @@
 # With --shots: one process renders every view and writes previews/cockpit_v2/screenshots/NAME.png as a contact sheet.
 cd "${0:A:h}/../.."
 LOG=${TMPDIR:-/tmp}/cockpit_capture.log
-perl -e 'alarm 120; exec @ARGV' /Applications/Godot.app/Contents/MacOS/Godot --path . \
+scripts/tools/godot_bg.sh --timeout 120 --path . \
   res://previews/cockpit_v2/cockpit_v2_preview.tscn -- --capture "$1" "${@:2}" > $LOG 2>&1
 grep -E "COCKPIT_V2_(CAPTURE|SHEET)|SCRIPT ERROR|ERROR: [^R]" $LOG | grep -v "RID\|leaked" | head -20

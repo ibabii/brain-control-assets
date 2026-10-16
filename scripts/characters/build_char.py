@@ -84,7 +84,7 @@ def tshirt(parent, rib):
     ell(t, (0, 1.22, 0.0), (c[0] - 0.018, c[1] - 0.006, c[2] - 0.018))
     ell(t, (0, 1.04, v['belly_z'] * 0.5), (bl[0] - 0.022, bl[1] - 0.006, bl[2] - 0.022))
     wy = lambda r: r * math.sqrt(max(0.0, 1 - ((0.95 - 0.86) / pe[1]) ** 2))    # joggers' half-width at y 0.95
-    ell(t, (0, 0.965, v['belly_z'] * 0.3), (wy(pe[0]) + 0.02, 0.09, wy(pe[2]) + 0.02))    # hem over the waist, no roll
+    ell(t, (0, 0.965, v['belly_z'] * 0.3), (wy(pe[0]) + 0.012, 0.08, wy(pe[2]) + 0.016))   # hem over the waist, no roll
     cap(t, (-0.15, 1.335, 0.004), (0.15, 1.335, 0.004), v['shoulder'] - 0.008)
     fams = [t]
     for s in (-1, 1):
@@ -118,6 +118,35 @@ def body_weights(p):
         if f > 0:
             w = R.mix(w, {R.side_name(s) + 'Foot': 1.0}, f)
     return w
+
+
+# --- female front-view hips -----------------------------------------------------------------------------------
+
+HIP_SLIM = 0.13, 0.22     # pelvis, thighs (user 2026-10-16: hips chunky from the front; keep the butt in profile)
+
+
+def hip_slim(p):
+    """Narrow hips and thighs in X only (the profile is untouched): about the centre at the pelvis, about each leg's
+    axis on the thighs, blended through the crotch."""
+    L = hb.LANDMARKS
+    leg = hb._ss((0.8 - p.y) / 0.08)
+    k = (HIP_SLIM[0] + (HIP_SLIM[1] - HIP_SLIM[0]) * leg) * hb._ss((p.y - 0.5) / 0.12) * hb._ss((1.04 - p.y) / 0.1)
+    if k <= 0:
+        return p
+    t = max(0.0, min(1.0, (L['HIP'].y - p.y) / (L['HIP'].y - L['KNEE'].y)))
+    axis = L['HIP'].x + (L['KNEE'].x - L['HIP'].x) * t
+    cx = axis * max(-1.0, min(1.0, p.x / 0.03)) * leg              # 0 at the pelvis and the crotch centre
+    return Vector((cx + (p.x - cx) * (1 - k), p.y, p.z))
+
+
+def slim_hips():
+    for o in bpy.data.objects:
+        if o.type != 'MESH' or o.name.startswith(('Hand', 'Nails', 'Sole', 'Upper', 'Lace', 'Stripe')) \
+                or o.name == 'HeadSkin' or o.parent is None or o.parent.name != 'Body':
+            continue
+        mw, inv = o.matrix_world, o.matrix_world.inverted()
+        for v in o.data.vertices:
+            v.co = inv @ B(hip_slim(G(mw @ v.co)))
 
 
 # --- build keys -----------------------------------------------------------------------------------------------
@@ -277,6 +306,8 @@ def main():
     hb.hands(body)
     mannequin(body)
     tshirt(body, rib)
+    if FEMALE:
+        slim_hips()
     hb.matte()
     table = hb.rig_table()
     rig = R.armature(table, root)

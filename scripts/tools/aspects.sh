@@ -13,7 +13,7 @@ shots=()
 set=(169 1920x1080 deck 1280x800 219 2520x1080)
 [[ -n $ASPECTS_43 ]] && set+=(43 1440x1080)
 for tag size in $set; do
-  perl -e 'alarm 120; exec @ARGV' $G --path . res://previews/cockpit_v2/cockpit_v2_preview.tscn -- \
+  scripts/tools/godot_bg.sh --timeout 120 --path . res://previews/cockpit_v2/cockpit_v2_preview.tscn -- \
     --capture ${name}_$tag --size $size "$@" 2>&1 | grep -E "SCRIPT ERROR|^[A-Z_]{4,} " | grep -v COCKPIT_V2_CAPTURE | sed "s/^/[$tag] /"
   rm -f $D/${name}_$tag-overlay.png $D/${name}_$tag-overlay.png.import
   shots+=($D/${name}_$tag.png)
