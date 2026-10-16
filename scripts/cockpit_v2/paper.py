@@ -264,7 +264,7 @@ def _wall_depth(px, py, gap):
 
 # --- notebook with the TODAY list --------------------------------------------------------------------
 
-NB_PAGE = (6, 590, 356, 960)    # TODAY page on screen, 1920x1080 px from the seat: left of the TaskNote, above the sleeve    # taller for the pivot (2026-10-16): rows grow so the far end keeps NB_CAP
+NB_PAGE = (6, 590, 334, 960)    # TODAY page on screen (1080p seat px); 2026-10-16: 6% narrower (0.240 m, as c27bda8) for the left arm    # taller for the pivot (2026-10-16): rows grow so the far end keeps NB_CAP
 _NB_PAGE_OLD = (6, 590, 356, 960)    # TODAY page on screen, 1920x1080 px from the seat: left of the TaskNote, above the sleeve
 NB_CAP = 22.5                    # cap height in px at 1080p (15 px on the Steam Deck, game-ux)
 NB_SQUEEZE = 0.78                # max glyph width factor (Patrick Hand is wide); narrowed further to fit a full row
