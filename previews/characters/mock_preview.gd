@@ -7,6 +7,7 @@ extends Node3D
 ##   [--chest "0,0.5,1"]   Chest_Size per model (one model + several values = repeated)
 ##   [--stage grey|kitchen|bathroom] [--spacing M] [--ragdoll --t S [--follow]] [--size WxH] [--cols N]
 ##   [--shots "name@eye@look[@fov];..."]   (contact sheet in screenshots/NAME.png)
+##   [--bend "Bone:deg,.."]   swing bones about their X (spring chain test)
 ## T-pose = the bind pose (no clip). Everything here is preview-only.
 
 const MOCK := 'res://previews/characters/mock/'
@@ -268,6 +269,14 @@ func _capture(name: String) -> void:
 			for h in humans:
 				var ap: AnimationPlayer = h.get_node('Anim')
 				ap.seek(t, true)
+		if '--bend' in args:                           # --bend "Bone:deg,Bone:deg": swing bones about X (spring test)
+			for h in humans:
+				var sk: Skeleton3D = h.find_children('*', 'Skeleton3D', true, false)[0]
+				for b in _arg('--bend', '').split(','):
+					var kv := b.split(':')
+					var i := sk.find_bone(kv[0])
+					sk.set_bone_pose_rotation(i, sk.get_bone_rest(i).basis.get_rotation_quaternion()
+						* Quaternion(Vector3.RIGHT, deg_to_rad(float(kv[1]))))
 		for item in items:
 			var part: PackedStringArray = item.split('@')
 			var e := part[1].split(',')

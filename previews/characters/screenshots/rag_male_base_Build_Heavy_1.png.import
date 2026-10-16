@@ -2,16 +2,12 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://suxwfb4nayqe"
-path="res://.godot/imported/bgtest.png-e6bbb280b4641906104ce08d1fe16ad4.ctex"
-metadata={
-"vram_texture": false
-}
+uid="uid://ce1cmy3havs2r"
+valid=false
 
 [deps]
 
-source_file="res://previews/characters/screenshots/bgtest.png"
-dest_files=["res://.godot/imported/bgtest.png-e6bbb280b4641906104ce08d1fe16ad4.ctex"]
+source_file="res://previews/characters/screenshots/rag_male_base_Build_Heavy_1.png"
 
 [params]
 

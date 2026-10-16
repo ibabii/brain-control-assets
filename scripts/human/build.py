@@ -938,7 +938,7 @@ def bust(p, bridge=True):
     if p.z > -0.02:
         return 0.0, Vector()
     dy = p.y - BUST.y
-    ry = dy if dy >= 0 else dy * 0.85
+    ry = dy * 0.72 if dy >= 0 else dy * 0.85                          # long gentle upper slope: no shelf on top
     h, lat = 0.0, 0.0
     for s in (-1, 1):
         dx = p.x - s * BUST.x

@@ -82,17 +82,20 @@ def tshirt(parent, rib):
     t = meta('ShirtBody', 0.007)
     c, bl, pe = v['chest'], v['belly'], v['pelvis']
     ell(t, (0, 1.22, 0.0), (c[0] - 0.018, c[1] - 0.006, c[2] - 0.018))
-    ell(t, (0, 1.04, v['belly_z'] * 0.5), (bl[0] - 0.022, bl[1] - 0.006, bl[2] - 0.022))
+    waist = 0.036 if FEMALE else 0.022                     # female: the waist reads narrower than the chest
+    ell(t, (0, 1.04, v['belly_z'] * 0.5), (bl[0] - waist, bl[1] - 0.006, bl[2] - 0.022))
     wy = lambda r: r * math.sqrt(max(0.0, 1 - ((0.95 - 0.86) / pe[1]) ** 2))    # joggers' half-width at y 0.95
-    ell(t, (0, 0.965, v['belly_z'] * 0.3), (wy(pe[0]) + 0.012, 0.08, wy(pe[2]) + 0.016))   # hem over the waist, no roll
+    hx = (hip_slim(Vector((wy(pe[0]), 0.95, 0))).x if FEMALE else wy(pe[0])) + 0.012
+    ell(t, (0, 0.95, v['belly_z'] * 0.3), (hx, 0.055, wy(pe[2]) + 0.016))       # hem just over the waistband
     cap(t, (-0.15, 1.335, 0.004), (0.15, 1.335, 0.004), v['shoulder'] - 0.008)
     fams = [t]
     for s in (-1, 1):
         sl = meta('ShirtSleeve%d' % s, 0.007)
         sh, el = m(s, hb.SHOULDER), m(s, hb.ELBOW)
         end = sh + (el - sh) * 0.5
+        ax = (el - sh).normalized()
         ball(sl, sh + Vector((-s * 0.006, -0.008, 0)), 0.056 * v['limb'])
-        cap(sl, sh, end, 0.058 * v['limb'])
+        cap(sl, sh, end - ax * 0.03, 0.058 * v['limb'])          # its rounded end stays inside the band
         fams.append(sl)
         r = 0.058 * v['limb'] * 1.04                  # a hair over the sleeve end: caps its edge cleanly
         hb.band('ShirtSleeve' + ('L' if s < 0 else 'R'), hb.frame_along(end, el - sh), r, r, 0.026, 0.06, rib, parent)
@@ -120,6 +123,52 @@ def body_weights(p):
     return w
 
 
+# --- hair spring chains (pilot: hair_bun's face-framing curls) ------------------------------------------------
+
+CURLS = []                # (side, top, bottom) in canonical head space: the ringlets of build.hair_bun
+if hb.SPEC['hair'] == 'bun':
+    for _s in (-1, 1):
+        for _x, _z, _y0, _y1 in ((0.12, -0.072, 1.70, 1.49), (0.134, -0.025, 1.65, 1.47)):
+            CURLS.append((_s, Vector((_s * _x, _y0 - 0.02, _z)), Vector((_s * _x, _y1, _z))))
+
+
+def curl_bones():
+    """Two bones per curl under Head: HairCurl<L|R><n>_1 (upper), _2 (lower)."""
+    out = []
+    for i, (s, top, bot) in enumerate(CURLS):
+        n = 'HairCurl%s%d' % ('L' if s < 0 else 'R', i % 2)
+        mid = (top + bot) / 2
+        out += [(n + '_1', hb.head_xf(top), hb.head_xf(mid), Vector((0, 0, -1)), 'Head'),
+                (n + '_2', hb.head_xf(mid), hb.head_xf(bot), Vector((0, 0, -1)), n + '_1')]
+    return out
+
+
+if CURLS:
+    _rig_table = hb.rig_table
+    hb.rig_table = lambda: _rig_table() + curl_bones()        # rig, rig json 'bones' and the export all see them
+
+
+def curl_weights(q):
+    """Hair vertex (canonical head space) -> weights: along a curl it rides its chain, fading in below the root."""
+    for i, (s, top, bot) in enumerate(CURLS):
+        if q.x * s <= 0 or math.hypot(q.x - top.x, q.z - top.z) > 0.03 or not bot.y - 0.025 < q.y < top.y + 0.02:
+            continue
+        n = 'HairCurl%s%d' % ('L' if s < 0 else 'R', i % 2)
+        t = (top.y - q.y) / (top.y - bot.y)
+        g = hb._ss(t / 0.12)
+        lo = hb._ss((t - 0.4) / 0.2)
+        w = {n + '_1': g * (1 - lo), n + '_2': g * lo}
+        if g < 1:
+            w['Head'] = 1 - g
+        return {k: v for k, v in w.items() if v > 1e-4}
+    return {'Head': 1.0}
+
+
+def springs():
+    return [{'kind': 'hair', 'root': b[0], 'end': c[0], 'radius': 0.012, 'tip': 0.03, 'stiffness': 0.8, 'drag': 0.3,
+             'gravity': 0.4} for b, c in zip(curl_bones()[0::2], curl_bones()[1::2])]
+
+
 # --- female front-view hips -----------------------------------------------------------------------------------
 
 HIP_SLIM = 0.13, 0.22     # pelvis, thighs (user 2026-10-16: hips chunky from the front; keep the butt in profile)
@@ -141,7 +190,7 @@ def hip_slim(p):
 
 def slim_hips():
     for o in bpy.data.objects:
-        if o.type != 'MESH' or o.name.startswith(('Hand', 'Nails', 'Sole', 'Upper', 'Lace', 'Stripe')) \
+        if o.type != 'MESH' or o.name.startswith(('Hand', 'Nails', 'Sole', 'Upper', 'Lace', 'Stripe', 'Shirt')) \
                 or o.name == 'HeadSkin' or o.parent is None or o.parent.name != 'Body':
             continue
         mw, inv = o.matrix_world, o.matrix_world.inverted()
@@ -403,6 +452,15 @@ def main():
         own[name] = out
         return out
 
+    hair_skinned = bool(CURLS)
+    if hair_skinned:                                         # curls ride spring bones: hair is a skinned part
+        o = bpy.data.objects['Hair']
+        inv, shift = o.matrix_world.inverted(), hb.warp(hb.NECK) - hb.NECK
+        k = hb.SPEC['head']
+        hw = [curl_weights(hb.HEAD_PIVOT + (c - hb.HEAD_PIVOT) / k) for c in canon['Hair']]
+        for v, c in zip(o.data.vertices, canon['Hair']):
+            v.co = inv @ B(c + shift)                        # the head's rigid move (the body warp would squash it)
+        R.skin(o, R.smooth(o, hw, 1), rig)
     # warp to the spec, skin, blend shapes
     for o in meshes:
         mw = o.matrix_world.copy()
@@ -445,11 +503,12 @@ def main():
     head.matrix_world = face_mw
     bpy.context.view_layer.update()                    # the hair's world matrix follows only after an update
     hair = bpy.data.objects['Hair']
-    hmw = hair.matrix_world.copy()
-    hair.parent = None
-    hair.matrix_world = hmw
+    if not hair_skinned:
+        hmw = hair.matrix_world.copy()
+        hair.parent = None
+        hair.matrix_world = hmw
     bpy.context.view_layer.update()
-    export_all(rig, head, hair, regions)
+    export_all(rig, head, hair, regions, hair_skinned)
 
 
 # --- clearance check (CHAR_CHECK=1) ---------------------------------------------------------------------------
@@ -549,7 +608,7 @@ def _json(path, data):
         json.dump(data, f, indent=1)
 
 
-def export_all(rig, head, hair, regions):
+def export_all(rig, head, hair, regions, hair_skinned=False):
     base = BASE + '_base'
     out = os.path.join(ROOT, 'characters', base, 'art')
     bodies = regions + [o for o in bpy.data.objects if o.name.startswith(('HandL', 'HandR', 'NailsL', 'NailsR'))]
@@ -565,6 +624,8 @@ def export_all(rig, head, hair, regions):
     parts = {'head': HEAD_ID, 'hair': HAIR_ID, 'top': ('tshirt' if FEMALE else 'hoodie') + SFX, 'bottom': 'joggers' + SFX, 'shoes': 'sneakers' + SFX}
     colors = dict(COLORS, top=SHIRT[0], rib=SHIRT[1]) if FEMALE else COLORS
     cj = {'parts': parts, 'paint': PAINT, 'colors': colors, 'shapes': {'Build_Slim': 0.0, 'Build_Heavy': 0.0}}
+    if CURLS:
+        cj['springs'] = springs()
     if hb.SPEC['chest']:
         cj['shapes']['Chest_Size'] = 0.7
         cj['chest'] = {'chains': [['LeftBreast', 'LeftBreast'], ['RightBreast', 'RightBreast']], 'radius': 0.05,
@@ -576,9 +637,9 @@ def export_all(rig, head, hair, regions):
     _tscn(pdir(HEAD_ID), HEAD_ID)
     _json(os.path.join(pdir(HEAD_ID), 'part.json'), {'slot': 'head', 'attach': 'Head', 'hidden': hidden,
                                                        'expressions': hb.EXPRESSIONS})
-    _export(os.path.join(pdir(HAIR_ID), HAIR_ID + '.glb'), [hair], False)
+    _export(os.path.join(pdir(HAIR_ID), HAIR_ID + '.glb'), ([rig] if hair_skinned else []) + [hair], False)
     _tscn(pdir(HAIR_ID), HAIR_ID)
-    _json(os.path.join(pdir(HAIR_ID), 'part.json'), {'slot': 'hair', 'attach': 'Head'})
+    _json(os.path.join(pdir(HAIR_ID), 'part.json'), {'slot': 'hair'} if hair_skinned else {'slot': 'hair', 'attach': 'Head'})
     for pid, (slot, prefixes, hides) in PARTS.items():
         objs = [o for o in bpy.data.objects if o.type == 'MESH' and o.name.startswith(prefixes)]
         _export(os.path.join(pdir(pid + SFX), pid + SFX + '.glb'), [rig] + objs, False)

@@ -50,6 +50,7 @@ static func build(base: String, over: Dictionary = {}) -> Node3D:
 	shapes.merge(over.get('shapes', {}), true)
 	var colors: Dictionary = cj.get('colors', {}).duplicate()
 	colors.merge(over.get('colors', {}), true)
+	colors.hair = hair_for(Color(colors.skin), Color(colors.hair)).to_html(false)
 	if colors.get('blush', 'auto') == 'auto':
 		colors.blush = auto_blush(Color(colors.skin)).to_html(false)
 	for m: MeshInstance3D in ch.find_children('*', 'MeshInstance3D', true, false):
@@ -66,6 +67,34 @@ static func build(base: String, over: Dictionary = {}) -> Node3D:
 					else Color(colors[slot[0]])
 				m.set_surface_override_material(i, d)
 	return ch
+
+
+## CIE L* (0..100) of an sRGB colour.
+static func lstar(c: Color) -> float:
+	var lin := func(x: float) -> float: return x / 12.92 if x <= 0.04045 else pow((x + 0.055) / 1.055, 2.4)
+	var y: float = 0.2126 * lin.call(c.r) + 0.7152 * lin.call(c.g) + 0.0722 * lin.call(c.b)
+	return 116.0 * (pow(y, 1.0 / 3.0) if y > 0.008856 else 7.787 * y + 16.0 / 116.0) - 16.0
+
+
+## Hair never reads as the skin (contract): |L*(hair) - L*(skin)| >= presets hair_contrast, else the passing preset
+## hair closest in L* to the asked one (ties: darker).
+static func hair_for(skin: Color, hair: Color) -> Color:
+	var pj: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(ROOT + 'presets.json'))
+	var need: float = pj.get('hair_contrast', 18)
+	var ls := lstar(skin)
+	if absf(lstar(hair) - ls) >= need:
+		return hair
+	var best := hair
+	var best_d := INF
+	for h in pj.hair:
+		var lh := lstar(Color(h))
+		if absf(lh - ls) < need:
+			continue
+		var d := absf(lh - lstar(hair)) + (0.001 * lh)
+		if d < best_d:
+			best_d = d
+			best = Color(h)
+	return best
 
 
 ## Blush from the skin (contract): rose on light skin, deeper berry on dark, 60% of the way from the skin.
