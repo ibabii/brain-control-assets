@@ -12,7 +12,7 @@
     "intercom": "cockpit/art/intercom/intercom.tscn (instanced as Intercom in cockpit_art.tscn) + intercom.glb, dotmatrix_5x7.json",
     "answering_machine": "cockpit/art/answering_machine/answering_machine.tscn (instanced as AnsweringMachine in cockpit_art.tscn) + .glb"
   },
-  "model_sha256": "a7ea4422abc93f520d58411e75e54e21a19d73cc2ab84a11b2e4ba4c4422d610",
+  "model_sha256": "47f720eac35b2214b83c45c979f138bcaa83249114b8775eb65c43699d688b56",
   "triangles": 325138,
   "source": "source/cockpit/cockpit_v2.blend",
   "rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build.py",

@@ -264,14 +264,14 @@ def _wall_depth(px, py, gap):
 
 # --- notebook with the TODAY list --------------------------------------------------------------------
 
-NB_PAGE = (6, 560, 334, 960)    # 15% narrower 2026-10-16 (mechanics: A/S sleeve meets the right end)    # taller for the pivot (2026-10-16): rows grow so the far end keeps NB_CAP
+NB_PAGE = (6, 590, 356, 960)    # TODAY page on screen, 1920x1080 px from the seat: left of the TaskNote, above the sleeve    # taller for the pivot (2026-10-16): rows grow so the far end keeps NB_CAP
 _NB_PAGE_OLD = (6, 590, 356, 960)    # TODAY page on screen, 1920x1080 px from the seat: left of the TaskNote, above the sleeve
 NB_CAP = 22.5                    # cap height in px at 1080p (15 px on the Steam Deck, game-ux)
 NB_SQUEEZE = 0.78                # max glyph width factor (Patrick Hand is wide); narrowed further to fit a full row
 NB_GAP = -0.3                    # row gap in em: rows at 1.07 em instead of the font's 1.37
 ROWS = 7                         # title + 6 items
 TRAY_TOP = 0.89
-NB_YAW = float(os.environ.get('NB_YAW', 12))   # deg: notebook pivots about its left edge, right edge back (user 2026-10-16)
+NB_YAW = float(os.environ.get('NB_YAW', 0))   # deg: pivot about the left edge, right edge back. 0: the 12° pivot (e7b0d76/c27bda8) put the cover's right end in the A/S hand path; awaiting a user call
 
 
 def notebook(parent):
@@ -341,11 +341,10 @@ def notebook(parent):
     wood = lib.mat('NotebookStand', '#B5835A', 0.6)
     bottom = f.at((-0.014, -h / 2 - ch / 2, -0.0145))
     ff = Frame((bottom.x, TRAY_TOP, bottom.z))
-    # Foot shifted left: the pivot swings its right end toward the console's left end.
-    lib.box('StandFoot', (w - 0.02, 0.012, 0.06), wood, ff.child((-0.045, 0.006, 0.018)), g, bevel=0.002)
-    lib.box('StandLip', (w - 0.02, 0.016, 0.012), wood, ff.child((-0.045, 0.012 + 0.008, 0.054)), g, bevel=0.002)
+    lib.box('StandFoot', (w + 0.07, 0.012, 0.06), wood, ff.child((0, 0.006, -0.01)), g, bevel=0.002)   # clear of the console front
+    lib.box('StandLip', (w + 0.07, 0.016, 0.012), wood, ff.child((0, 0.012 + 0.008, 0.026)), g, bevel=0.002)
     lib.box('StandBoard', (w + 0.03, h * 0.75, 0.008), wood, f.child((-0.014, -h * 0.1, -0.0145 - 0.0045)), g, bevel=0.002)
-    lib.tube('StandStrut', [f.at((-0.014, h * 0.02, -0.024)), ff.at((0, 0.012, -0.012))], 0.004,
+    lib.tube('StandStrut', [f.at((-0.014, h * 0.02, -0.024)), ff.at((0, 0.012, -0.035))], 0.004,
              lib.mat('StandWire', '#3B3A36', 0.4, 0.7), g, res=3)
     SLOTS['Today'] = {'kind': 'list', 'position': list(f.at((-w / 2 + ml + lw / 2, h / 2 - mt - lh / 2, 0.0008))),
                       'basis': [list(f.m.col[i]) for i in range(3)], 'size': [lw, lh],
