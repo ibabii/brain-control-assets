@@ -700,7 +700,7 @@ def face(head_node, skin_obj):
 # Expressions (game contract, json "expressions"): transforms and visibility only, applied over the rest face.
 # show/hide: parts to toggle (Smile hides when another mouth shows); brow: BrowL/R (raise m, tilt deg about Z,
 # + = inner end up; a raise past ~2 mm tucks them under the fringe); pupil: Pupil/Glint X/Y scale; look: per-eye LookL/R gaze [[yaw, pitch], [yaw, pitch]] or null
-# (game's gaze); lid: LidL/R X rotation (deg, rest 45, + = open) for the look-dev extras; mouth: Open/Tongue scale.
+# (game's gaze); lid: LidL/R X rotation (deg, rest 45, + = open, -100 = shut), one value or [L, R]; mouth: Open/Tongue scale.
 EXPRESSIONS = {
     'rest': {'show': [], 'brow': [0.0, 0.0], 'pupil': 1.0, 'look': None},
     'alarm': {'show': ['O'], 'hide': ['LidL', 'LidR'], 'brow': [0.0, 18.0], 'pupil': 0.62, 'look': None},
@@ -712,6 +712,8 @@ EXPRESSIONS = {
     'sleepy': {'lid': -22.0, 'brow': [-0.006, -4.0], 'look': [[0.0, -6.0]] * 2, 'pupil': 1.0, 'show': []},
     'embarrassed': {'lid': 20.0, 'brow': [0.008, 20.0], 'look': [[-16.0, -8.0]] * 2, 'pupil': 1.0,
                     'show': ['Grimace', 'GrimaceLine', 'BlushL', 'BlushR']},
+    'wink': {'show': ['LidR'], 'lid': [45.0, -100.0], 'brow': [0.0, -6.0], 'pupil': 1.0, 'look': None},   # -100 = shut
+    'surprised': {'show': ['O'], 'brow': [0.002, 6.0], 'pupil': 0.85, 'look': None},
 }
 
 

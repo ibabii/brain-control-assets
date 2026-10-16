@@ -8,6 +8,7 @@ extends Node3D
 ##   [--stage grey|flat|kitchen|bathroom] [--spacing M] [--ragdoll --t S [--follow]] [--size WxH] [--cols N]
 ##   [--shots "name@eye@look[@fov];..."]   (contact sheet in screenshots/NAME.png)
 ##   [--bend "Bone:deg,.."]   swing bones about their X (spring chain test)
+##   [--faces "rest,wink,.."]  expression per model (head part.json `expressions`, applied like the game)
 ## T-pose = the bind pose (no clip). Everything here is preview-only.
 
 const MOCK := 'res://previews/characters/mock/'
@@ -32,7 +33,8 @@ func _ready() -> void:
 	var ids := _arg('--models', 'bernard_b').split(',')
 	var tones := _arg('--tones', '').split(',', false)
 	var chest := _arg('--chest', '').split(',', false)
-	var n := maxi(ids.size(), maxi(tones.size(), chest.size()))
+	var faces := _arg('--faces', '').split(',', false)
+	var n := maxi(maxi(ids.size(), faces.size()), maxi(tones.size(), chest.size()))
 	var spacing := float(_arg('--spacing', '0.9'))
 	var x0 := float(_arg('--x', '0'))
 	for i in n:
@@ -48,6 +50,8 @@ func _ready() -> void:
 			_tone(h, Color(tones[mini(i, tones.size() - 1)]))
 		if chest.size():
 			_chest(h, float(chest[mini(i, chest.size() - 1)]))
+		if faces.size():
+			_face(h, id.split(':')[0], faces[mini(i, faces.size() - 1)])
 	if '--clip' in args:
 		_share(_arg('--from', ''))
 	else:
@@ -311,3 +315,50 @@ func _capture(name: String) -> void:
 	sheet.save_png(dir + name + '.png')
 	print('MOCK_SHEET ', dir + name + '.png')
 	get_tree().quit()
+
+
+## Expression from the head part's table, with the game's rules (src/human/human_avatar.gd): one mouth shows
+## (Smile unless the expression shows another), lids only where the expression shows them (the game adds blinks),
+## LidHalf off unless shown; brow [raise, tilt], pupil, look, mouth scale, lid (deg, or [L, R]).
+func _face(h: Node3D, base: String, name: String) -> void:
+	var cj: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://characters/%s/art/character.json' % base))
+	var head: String = cj.parts.head
+	var pj: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://characters/parts/%s/art/part.json' % head))
+	var e: Dictionary = pj.expressions[name]
+	var f := func(n: String) -> Node3D: return h.find_child(n, true, false) as Node3D
+	var show: Array = e.get('show', [])
+	var mouths := ['Smile', 'Open', 'O', 'Flat', 'Grimace', 'Wobble']
+	var mouth := 'Smile'
+	for m in show:
+		if m in mouths:
+			mouth = m
+	for m in mouths:
+		if f.call(m):
+			f.call(m).visible = m == mouth
+	for n in ['LidL', 'LidR', 'LidHalfL', 'LidHalfR']:
+		if f.call(n):
+			f.call(n).visible = n in show
+	for n in show:
+		if f.call(n):
+			f.call(n).visible = true
+	for n in e.get('hide', []):
+		if f.call(n):
+			f.call(n).visible = false
+	var brow: Array = e.get('brow', [0.0, 0.0])
+	var lid = e.get('lid', null)
+	for side in ['L', 'R']:
+		var s := -1.0 if side == 'L' else 1.0
+		var b: Node3D = f.call('Brow' + side)
+		b.position.y += brow[0]
+		b.rotation_degrees.z += -s * brow[1]
+		if lid != null:
+			f.call('Lid' + side).rotation_degrees.x = lid[0 if side == 'L' else 1] if lid is Array else lid
+		if e.get('look') != null:
+			var g: Array = e.look[0 if side == 'L' else 1]
+			f.call('Look' + side).rotation_degrees = Vector3(g[1], g[0], 0)
+		for p in ['Pupil', 'Glint']:
+			f.call(p + side).scale = Vector3(e.get('pupil', 1.0), e.get('pupil', 1.0), 1.0)
+	var m: float = e.get('mouth', 1.0)
+	for n in ['Open', 'Tongue']:
+		if m != 1.0:
+			f.call(n).scale = Vector3(m, m * 1.25, 1.0)

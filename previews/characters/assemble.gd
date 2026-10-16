@@ -1,8 +1,9 @@
 class_name CharacterAssembler
 ## Reference assembler for the "Characters" contract (coordination/interfaces.md), preview-only:
 ## base body + parts from character.json (or overrides) -> one Node3D on the base skeleton.
-## Skinned part meshes move onto the base Skeleton (bind by bone name); rigid ones ride a BoneAttachment3D
-## (part.json "attach", default Head), authored in character space at rest. "hides" turns off Body_<Region> meshes.
+## Skinned part meshes move onto the base Skeleton (bind by bone name); the rest of the part (face tree, hair) rides
+## a BoneAttachment3D whole (part.json "attach", default Head), authored in character space at rest (as the game's
+## CharacterBuilder). "hides" turns off Body_<Region> meshes.
 ## Shapes (blend shapes) and paint (material -> colour slot) go to every mesh.
 
 const ROOT := 'res://characters/'
@@ -28,22 +29,19 @@ static func build(base: String, over: Dictionary = {}) -> Node3D:
 		att.name = 'Part_' + slot
 		sk.add_child(att)
 		att.bone_name = pj.get('attach', 'Head')
-		var rest_inv := sk.get_bone_global_rest(sk.find_bone(att.bone_name)).affine_inverse()
 		for m: MeshInstance3D in p.find_children('*', 'MeshInstance3D', true, false):
-			var xf := m.global_transform if m.is_inside_tree() else _xf(m, p)
-			m.get_parent().remove_child(m)
-			m.owner = null
 			if m.skin:
+				m.get_parent().remove_child(m)
+				m.owner = null
 				sk.add_child(m)
 				m.transform = Transform3D()
 				m.skeleton = m.get_path_to(sk)
-			else:
-				att.add_child(m)
-				m.transform = rest_inv * xf
-			for h in pj.get('hidden', []):
-				if m.name == h:
-					m.visible = false
-		p.free()
+		att.add_child(p)                               # the rest (face tree, hair) rides the bone whole, like the game
+		p.transform = sk.get_bone_global_rest(sk.find_bone(att.bone_name)).affine_inverse() * p.transform
+		for h in pj.get('hidden', []):
+			var n := p.find_child(h, true, false) as Node3D
+			if n:
+				n.visible = false
 	for m: MeshInstance3D in ch.find_children('Body_*', 'MeshInstance3D', true, false):
 		m.visible = not m.name in hidden
 	var shapes: Dictionary = cj.get('shapes', {}).duplicate()
@@ -102,12 +100,3 @@ static func auto_blush(skin: Color) -> Color:
 	var t := clampf((skin.get_luminance() - 0.3) / 0.45, 0.0, 1.0)
 	return skin.lerp(Color('#8E2E4A').lerp(Color('#F08A8A'), t), 0.6)
 
-
-static func _xf(n: Node3D, root: Node3D) -> Transform3D:
-	var t := Transform3D()
-	var x: Node = n
-	while x and x != root:
-		if x is Node3D:
-			t = (x as Node3D).transform * t
-		x = x.get_parent()
-	return t

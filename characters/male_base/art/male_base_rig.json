@@ -916,6 +916,32 @@
     "BlushL",
     "BlushR"
    ]
+  },
+  "wink": {
+   "show": [
+    "LidR"
+   ],
+   "lid": [
+    45.0,
+    -100.0
+   ],
+   "brow": [
+    0.0,
+    -6.0
+   ],
+   "pupil": 1.0,
+   "look": null
+  },
+  "surprised": {
+   "show": [
+    "O"
+   ],
+   "brow": [
+    0.002,
+    6.0
+   ],
+   "pupil": 0.85,
+   "look": null
   }
  },
  "loops": [
