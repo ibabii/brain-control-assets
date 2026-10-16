@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ioggunm7lchf"
-path="res://.godot/imported/door_gap.png-caf232e1ca65e5c1cd7b7f6f1aa8325d.ctex"
+uid="uid://bnakxq7rcdely"
+path="res://.godot/imported/door_max.png-f1ce2cf0abc227396656d3a0b200ccdd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://previews/bathroom/screenshots/door_gap.png"
-dest_files=["res://.godot/imported/door_gap.png-caf232e1ca65e5c1cd7b7f6f1aa8325d.ctex"]
+source_file="res://previews/bathroom/screenshots/door_max.png"
+dest_files=["res://.godot/imported/door_max.png-f1ce2cf0abc227396656d3a0b200ccdd.ctex"]
 
 [params]
 

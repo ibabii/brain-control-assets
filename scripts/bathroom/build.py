@@ -35,7 +35,7 @@ TOWEL_BAR = Vector((-0.72, 1.425, -0.655))
 PROPS = {   # id: node position (game), base pivots for the knockables (counter top 0.87)
     'toothpaste': (-0.35, 0.889, -0.4), 'cup': (0.33, 0.87, -0.56), 'soap': (-0.2, 0.87, -0.62),
     'lotion': (0.21, 0.87, -0.64), 'smudge': (0, 1.55, -0.657), 'towel': (-0.72, 1.2, -0.67),
-    'faucet': (0, 0.95, -0.64), 'tub': (-1.15, 0.5, 0.55), 'door': (0.585, 0.0, 2.64),
+    'faucet': (0, 0.95, -0.64), 'tub': (-1.15, 0.5, 0.55), 'door': (1.415, 0.0, 2.64),
 }
 
 
@@ -311,8 +311,8 @@ def room(root):
 
 
 DOOR_X = (1.42, 0.58)                      # opening, world x (from the front wall's local DOOR range)
-HINGE = (0.585, 0.0, 2.64)                 # door prop pivot: jamb at x 0.58, room face of the leaf (z 2.64)
-LEAF = (0.83, 2.025, 0.04, 0.015)          # width (+X from the hinge), height, thickness (+Z, toward the hall), floor gap
+HINGE = (1.415, 0.0, 2.64)                 # door prop pivot: right jamb (x 1.42), room face of the leaf (z 2.64)
+LEAF = (0.83, 2.025, 0.04, 0.015)          # width (-X from the hinge), height, thickness (+Z, toward the hall), floor gap
 HALL = (0.3, 1.7, 2.75, 3.6, 2.5)          # hallway stub behind the door: x0, x1, z0, z1, ceiling
 HALL_LIGHT = (1.0, 2.35, 3.15)             # gameplay's warm OmniLight (art has no lights); lamp mesh above it
 
@@ -946,14 +946,15 @@ def p_towel():
 
 
 def p_door():
-    """Hinged door. Root = hinge (static). Gameplay rotates `Hinge` about +Y: 0 = shut, + opens into the room.
+    """Hinged door on the right jamb (clear of the tub sightline). Root = hinge (static). Gameplay rotates `Hinge`
+    about +Y: 0 = shut, negative opens into the room toward the right wall (knob meets the wall past about -92).
     `Gap` (hall light under the door) and `Shadow` (feet in it, slide along X) stay put under the root."""
     r = prop_root('door')
     w, h, t, gap = LEAF
     hx, hy, hz = HINGE
     hg = lib.empty('Hinge', HINGE, r)
     leaf_m = M('DoorLeaf', 'cream', 'painted')
-    lf = Frame((hx + w / 2, 0, hz))
+    lf = Frame((hx - w / 2, 0, hz))
     lib.slab('Panel', [(x, y + gap + h / 2) for x, y in lib.rrect(w, h, 0.01, 2)], t, 0.008, leaf_m, lf, hg)
     for side, z, flip in (('Room', 0.0, True), ('Hall', t, False)):              # shaker panels on both faces
         for k, (cy, ph) in enumerate(((1.45, 0.72), (0.55, 0.78))):
@@ -964,14 +965,14 @@ def p_door():
             lib.slab('Inset%s%d' % (side, k), [(x, y + cy) for x, y in outer], 0.008, 0.003, leaf_m, pf, hg,
                      holes=[[(x, y + cy) for x, y in inner]])
     knob = M('Honey', 'honey', 'painted')
-    handle = lib.empty('Handle', (hx + w - 0.08, 1.0, hz + t / 2), hg)
+    handle = lib.empty('Handle', (hx - w + 0.08, 1.0, hz + t / 2), hg)
     for side, z0, d in (('Room', hz, -1), ('Hall', hz + t, 1)):
-        c = Vector((hx + w - 0.08, 1.0, z0))
+        c = Vector((hx - w + 0.08, 1.0, z0))
         lib.sphere('Rose' + side, 0.03, knob, Frame(c + Vector((0, 0, d * 0.002))), handle, scale=(1, 1, 0.25), seg=20, rings=8)
         lib.sphere('Knob' + side, 0.027, knob, Frame(c + Vector((0, 0, d * 0.05))), handle, scale=(1, 1, 0.8), seg=20, rings=10)
         tube('Neck' + side, [c + Vector((0, 0, d * 0.004)), c + Vector((0, 0, d * 0.03))], 0.009, knob, handle)
     # Robe hooks with the peach bath towel (seen in the mirror behind the Human); they swing with the door.
-    cx_ = hx + w / 2
+    cx_ = hx - w / 2
     for i, dx in enumerate((-0.1, 0.1)):
         b = Vector((cx_ + dx, 1.72, hz))
         tube('Hook%d' % i, [b, b + Vector((0, 0, -0.04)), b + Vector((0, 0.03, -0.055))], 0.008, knob, hg)
@@ -991,7 +992,7 @@ def p_door():
     bsdf = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
     nt.links.new(next(n for n in nt.nodes if n.type == 'TEX_IMAGE').outputs['Alpha'], bsdf.inputs['Alpha'])
     gm.surface_render_method = 'BLENDED'
-    quad_grid('Gap', Frame((hx + 0.01, 0.0015, hz + 0.004), (-90, 0, 0)), 0, w - 0.02, 0, 0.09, gm, r)
+    quad_grid('Gap', Frame((hx - w + 0.01, 0.0015, hz + 0.004), (-90, 0, 0)), 0, w - 0.02, 0, 0.09, gm, r)
     # Shadow: two feet just past the door, toes toward the room (dark, soft).
     sm = lib.mat('DoorShadow', '#2A2220', 1.0)
     bsdf = next(n for n in sm.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
@@ -1002,7 +1003,7 @@ def p_door():
         foot = [(x * 0.035, y * 0.05) for x, y in lib.circle(1.0, 20)]         # long ovals coming from under the door
         lib.slab('Foot%d' % i, foot, 0.0005, 0.0002, sm, Frame((cx_ + dx, 0.0025, hz - 0.012), (-90, 0, 0)), sh)
     return r, {'hinge': list(HINGE), 'leaf': {'width': w, 'height': h, 'thickness': t, 'floor_gap': gap},
-               'rotate': 'Hinge about +Y; 0 shut, +100 open into the room', 'hall_light': list(HALL_LIGHT)}
+               'rotate': 'Hinge about +Y; 0 shut, -90 open into the room (max about -92: right wall)', 'hall_light': list(HALL_LIGHT)}
 
 
 PROP_BUILDERS = [p_cup, p_lotion, p_soap, p_toothpaste, p_smudge, p_faucet, p_tub, p_towel, p_door]

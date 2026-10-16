@@ -102,7 +102,7 @@
   },
   "door": {
    "hinge": [
-    0.585,
+    1.415,
     0.0,
     2.64
    ],
@@ -112,14 +112,14 @@
     "thickness": 0.04,
     "floor_gap": 0.015
    },
-   "rotate": "Hinge about +Y; 0 shut, +100 open into the room",
+   "rotate": "Hinge about +Y; 0 shut, -90 open into the room (max about -92: right wall)",
    "hall_light": [
     1.0,
     2.35,
     3.15
    ],
    "node_position": [
-    0.585,
+    1.415,
     0.0,
     2.64
    ],
