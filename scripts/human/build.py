@@ -48,7 +48,7 @@ HAND_SCALE = 1.12                          # on top of the brain hand's own 1.2
 EYE_Y = 1.625
 NECK = Vector((0, 1.47, 0.0))
 HEAD_PIVOT = Vector((0, EYE_Y, -0.1))                # look B head scale pivot (= the EyeCam marker)
-SHOULDER = Vector((0.20, 1.355, 0.0))
+SHOULDER = Vector((0.20, 1.31 if FEMALE else 1.355, 0.0))   # female: relaxed, lower shoulders (user)
 # The arms are modelled and bound in an A-pose (ARM_UP more than they hang), so the voxel union can't fuse sleeve and
 # torso; the `rest` and `idle` clips lower them to the hanging pose the design shows.
 ARM_UP = float(os.environ.get('HUMAN_ARM_UP', 33.0))   # character-system mock: 78 = T-pose bind
@@ -1034,7 +1034,7 @@ def char_json(path, cw):
               'top': cw['top'], 'bottom': cw['pants'], 'shoes': cw['shoe']}
     data = {'paint': paint, 'colors': colors}
     if SPEC['chest']:
-        data['shapes'] = {'Chest_Size': 0.7}
+        data['shapes'] = {'Chest_Size': 0.8}
         data['chest'] = {'chains': [['LeftBreast', 'LeftBreast'], ['RightBreast', 'RightBreast']], 'radius': 0.05}
     with open(path, 'w') as f:
         json.dump(data, f, indent=1)

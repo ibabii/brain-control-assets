@@ -54,7 +54,8 @@ def mannequin(parent):
         ell(torso, (0, 1.22, 0.0), (c[0] - 0.03, c[1] - 0.01, c[2] - 0.03))
         ell(torso, (0, 1.04, v['belly_z'] * 0.5), (bl[0] - 0.035, bl[1] - 0.01, bl[2] - 0.035))
         ell(torso, (0, 0.88, 0.004), (pe[0] - 0.02, pe[1] - 0.01, pe[2] - 0.02))
-    cap(torso, (-0.15, 1.33, 0.004), (0.15, 1.33, 0.004), v['shoulder'] - 0.018)
+    if not FEMALE:                                     # female: a soft neck-to-arm slope (torso loft), no shoulder bar
+        cap(torso, (-0.15, 1.33, 0.004), (0.15, 1.33, 0.004), v['shoulder'] - 0.018)
     cap(torso, (0, 1.30, 0.008), (0, 1.43, 0.008), 0.048)                       # neck stub (into the head's neck)
     fams = [torso]
     for s, side in ((-1, 'L'), (1, 'R')):
@@ -99,15 +100,20 @@ def tshirt(parent, rib):
         ell(t, (0, 1.04, v['belly_z'] * 0.5), (bl[0] - 0.022, bl[1] - 0.006, bl[2] - 0.022))
         wy = lambda r: r * math.sqrt(max(0.0, 1 - ((0.95 - 0.86) / pe[1]) ** 2))    # joggers' half-width at y 0.95
         ell(t, (0, 0.95, v['belly_z'] * 0.3), (wy(pe[0]) + 0.012, 0.055, wy(pe[2]) + 0.016))   # hem over the waist
-    cap(t, (-0.15, 1.335, 0.004), (0.15, 1.335, 0.004), v['shoulder'] - 0.008)
+    if not FEMALE:
+        cap(t, (-0.15, 1.335, 0.004), (0.15, 1.335, 0.004), v['shoulder'] - 0.008)
     fams = [t]
     for s in (-1, 1):
         sl = meta('ShirtSleeve%d' % s, 0.007)
         sh, el = m(s, hb.SHOULDER), m(s, hb.ELBOW)
         end = sh + (el - sh) * 0.5
         ax = (el - sh).normalized()
-        ball(sl, sh + Vector((-s * 0.006, -0.008, 0)), 0.056 * v['limb'])
-        cap(sl, sh, end - ax * 0.03, 0.058 * v['limb'])          # its rounded end stays inside the band
+        if FEMALE:                                     # relaxed shoulder: small low cap, sleeve tube starts down the arm
+            ball(sl, sh, 0.055 * v['limb'])
+            cap(sl, sh + ax * 0.04, end - ax * 0.03, 0.058 * v['limb'])
+        else:
+            ball(sl, sh + Vector((-s * 0.006, -0.008, 0)), 0.056 * v['limb'])
+            cap(sl, sh, end - ax * 0.03, 0.058 * v['limb'])      # its rounded end stays inside the band
         fams.append(sl)
         r = 0.058 * v['limb'] * 1.04                  # a hair over the sleeve end: caps its edge cleanly
         hb.band('ShirtSleeve' + ('L' if s < 0 else 'R'), hb.frame_along(end, el - sh), r, r, 0.026, 0.06, rib, parent)
@@ -221,7 +227,8 @@ SHIRT_TORSO = [(0.915, 0, 0.168, 0.0, 0.127, 0.140), (0.94, 0, 0.157, -0.002, 0.
                (0.97, 0, 0.145, -0.002, 0.122, 0.116), (1.0, 0, 0.138, -0.002, 0.120, 0.110),
                (1.04, 0, 0.134, -0.002, 0.117, 0.106), (1.10, 0, 0.142, -0.002, 0.112, 0.106),
                (1.15, 0, 0.152, 0.0, 0.108, 0.106), (1.22, 0, 0.158, 0.0, 0.104, 0.104),
-               (1.27, 0, 0.152, 0.0, 0.098, 0.104), (1.31, 0, 0.130, 0.0, 0.090, 0.114),
+               (1.27, 0, 0.150, 0.0, 0.098, 0.104), (1.295, 0, 0.136, 0.0, 0.094, 0.110),   # neck-to-arm slope
+               (1.316, 0, 0.114, 0.0, 0.088, 0.114),
                (1.335, 0, 0.088, 0.010, 0.060, 0.104)]                        # up to the collar, over the nape
 CLOTH = 0.008                                             # body = cloth minus this
 
@@ -789,7 +796,7 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
     if CURLS:
         cj['springs'] = springs()
     if hb.SPEC['chest']:
-        cj['shapes']['Chest_Size'] = 0.7
+        cj['shapes']['Chest_Size'] = 0.8
         cj['chest'] = {'chains': [['LeftBreast', 'LeftBreast'], ['RightBreast', 'RightBreast']], 'radius': 0.05,
                        'tip_dir': [0, 0, -1], 'tip': 0.1}
     _json(os.path.join(out, 'character.json'), cj)

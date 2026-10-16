@@ -6,8 +6,9 @@ set -e
 cd "${0:A:h}/../.."
 notes=$1; shift
 for d in "$@"; do
-  (cd $d && find . -type f \( -name '*.glb' -o -name '*.tscn' -o -name '*.json' -o -name '*.gd' -o -name '*.import' -o -name '*.png' \) \
-     ! -name SHA256SUMS | sort | xargs shasum -a 256 > SHA256SUMS)
+  # tracked files only (local preview snapshots stay out of the sums)
+  (cd $d && git ls-files -- '*.glb' '*.tscn' '*.json' '*.gd' '*.import' '*.png' | grep -v '^SHA256SUMS$' | sed 's|^|./|' \
+     | sort | xargs shasum -a 256 > SHA256SUMS)
 done
 git add "${@/%//SHA256SUMS}"
 git diff --cached --quiet || git commit -qm "Handoff checksums: $*
