@@ -6,7 +6,7 @@ B=/Applications/Blender.app/Contents/MacOS/Blender
 typeset -A SPECS
 SPECS=(
   male   '{"look":"B","head":1.25,"sy":0.975,"keep_eye":true,"mock":true}'
-  female '{"look":"B","sex":"female","head":1.2,"sy":0.95,"narrow":0.03,"chest":true,"hair":"bun","clips":"basic","mock":true}'
+  female '{"look":"B","sex":"female","head":1.25,"sy":0.95,"narrow":0.03,"chest":true,"hair":"bun","clips":"basic","mock":true}'
 )
 bases=($@)
 (( $#bases )) || bases=(male female)

@@ -356,7 +356,7 @@ def volumes():
              shoulder=0.066, limb=1.0, pelvis=(0.178, 0.125, 0.126), leg=1.0)
     if f:                                                         # narrower waist, wider hips, softer shoulders
         v.update(chest=(0.168, 0.165, 0.122), belly=(0.152, 0.15, 0.124), flare=(0.228, 0.078, 0.146), shoulder=0.058,
-                 limb=0.92, pelvis=(0.216, 0.13, 0.142), leg=1.05)
+                 limb=1.0, pelvis=(0.216, 0.13, 0.142), leg=1.05)
     c, bl, fl, pe = v['chest'], v['belly'], v['flare'], v['pelvis']
     v.update(chest=(c[0] * (1 + 0.1 * b), c[1], c[2] * (1 + 0.14 * b)),
              belly=(bl[0] + 0.045 * b, bl[1] + 0.01 * max(b, 0), bl[2] + 0.055 * b), belly_z=v['belly_z'] - 0.02 * b,
@@ -941,13 +941,13 @@ def bust(p, bridge=True):
     if p.z > -0.02:
         return 0.0, Vector()
     dy = p.y - BUST.y
-    ry = dy * 0.72 if dy >= 0 else dy * 0.85                          # long gentle upper slope: no shelf on top
+    ry = dy * 0.8 if dy >= 0 else dy * 0.85                          # long gentle upper slope: no shelf on top
     h, lat = 0.0, 0.0
     for s in (-1, 1):
         dx = p.x - s * BUST.x
         c = _cap(math.hypot(dx, ry))
         if bridge and ry < 0:                                         # cloth follows the underside partway
-            c = _smax(c, 0.7 * _cap(abs(dx)) * _ss(1 + ry / 0.13))
+            c = _smax(c, 0.5 * _cap(abs(dx)) * _ss(1 + ry / 0.10))
         h = _smax(h, c)
         lat += 0.25 * c * s * max(0.0, s * dx) / BUST_A              # spreads outward only: no fold in the middle
     if bridge and abs(p.x) < BUST.x:                                  # cloth stretches across: no dip, no line
