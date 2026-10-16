@@ -62,7 +62,14 @@ def mannequin(parent):
         arm = meta('BodyArm' + side, 0.007)
         sh, el, wr = m(s, hb.SHOULDER), m(s, hb.ELBOW), m(s, hb.WRIST)
         cap(arm, sh, el, 0.046 * v['limb'])
-        cap(arm, el, wr - m(s, hb.FORE) * 0.02, 0.038 * v['limb'])
+        if FEMALE:                                     # soft forearm: full below the elbow, easing to a slim wrist
+            end = wr - m(s, hb.FORE) * 0.02
+            pts = [el.lerp(end, i / 12) for i in range(13)]
+            for i, p_ in enumerate(pts):
+                t = i / 12
+                ball(arm, p_, (0.044 - 0.013 * t * t * (3 - 2 * t) + 0.003 * math.sin(math.pi * min(1, t * 2.2))) * v['limb'])
+        else:
+            cap(arm, el, wr - m(s, hb.FORE) * 0.02, 0.038 * v['limb'])
         h, k, a = m(s, hb.HIP), m(s, hb.KNEE), m(s, hb.ANKLE_J)
         if not FEMALE:
             leg = meta('BodyLeg' + side, 0.008)

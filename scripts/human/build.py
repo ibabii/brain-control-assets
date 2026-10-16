@@ -36,10 +36,10 @@ COLOURWAYS = {
 # sy/narrow = height scale below the neck and shoulder narrowing (warp, after weights); chest = female chest key +
 # spring bones; clips 'basic' = RESET/rest/idle/hands only (other bodies share the full set by retarget).
 SPEC = dict(look='now', head=1.0, sex='male', build=0.0, sy=1.0, narrow=0.0, chest=False, clips='all', hair='short',
-            mock=False, keep_eye=False)
+            mock=False, keep_eye=False, neck=0.0)
 SPEC.update(json.loads(os.environ.get('HUMAN_SPEC', '{}')))
 LOOK_B = SPEC['look'] == 'B'
-IDENT = SPEC['sy'] == 1.0 and not SPEC['narrow'] and SPEC['head'] == 1.0   # no warp: the shipped Human, untouched
+IDENT = SPEC['sy'] == 1.0 and not SPEC['narrow'] and SPEC['head'] == 1.0 and not SPEC['neck']   # no warp: the shipped Human, untouched
 FEMALE = SPEC['sex'] == 'female'
 BUILD = SPEC['build']
 HAND_SCALE = 1.12                          # on top of the brain hand's own 1.2
@@ -1002,6 +1002,7 @@ def warp(p):
         y = p.y * (sy + (1 - sy) * _ss((p.y - 1.30) / 0.14))
     else:
         y = p.y * sy if p.y <= NECK.y else p.y + NECK.y * (sy - 1)
+    y += SPEC['neck'] * _ss((p.y - 1.40) / 0.07)        # longer neck above the collar line: the head rides up
     x = p.x
     if nar:
         t = _ss((p.y - 1.12) / 0.16)
