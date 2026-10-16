@@ -560,6 +560,33 @@ def ellipse(a, b, n=24, cx=0.0, cy=0.0):
     return [(cx + a * math.cos(2 * math.pi * i / n), cy + b * math.sin(2 * math.pi * i / n)) for i in range(n)]
 
 
+def soft_blush():
+    """Blush: white with a radial alpha fade (soft edge, ~0.7 at the centre), times the colour (the 'blush' paint
+    slot; default #EE9488 as the base colour factor)."""
+    import numpy as np
+    m = bpy.data.materials.get('CK2_Blush')
+    if m:
+        return m
+    n = 64
+    yy, xx = np.mgrid[0:n, 0:n] / (n - 1) * 2 - 1
+    r = np.sqrt(xx * xx + yy * yy)
+    a = 0.7 * np.clip(1 - r, 0, 1) ** 1.6
+    img = lib.image_from_array('BlushFade', np.dstack([np.ones_like(r)] * 3 + [a]))
+    m = lib.mat('Blush', '#EE9488', 0.9, image=img)
+    nt = m.node_tree
+    bsdf = next(x for x in nt.nodes if x.type == 'BSDF_PRINCIPLED')
+    tex = next(x for x in nt.nodes if x.type == 'TEX_IMAGE')
+    mix = nt.nodes.new('ShaderNodeMix')                      # texture x colour: glTF exports the colour as the factor
+    mix.data_type, mix.blend_type = 'RGBA', 'MULTIPLY'
+    mix.inputs['Factor'].default_value = 1.0
+    nt.links.new(tex.outputs['Color'], mix.inputs['A'])
+    mix.inputs['B'].default_value = bsdf.inputs['Base Color'].default_value[:]
+    nt.links.new(mix.outputs['Result'], bsdf.inputs['Base Color'])
+    nt.links.new(tex.outputs['Alpha'], bsdf.inputs['Alpha'])
+    m.surface_render_method = 'BLENDED'
+    return m
+
+
 def face(head_node, skin_obj):
     surf = Surface(skin_obj)
     white = lib.mat('EyeWhite', '#F8F4EA', 0.3)
@@ -612,9 +639,13 @@ def face(head_node, skin_obj):
         else:
             pts = on_curve(surf, [(s * 0.022, 1.676), (s * 0.05, 1.688), (s * 0.08, 1.678)], front, 0.006)
             lib.tube('Brow' + side, pts, 0.0095, lib.mat('Brow', BROW, 0.75), head_node, res=6, bevel_res=2)
-        if LOOK_B:                                                  # warm cheeks, always on
-            decal('Blush' + side, surf, ellipse(0.03, 0.018, 18, s * 0.086, 1.56), front,
-                  lib.mat('Blush', '#EE9488', 0.9), head_node, offset=0.0015)
+        if LOOK_B:                                                  # warm cheeks, always on, soft-edged
+            bl = decal('Blush' + side, surf, ellipse(0.036, 0.022, 18, s * 0.086, 1.56), front, soft_blush(),
+                       head_node, offset=0.0015)
+            uv = bl.data.uv_layers.new(name='UVMap')                # planar: the alpha fade is radial
+            for loop in bl.data.loops:
+                q = G(bl.matrix_world @ bl.data.vertices[loop.vertex_index].co)
+                uv.data[loop.index].uv = (0.5 + (q.x - s * 0.086) / 0.072, 0.5 + (q.y - 1.56) / 0.044)
         else:
             bl = decal('Blush' + side, surf, ellipse(0.026, 0.016, 18, s * 0.083, 1.567), front,
                        lib.mat('Blush', BLUSH, 0.7), head_node, offset=0.0015)

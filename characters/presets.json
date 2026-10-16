@@ -1,0 +1,21 @@
+{
+ "_note": "Cast/crowd colourways (interfaces.md Characters). Never the Human's yellow or the Lady's purple (see exclude). rib = top darkened 15%; blush 'auto' (derived from skin).",
+ "exclude": {"#D9A04C": "the Human's yellow (honey)", "purple": "the Lady's beret: no purple/violet/lilac tops or hats"},
+ "skin": ["#F1C6AC", "#E8B094", "#E2A184", "#C98B66", "#B9784F", "#8E5A3C", "#6E4330", "#4E2F22"],
+ "hair": ["#2A1E1A", "#3B2820", "#6A4636", "#8A5A3A", "#C98B4F", "#D9B77A", "#9A9590"],
+ "eyes": ["#2E2624", "#4A3426", "#3D5560"],
+ "top": ["#E8765E", "#7FB3D5", "#9BC59D", "#C98778", "#BAC6B2", "#F1E4CF", "#5A7FA8", "#C9574A", "#6E8FC9", "#E2C9A0"],
+ "bottom": {"denim": "#4A6A8C", "dark_denim": "#2F4560", "graphite": "#454C48", "khaki": "#B8A57E", "olive": "#6E7550",
+            "teal": "#2D5C5B"},
+ "shoes": ["#F8F4EA", "#454C48", "#C98778", "#7FB3D5"],
+ "crowd": [
+  {"skin": "#E2A184", "hair": "#3B2820", "top": "#7FB3D5", "bottom": "#4A6A8C"},
+  {"skin": "#6E4330", "hair": "#2A1E1A", "top": "#E8765E", "bottom": "#454C48"},
+  {"skin": "#F1C6AC", "hair": "#C98B4F", "top": "#9BC59D", "bottom": "#B8A57E"},
+  {"skin": "#B9784F", "hair": "#2A1E1A", "top": "#F1E4CF", "bottom": "#2F4560"},
+  {"skin": "#8E5A3C", "hair": "#3B2820", "top": "#C98778", "bottom": "#6E7550"},
+  {"skin": "#E8B094", "hair": "#D9B77A", "top": "#5A7FA8", "bottom": "#454C48"},
+  {"skin": "#4E2F22", "hair": "#2A1E1A", "top": "#BAC6B2", "bottom": "#4A6A8C"},
+  {"skin": "#C98B66", "hair": "#9A9590", "top": "#C9574A", "bottom": "#B8A57E"}
+ ]
+}

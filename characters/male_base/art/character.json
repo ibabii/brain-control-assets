@@ -23,7 +23,7 @@
   "skin": "#F2A99A",
   "hair": "#6A4636",
   "eyes": "#2E2624",
-  "blush": "#EE9488",
+  "blush": "auto",
   "rib": "#C58E3F",
   "top": "#D9A04C",
   "bottom": "#2D5C5B",

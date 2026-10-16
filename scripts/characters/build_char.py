@@ -557,7 +557,7 @@ def export_all(rig, head, hair, regions):
 
 
 PAINT = {'CK2_Shirt' + SHIRT[0][1:]: 'top', 'CK2_Rib': 'rib', 'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush'}
-COLORS = {'skin': hb.SKIN, 'hair': hb.HAIR, 'eyes': '#2E2624', 'blush': '#EE9488'}
+COLORS = {'skin': hb.SKIN, 'hair': hb.HAIR, 'eyes': '#2E2624', 'blush': 'auto'}
 for _m, _slot in (('Top', 'top'), ('Pants', 'bottom'), ('PantCuff', 'bottom'), ('Shoe', 'shoes')):
     _key = {'Top': 'top', 'Pants': 'pants', 'PantCuff': 'pants', 'Shoe': 'shoe'}[_m]
     PAINT['CK2_' + _m + hb.COLOURWAYS['A'][_key][1:]] = _slot

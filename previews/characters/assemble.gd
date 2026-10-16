@@ -50,6 +50,8 @@ static func build(base: String, over: Dictionary = {}) -> Node3D:
 	shapes.merge(over.get('shapes', {}), true)
 	var colors: Dictionary = cj.get('colors', {}).duplicate()
 	colors.merge(over.get('colors', {}), true)
+	if colors.get('blush', 'auto') == 'auto':
+		colors.blush = auto_blush(Color(colors.skin)).to_html(false)
 	for m: MeshInstance3D in ch.find_children('*', 'MeshInstance3D', true, false):
 		for s in shapes:
 			var i := m.find_blend_shape_by_name(s)
@@ -64,6 +66,12 @@ static func build(base: String, over: Dictionary = {}) -> Node3D:
 					else Color(colors[slot[0]])
 				m.set_surface_override_material(i, d)
 	return ch
+
+
+## Blush from the skin (contract): rose on light skin, deeper berry on dark, 60% of the way from the skin.
+static func auto_blush(skin: Color) -> Color:
+	var t := clampf((skin.get_luminance() - 0.3) / 0.45, 0.0, 1.0)
+	return skin.lerp(Color('#8E2E4A').lerp(Color('#F08A8A'), t), 0.6)
 
 
 static func _xf(n: Node3D, root: Node3D) -> Transform3D:
