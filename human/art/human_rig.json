@@ -1422,6 +1422,52 @@
    },
    "length": 1.333
   },
+  "brace": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.79,
+     0.02
+    ],
+    "pitch": -4.0,
+    "yaw": 0.0
+   },
+   "length": 0.533
+  },
   "brush_loop": {
    "layer": "upper",
    "bones": [

@@ -341,8 +341,24 @@ def step():
             (30, k(-0.3, -0.3, -0.3))]
 
 
+def brace():
+    """Braces for an impact ahead: hands up and forward, palms out, elbows soft, knees giving a little. Holds the end
+    pose (a target pose for the active ragdoll, M2)."""
+    def palm_out(s):
+        return lib.rot((90, 0, 0)) @ palm_down(s)
+
+    def k(dip, spine, head, arm, hands=None):
+        return {'hips': ((0, 0.83 - dip, 0.02 * dip / 0.04), (-4 * dip / 0.04, 0, 0)), 'ik': stand_feet(),
+                'world': merge(FLAT, hands or {}), 'rot': merge(arm, {'Spine': (spine, 0, 0), 'Head': (head, 0, 0)})}
+    out = {'LeftHand': palm_out(-1), 'RightHand': palm_out(1)}
+    return [(0, k(0, 0, 0, arms(3, 6, 3, 6, 8))),
+            (4, k(0.03, -6, 6, arms(55, 20, 55, 20, 40))),
+            (8, k(0.04, -10, 10, arms(78, 16, 78, 16, 25), out)),
+            (16, k(0.04, -10, 10, arms(78, 16, 78, 16, 25), out))]
+
+
 FULL_EXTRA = {'stumble': stumble, 'climb_out_tub': climb_out_tub, 'walk_loop': walk_loop, 'turn_L': turn_L,
-              'turn_R': turn_R, 'step': step, 'sit_floor': sit_floor}
+              'turn_R': turn_R, 'step': step, 'sit_floor': sit_floor, 'brace': brace}
 UPPER = {'brush_loop': (brush_loop, 1)}
 LOOPS = ['brush_loop', 'walk_loop']
 
