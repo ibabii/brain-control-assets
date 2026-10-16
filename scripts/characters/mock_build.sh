@@ -4,8 +4,8 @@
 # imported with human/art/human_import.gd). Usage: mock_build.sh [id ...]  (default: all). Never touches human/art.
 cd "${0:A:h}/../.."
 B=/Applications/Blender.app/Contents/MacOS/Blender
-F='"look":"B","sex":"female","head":1.1,"sy":0.95,"narrow":0.02,"chest":true,"hair":"bun","clips":"basic","mock":true'
-M='"look":"B","head":1.13,"mock":true'
+F='"look":"B","sex":"female","head":1.2,"sy":0.95,"narrow":0.03,"chest":true,"hair":"bun","clips":"basic","mock":true'
+M='"look":"B","head":1.25,"sy":0.975,"keep_eye":true,"mock":true'
 typeset -A SPECS
 SPECS=(
   bernard_now '{"mock":true}'

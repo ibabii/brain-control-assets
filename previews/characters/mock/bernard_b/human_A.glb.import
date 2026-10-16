@@ -4,12 +4,11 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://7ccyc8k6rk7u"
-path="res://.godot/imported/human_A.glb-78218b30ee9273613523910f09e5a3b6.scn"
+valid=false
 
 [deps]
 
 source_file="res://previews/characters/mock/bernard_b/human_A.glb"
-dest_files=["res://.godot/imported/human_A.glb-78218b30ee9273613523910f09e5a3b6.scn"]
 
 [params]
 
