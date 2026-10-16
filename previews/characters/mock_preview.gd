@@ -327,7 +327,7 @@ func _face(h: Node3D, base: String, name: String) -> void:
 	var e: Dictionary = pj.expressions[name]
 	var f := func(n: String) -> Node3D: return h.find_child(n, true, false) as Node3D
 	var show: Array = e.get('show', [])
-	var mouths := ['Smile', 'Open', 'O', 'Flat', 'Grimace', 'Wobble']
+	var mouths: Array = pj.get('mouths', ['Smile', 'Open', 'O', 'Flat', 'Grimace', 'Wobble'])
 	var mouth := 'Smile'
 	for m in show:
 		if m in mouths:
@@ -335,7 +335,7 @@ func _face(h: Node3D, base: String, name: String) -> void:
 	for m in mouths:
 		if f.call(m):
 			f.call(m).visible = m == mouth
-	for n in ['LidL', 'LidR', 'LidHalfL', 'LidHalfR']:
+	for n in ['LidL', 'LidR', 'LidHalfL', 'LidHalfR', 'ShutL', 'ShutR', 'BlushHotL', 'BlushHotR']:
 		if f.call(n):
 			f.call(n).visible = n in show
 	for n in show:

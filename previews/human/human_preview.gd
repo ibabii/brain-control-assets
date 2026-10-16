@@ -7,7 +7,9 @@ extends Node3D
 const MODELS := {'A': 'res://previews/human/human_A.glb', 'B': 'res://previews/human/human_B.glb',
 	'C': 'res://previews/human/human_C.glb'}
 ## Expressions come from human/art/human_rig.json "expressions" (the contract; schema in scripts/human/build.py).
-var EXPR: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://human/art/human_rig.json')).expressions
+var RIG: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://human/art/human_rig.json'))
+var EXPR: Dictionary = RIG.expressions
+var MOUTHS: Array = RIG.get('mouths', ['Smile', 'Open', 'O', 'Flat', 'Grimace', 'Wobble'])
 var HIDDEN: Array = JSON.parse_string(FileAccess.get_file_as_string('res://human/art/human_rig.json')).hidden
 
 var camera: Camera3D
@@ -60,17 +62,21 @@ func _expression(h: Node3D, name: String) -> void:
 	var e: Dictionary = EXPR[name]
 	for n in HIDDEN:
 		_find(h, n).visible = false
+	for n in ['LidL', 'LidR']:                     # the game shows lids only when an expression (or a blink) does
+		_find(h, n).visible = false
 	_find(h, 'Smile').visible = true
 	for n in e.show:
 		_find(h, n).visible = true
-		if n in ['Open', 'Grimace', 'O', 'Wobble', 'Flat']:
+		if n in MOUTHS and n != 'Smile':
 			_find(h, 'Smile').visible = false
 	for n in e.get('hide', []):
-		_find(h, n).visible = false
+		var x := h.find_child(n, true, false) as Node3D   # e.g. LashR: female heads only
+		if x:
+			x.visible = false
 	for side in ['L', 'R']:
 		var s := -1.0 if side == 'L' else 1.0
 		if e.has('lid'):
-			_find(h, 'Lid' + side).rotation_degrees.x = e.lid
+			_find(h, 'Lid' + side).rotation_degrees.x = e.lid[0 if side == 'L' else 1] if e.lid is Array else e.lid
 		var brow := _find(h, 'Brow' + side)
 		brow.position.y += e.brow[0]
 		brow.rotation_degrees.z = -s * e.brow[1]

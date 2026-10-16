@@ -766,18 +766,26 @@
   }
  ],
  "hidden": [
+  "BlushHotL",
+  "BlushHotR",
   "BlushL",
   "BlushR",
   "Flat",
   "Grimace",
   "GrimaceLine",
+  "Grin",
   "LidHalfL",
   "LidHalfR",
   "O",
   "Open",
+  "OSmall",
+  "ShutL",
+  "ShutR",
+  "Shy",
   "Teeth",
   "Tongue",
-  "Wobble"
+  "Wobble",
+  "Yell"
  ],
  "expressions": {
   "rest": {
@@ -799,9 +807,9 @@
    ],
    "brow": [
     0.0,
-    18.0
+    26.0
    ],
-   "pupil": 0.62,
+   "pupil": 0.55,
    "look": null
   },
   "dazed": {
@@ -842,83 +850,128 @@
    "look": null
   },
   "happy": {
-   "lid": 30.0,
-   "brow": [
-    0.01,
-    -8.0
-   ],
-   "look": [
-    [
-     0.0,
-     4.0
-    ],
-    [
-     0.0,
-     4.0
-    ]
-   ],
-   "pupil": 1.08,
    "show": [
-    "Open",
+    "ShutL",
+    "ShutR",
+    "Grin",
     "Tongue"
-   ]
+   ],
+   "hide": [
+    "WhiteL",
+    "LookL",
+    "LashL",
+    "WhiteR",
+    "LookR",
+    "LashR"
+   ],
+   "brow": [
+    0.006,
+    -12.0
+   ],
+   "pupil": 1.0,
+   "look": null
   },
   "panic": {
-   "lid": 75.0,
-   "brow": [
-    0.009,
-    18.0
-   ],
-   "look": null,
-   "pupil": 0.74,
    "show": [
-    "Open"
+    "Yell"
    ],
-   "mouth": 1.35
+   "brow": [
+    0.004,
+    34.0
+   ],
+   "pupil": 0.42,
+   "look": null
   },
   "sleepy": {
-   "lid": -22.0,
-   "brow": [
-    -0.006,
-    -4.0
+   "show": [
+    "LidHalfL",
+    "LidHalfR",
+    "Flat"
    ],
-   "look": [
-    [
-     0.0,
-     -6.0
-    ],
-    [
-     0.0,
-     -6.0
-    ]
+   "hide": [
+    "LidL",
+    "LidR"
+   ],
+   "brow": [
+    -0.003,
+    -8.0
    ],
    "pupil": 1.0,
-   "show": []
+   "look": null
   },
   "embarrassed": {
-   "lid": 20.0,
-   "brow": [
-    0.008,
-    20.0
+   "show": [
+    "BlushHotL",
+    "BlushHotR",
+    "Shy"
    ],
-   "look": [
-    [
-     -16.0,
-     -8.0
-    ],
-    [
-     -16.0,
-     -8.0
-    ]
+   "brow": [
+    0.004,
+    26.0
    ],
    "pupil": 1.0,
-   "show": [
-    "Grimace",
-    "GrimaceLine",
-    "BlushL",
-    "BlushR"
+   "look": [
+    [
+     -4.0,
+     -7.0
+    ],
+    [
+     -4.0,
+     -7.0
+    ]
    ]
+  },
+  "wink": {
+   "show": [
+    "ShutR"
+   ],
+   "hide": [
+    "WhiteR",
+    "LookR",
+    "LashR"
+   ],
+   "brow": [
+    0.0,
+    -8.0
+   ],
+   "pupil": 1.0,
+   "look": null
+  },
+  "surprised": {
+   "show": [
+    "OSmall"
+   ],
+   "brow": [
+    0.01,
+    -14.0
+   ],
+   "pupil": 1.0,
+   "look": null
   }
+ },
+ "mouths": [
+  "Smile",
+  "Open",
+  "O",
+  "Flat",
+  "Grimace",
+  "Wobble",
+  "Grin",
+  "Yell",
+  "OSmall",
+  "Shy"
+ ],
+ "shut": {
+  "L": [
+   "WhiteL",
+   "LookL",
+   "LashL"
+  ],
+  "R": [
+   "WhiteR",
+   "LookR",
+   "LashR"
+  ]
  },
  "loops": [
   "idle",

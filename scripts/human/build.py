@@ -563,19 +563,19 @@ def ellipse(a, b, n=24, cx=0.0, cy=0.0):
     return [(cx + a * math.cos(2 * math.pi * i / n), cy + b * math.sin(2 * math.pi * i / n)) for i in range(n)]
 
 
-def soft_blush():
-    """Blush: white with a radial alpha fade (soft edge, ~0.7 at the centre), times the colour (the 'blush' paint
-    slot; default #EE9488 as the base colour factor)."""
+def soft_blush(name='Blush', peak=0.7, fall=1.6):
+    """Blush: white with a radial alpha fade (soft edge, `peak` at the centre), times the colour (the 'blush' paint
+    slot; default #EE9488 as the base colour factor). BlushHot: denser, for embarrassed."""
     import numpy as np
-    m = bpy.data.materials.get('CK2_Blush')
+    m = bpy.data.materials.get('CK2_' + name)
     if m:
         return m
     n = 64
     yy, xx = np.mgrid[0:n, 0:n] / (n - 1) * 2 - 1
     r = np.sqrt(xx * xx + yy * yy)
-    a = 0.7 * np.clip(1 - r, 0, 1) ** 1.6
-    img = lib.image_from_array('BlushFade', np.dstack([np.ones_like(r)] * 3 + [a]))
-    m = lib.mat('Blush', '#EE9488', 0.9, image=img)
+    a = peak * np.clip(1 - r, 0, 1) ** fall
+    img = lib.image_from_array(name + 'Fade', np.dstack([np.ones_like(r)] * 3 + [a]))
+    m = lib.mat(name, '#EE9488', 0.9, image=img)
     nt = m.node_tree
     bsdf = next(x for x in nt.nodes if x.type == 'BSDF_PRINCIPLED')
     tex = next(x for x in nt.nodes if x.type == 'TEX_IMAGE')
@@ -666,6 +666,29 @@ def face(head_node, skin_obj):
                 tip = c + Vector((s * l * math.cos(a), l * math.sin(a), 0.002))
                 chain(mb, [c, tip], 0.003, 0.0016, step=0.0012)
             adopt(solid('Lash' + side, [mb], 0.0009, 700, lib.mat('Lash', '#3A2420', 0.75)), head_node, e)
+        # Shut: the closed eye as a dark upturned arc on the skin (wink, blink, happy squint); shown with the eye
+        # parts (White/Look/Lash) hidden. The female's carries two lash flicks at the outer end.
+        hw = semi[0] * 0.8
+        arc = [(e.x + hw * (2 * i / 10 - 1), EYE_Y - 0.010 + 0.017 * (1 - (2 * i / 10 - 1) ** 2)) for i in range(11)]
+        pts = on_curve(surf, arc, front, 0.002)
+        if FEMALE:
+            mb = meta('Shut' + side, 0.002)
+            chain(mb, pts, 0.0034, 0.0034, step=0.0015)
+            c = pts[-1] if s > 0 else pts[0]
+            for a_, l in ((0.35, 0.011), (0.85, 0.008)):
+                chain(mb, [c, c + Vector((s * l * math.cos(a_), l * math.sin(a_), -0.002))], 0.0026, 0.0014, step=0.0012)
+            sh_ = adopt(solid('Shut' + side, [mb], 0.0009, 900, ink), head_node, e)
+        else:
+            sh_ = lib.tube('Shut' + side, pts, 0.0042, ink, head_node, res=8, bevel_res=2)
+        sh_['hidden'] = True
+        # BlushHot: a second, bigger blush layer over the warm cheeks (embarrassed)
+        bh = decal('BlushHot' + side, surf, ellipse(0.05, 0.03, 18, s * 0.084, 1.556), front, soft_blush('BlushHot', 0.95, 0.9), head_node,
+                   offset=0.0021)
+        uv = bh.data.uv_layers.new(name='UVMap')
+        for loop in bh.data.loops:
+            q = G(bh.matrix_world @ bh.data.vertices[loop.vertex_index].co)
+            uv.data[loop.index].uv = (0.5 + (q.x - s * 0.084) / 0.1, 0.5 + (q.y - 1.556) / 0.06)
+        bh['hidden'] = True
     mouth = lib.empty('Mouth', (0, 1.522, -0.11), head_node)
     smile = on_curve(surf, [(-0.036, 1.531), (-0.018, 1.521), (0, 1.518), (0.018, 1.521), (0.036, 1.531)], front, 0.002)
     lib.tube('Smile', smile, 0.0042, ink, mouth, res=8, bevel_res=2)
@@ -695,25 +718,43 @@ def face(head_node, skin_obj):
     flat = on_curve(surf, [(-0.024, 1.523), (0, 1.522), (0.024, 1.523)], front, 0.0024)
     fl = lib.tube('Flat', flat, 0.0038, ink, mouth, res=6, bevel_res=2)     # neutral, no smile
     fl['hidden'] = True
+    # Phase 2 faces (art-director pass): wide grin (happy), stretched panic mouth with the corners down, small "o"
+    # (surprised), small tight wobbly smile (embarrassed).
+    grin = [(0.046 * math.cos(a), 1.531 - 0.032 * math.sin(a)) for a in [math.pi * i / 18 for i in range(19)]]
+    grin += [(x, 1.531 + 0.005 * (1 - (x / 0.046) ** 2)) for x in [-0.046 + 0.092 * i / 10 for i in range(1, 10)]]
+    decal('Grin', surf, grin, front, ink, mouth, offset=0.0016)['hidden'] = True
+    yell = [(x, 1.528 - 0.016 * (x / 0.044) ** 2) for x in [0.044 - 0.088 * i / 12 for i in range(13)]]
+    yell += [(x, 1.506 - 0.007 * (1 - (x / 0.044) ** 2) - 0.010 * (x / 0.044) ** 2) for x in
+             [-0.044 + 0.088 * i / 12 for i in range(1, 12)]]
+    decal('Yell', surf, yell, front, ink, mouth, offset=0.0016)['hidden'] = True
+    decal('OSmall', surf, ellipse(0.009, 0.0115, 16, 0.0, 1.517), front, ink, mouth, offset=0.0016)['hidden'] = True
+    shy = on_curve(surf, [(-0.022 + 0.044 * i / 8, 1.5225 - 0.0035 * (1 - ((i - 4) / 4) ** 2)
+                           + 0.0016 * math.sin(i * math.pi / 2)) for i in range(9)], front, 0.0024)
+    lib.tube('Shy', shy, 0.0032, ink, mouth, res=6, bevel_res=2)['hidden'] = True
 
 
 # Expressions (game contract, json "expressions"): transforms and visibility only, applied over the rest face.
 # show/hide: parts to toggle (Smile hides when another mouth shows); brow: BrowL/R (raise m, tilt deg about Z,
 # + = inner end up; a raise past ~2 mm tucks them under the fringe); pupil: Pupil/Glint X/Y scale; look: per-eye LookL/R gaze [[yaw, pitch], [yaw, pitch]] or null
-# (game's gaze); lid: LidL/R X rotation (deg, rest 45, + = open, -100 = shut), one value or [L, R]; mouth: Open/Tongue scale.
+# (game's gaze); lid: LidL/R X rotation (deg, rest 45, + = open), one value or [L, R]; mouth: Open/Tongue scale.
+# A shut eye (wink, blink, happy): show Shut<side>, hide that side's eye parts. Mouth parts: one shows at a time.
+SHUT = {k: ['White' + k, 'Look' + k, 'Lash' + k] for k in 'LR'}
+MOUTHS = ['Smile', 'Open', 'O', 'Flat', 'Grimace', 'Wobble', 'Grin', 'Yell', 'OSmall', 'Shy']
 EXPRESSIONS = {
     'rest': {'show': [], 'brow': [0.0, 0.0], 'pupil': 1.0, 'look': None},
-    'alarm': {'show': ['O'], 'hide': ['LidL', 'LidR'], 'brow': [0.0, 18.0], 'pupil': 0.62, 'look': None},
+    'alarm': {'show': ['O'], 'hide': ['LidL', 'LidR'], 'brow': [0.0, 26.0], 'pupil': 0.55, 'look': None},
     'dazed': {'show': ['LidHalfL', 'LidHalfR', 'Wobble'], 'hide': ['LidL', 'LidR'], 'brow': [0.002, 8.0],
               'pupil': 1.0, 'look': [[9.0, -4.0], [-9.0, 3.0]]},
     'neutral': {'show': ['Flat'], 'brow': [0.0, 0.0], 'pupil': 1.0, 'look': None},
-    'happy': {'lid': 30.0, 'brow': [0.010, -8.0], 'look': [[0.0, 4.0]] * 2, 'pupil': 1.08, 'show': ['Open', 'Tongue']},
-    'panic': {'lid': 75.0, 'brow': [0.009, 18.0], 'look': None, 'pupil': 0.74, 'show': ['Open'], 'mouth': 1.35},
-    'sleepy': {'lid': -22.0, 'brow': [-0.006, -4.0], 'look': [[0.0, -6.0]] * 2, 'pupil': 1.0, 'show': []},
-    'embarrassed': {'lid': 20.0, 'brow': [0.008, 20.0], 'look': [[-16.0, -8.0]] * 2, 'pupil': 1.0,
-                    'show': ['Grimace', 'GrimaceLine', 'BlushL', 'BlushR']},
-    'wink': {'show': ['LidR'], 'lid': [45.0, -100.0], 'brow': [0.0, -6.0], 'pupil': 1.0, 'look': None},   # -100 = shut
-    'surprised': {'show': ['O'], 'brow': [0.002, 6.0], 'pupil': 0.85, 'look': None},
+    'happy': {'show': ['ShutL', 'ShutR', 'Grin', 'Tongue'], 'hide': SHUT['L'] + SHUT['R'], 'brow': [0.006, -12.0],
+              'pupil': 1.0, 'look': None},
+    'panic': {'show': ['Yell'], 'brow': [0.004, 34.0], 'pupil': 0.42, 'look': None},
+    'sleepy': {'show': ['LidHalfL', 'LidHalfR', 'Flat'], 'hide': ['LidL', 'LidR'], 'brow': [-0.003, -8.0],
+               'pupil': 1.0, 'look': None},
+    'embarrassed': {'show': ['BlushHotL', 'BlushHotR', 'Shy'], 'brow': [0.004, 26.0], 'pupil': 1.0,
+                    'look': [[-4.0, -7.0]] * 2},
+    'wink': {'show': ['ShutR'], 'hide': SHUT['R'], 'brow': [0.0, -8.0], 'pupil': 1.0, 'look': None},
+    'surprised': {'show': ['OSmall'], 'brow': [0.010, -14.0], 'pupil': 1.0, 'look': None},
 }
 
 
@@ -1007,7 +1048,7 @@ def rig_json(path, hidden):
     import json
     table = rig_table()
     s = lambda v: [round(x, 5) for x in v]
-    data = {'markers': spec_markers(), 'ragdoll': spec_ragdoll(), 'hidden': hidden, 'expressions': EXPRESSIONS, 'loops': R.LOOPS,
+    data = {'markers': spec_markers(), 'ragdoll': spec_ragdoll(), 'hidden': hidden, 'expressions': EXPRESSIONS, 'mouths': MOUTHS, 'shut': SHUT, 'loops': R.LOOPS,
             'clips': R.CLIPS,
             'first_person': ['HandL', 'HandR', 'NailsL', 'NailsR', 'CuffL', 'CuffR'],   # meshes the player's own camera sees
             'look': {'neck': 'Neck', 'head': 'Head', 'share': [0.35, 0.65], 'yaw': 70, 'pitch': [-40, 30],
@@ -1027,7 +1068,7 @@ def rig_json(path, hidden):
 
 def char_json(path, cw):
     """character.json (contract: interfaces.md "Characters"): colour slots for the shared materials, the chest."""
-    paint = {'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush',
+    paint = {'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush', 'CK2_BlushHot': 'blush',
              'CK2_Top' + cw['top'][1:]: 'top', 'CK2_Pants' + cw['pants'][1:]: 'bottom',
              'CK2_PantCuff' + cw['pants'][1:]: 'bottom', 'CK2_Shoe' + cw['shoe'][1:]: 'shoes'}
     colors = {'skin': SKIN, 'hair': HAIR, 'eyes': '#2E2624', 'blush': '#EE9488' if LOOK_B else BLUSH,
