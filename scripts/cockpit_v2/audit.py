@@ -25,7 +25,7 @@ ALLOW = [('ConsoleSlab', 'ConsoleRim'), ('ConsoleSlab', 'ConsoleSkirt'), ('Conso
          ('ConsoleSlab', 'Base'), ('SlotInset', 'Base'), ('SlotInset', 'Housing'), ('ConsoleSlab', 'Plate'), ('SlotInset', 'Plate'),
          ('ConsoleSlab', 'Screw'), ('ConsoleRim', 'Screw'), ('DeskTop', 'Deck'), ('DeskTop', 'Tray'),
          ('DeskTop', 'Console'), ('Tray', 'Console'), ('DeskTop', 'BrainFolds'), ('Deck', 'BrainFolds'),
-         ('GaugePanel', 'Screw'), ('GaugePanel', 'Bezel'), ('Bezel', 'Face'), ('GaugePanel', 'Paper'),
+         ('GaugePanel', 'Screw'), ('GaugePanel', 'Pilot'), ('Pilot', 'Pilot'), ('GaugePanel', 'PWR'), ('GaugePanel', 'THINK'), ('GaugePanel', 'OOPS'), ('Pilot', 'PWR'), ('Pilot', 'THINK'), ('Pilot', 'OOPS'), ('MentalBandwidth', 'MentalBandwidth'), ('MentalBandwidth', 'BandwidthFill'), ('GaugePanel', 'Bezel'), ('Bezel', 'Face'), ('GaugePanel', 'Paper'),
          ('Frame', 'Screw'), ('Frame', 'Glass'), ('Back', 'Glass'), ('Shelf', 'Frame'), ('Shelf', 'Back'),
          ('Shelf', 'BrainFolds'), ('Deck', 'GaugePanel'), ('Deck', 'Console'),
          ('IntercomBody', 'IntercomFace')]

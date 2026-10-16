@@ -54,6 +54,11 @@ LABEL_TILT = 16.7                                # leans back onto the bezel fro
 LABEL_C = (0.0, -0.0754, 0.0113)                 # paper centre in dial space (bottom edge y -0.108, z 0.0015)
 LABEL_SHORT = ['COORD', 'CONF', 'BAL', 'FOCUS', 'EMBAR']
 GAUGES = ['Coordination', 'Confidence', 'Balance', 'Focus', 'Embarrassment']
+# Pilot lights (art_direction.md, user 2026-10-15): 18 mm warm-white domes stacked on the panel's left end, between
+# TaskNote and COORD. Gameplay lights one by overriding its material (lit colour, emission ~1.2); labels in the tscn.
+PILOT_X = -0.604
+PILOTS = [('PWR', 0.035), ('THINK', 0.010), ('OOPS', -0.015)]
+PILOT_LIT, PILOT_UNLIT = '#F8F4EA', '#8F887E'
 
 C = {
     'housing': '#3E5250', 'housing_dark': '#2E3B3A', 'side_frame': '#B4B09D', 'panel': '#4A5755',
@@ -199,6 +204,13 @@ def gauges(root):
         if i < 4:
             screw(group, DIALS, (x + 0.12, 0.045, 0.0), 0.007, M('copper', 0.35, 0.6))
             screw(group, DIALS, (x + 0.12, -0.045, 0.0), 0.007, M('copper', 0.35, 0.6))
+    pilots = lib.empty('PilotLights', DIALS.o, group)
+    for name, y in PILOTS:
+        f = DIALS.child((PILOT_X, y, 0.0))
+        lib.slab('Pilot' + name + 'Ring', circle(0.0125, 24), 0.003, 0.001, M('rubber', 0.85), f.child((0, 0, -0.001)),
+                 group, holes=[list(reversed(circle(0.0085, 24)))])
+        lib.sphere(name, 0.009, lib.mat('Pilot' + name, PILOT_UNLIT, 0.3), f.child((0, 0, 0.001)), pilots,
+                   scale=(1, 1, 0.9))
     return group
 
 

@@ -269,13 +269,13 @@ def trinkets(parent, shelf_top, books_top):
     props.radio('Radio', base + up, w * 0.9, g)
     base, w, h = on_ground((768, 66, 830, 146), s, 0.9)
     # Shelf items show only a sliver above the 16:9 frame (composition #7): the alien stands on the right monitor, beside the cat TV.
-    props.alien('Alien', monitor_top('RightPanel', 0.155), h * 0.8, g)
+    props.alien('Alien', monitor_top('RightPanel', 0.175), h * 0.8, g)
     base, w, h = on_ground((1080, 86, 1116, 146), s)
     props.valve('Valve', base + up, h, g)
     _, w, h = on_ground((854, 47, 1082, 142), s)
     props.meter_box('MentalBandwidth', monitor_top('LeftPanel', 0.02), w * 0.75, g, 32)
     _, w, h = on_ground((1107, -10, 1316, 148), s + 0.02)
-    props.cat_tv('CatTV', monitor_top('RightPanel', -0.03), w * 0.6, g, -32)
+    props.cat_tv('CatTV', monitor_top('RightPanel', -0.005), w * 0.6, g, -32)     # 2.5 cm right: the SmallSteps clock reads whole
     c, w, h = _fit((285, 18, 405, 188), min(1.45, wall_depth(345, 100, 0.22)), shrink=0.88)
     props.banana('Banana', books_top, h * 0.8, g, 20)
     print('BANANA', books_top, h)
@@ -323,11 +323,7 @@ def desk_props(parent):
     for i, (bbox, seed, shift) in enumerate([((100, 580, 197, 676), 1, (0, 0, 0)), ((1372, 715, 1480, 830), 2, (0.19, 0, 0.22))]):
         base, w, h = on_ground(bbox, y, 0.97)
         props.crumple('Crumple%d' % i, seat(base + Vector(shift)), w / 2, g, seed)
-    base, w, h = on_ground((1352, 795, 1486, 925), y, 0.97)
-    lean = math.radians(62)
-    f = props.face_cam(seat(base + Vector((-0.05, 0, 0.05)), h * 0.95 / 2 * math.cos(lean) + 0.012), 12).child(
-        (0, 0, 0), (-62, 0, 10))
-    props.folded_note('ProgressPaper', f, w * 0.95, h * 0.95, 'PROGRESS\n>\nPERFECTION', g, 7)
+    # PROGRESS > PERFECTION cut 2026-10-15 (user: repeated self-help joke).
     return g
 
 

@@ -216,6 +216,16 @@ def set_parent(o, parent):
         o.matrix_world = mw
 
 
+def oriented(name, bm, material, frame, parent=None, smooth=True):
+    """bm vertices are in frame-local Godot coords; the node keeps frame's rotation (for parts gameplay scales or
+    rotates along their own axes)."""
+    o = from_bmesh(name, bm, material, None, (0, 0, 0), smooth)
+    c = Matrix(((1, 0, 0), (0, 0, -1), (0, 1, 0)))           # Godot -> Blender axes
+    o.matrix_world = Matrix.Translation(B(frame.o)) @ (c @ frame.m @ c.inverted()).to_4x4()
+    set_parent(o, parent)
+    return o
+
+
 def from_bmesh(name, bm, material, parent=None, pivot=None, smooth=True, auto_smooth=None):
     """bm vertices are Godot world coords. Node is placed at pivot (default: bounds centre)."""
     if pivot is None:

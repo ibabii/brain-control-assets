@@ -77,8 +77,38 @@ font = ExtResource("hand")
 font_size = 150
 text = "EMBAR"
 
+[node name="PilotLabels" type="Node3D" parent="."]
+position = Vector3(0, 0.93, -0.59)
+
+[node name="PWR" type="Label3D" parent="PilotLabels"]
+position = Vector3(-0.5905, 0.035, 0.0005)
+pixel_size = 0.00012
+modulate = Color(0.93, 0.89, 0.8, 1)
+outline_size = 0
+font_size = 32
+horizontal_alignment = 0
+text = "PWR"
+
+[node name="THINK" type="Label3D" parent="PilotLabels"]
+position = Vector3(-0.5905, 0.01, 0.0005)
+pixel_size = 0.00012
+modulate = Color(0.93, 0.89, 0.8, 1)
+outline_size = 0
+font_size = 32
+horizontal_alignment = 0
+text = "THINK"
+
+[node name="OOPS" type="Label3D" parent="PilotLabels"]
+position = Vector3(-0.5905, -0.015, 0.0005)
+pixel_size = 0.00012
+modulate = Color(0.93, 0.89, 0.8, 1)
+outline_size = 0
+font_size = 32
+horizontal_alignment = 0
+text = "OOPS"
+
 [node name="HandRest_L" type="Marker3D" parent="."]
-transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, -0.37, 0.945, 0.43)
+transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, -0.46, 0.945, 0.34)
 
 [node name="HandRest_R" type="Marker3D" parent="."]
 transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, 0.43, 0.945, 0.4)

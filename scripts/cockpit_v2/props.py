@@ -489,8 +489,15 @@ def meter_box(name, base, w, parent, yaw=0.0):
     c = ink.paper(int(w * 0.92 * PX), int(h * 0.82 * PX), '#E9E0CC', 50, grain=0.03)
     ink.text(c, 'MENTAL\nBANDWIDTH', (0.5, 0.68), 0.3, '#2B2220', weight=1)
     c.stroke([(0.08, 0.24), (0.92, 0.24)], c.h * 0.17, '#2B2E2D')
-    c.stroke([(0.1, 0.24), (0.22, 0.24)], c.h * 0.1, '#E2402F')
-    face_card(name + 'Face', w * 0.92, h * 0.82, c, f.child((0, h * 0.5, d / 2 + 0.0015)), parent, rough=0.55)
+    cw, ch = w * 0.92, h * 0.82
+    face = f.child((0, h * 0.5, d / 2 + 0.0015))
+    face_card(name + 'Face', cw, ch, c, face, parent, rough=0.55)
+    # Live fill (gameplay drives scale.x 0..1; origin at the empty end, local +X along the bar). Default ~15%.
+    length, bar = 0.8 * cw, 0.1 * ch
+    bm = rounded_box((length, bar, 0.0008), bar * 0.3, (length / 2, 0, 0.0004))
+    fill = lib.oriented('BandwidthFill', bm, M('BandwidthFill', '#E2402F', 0.5), face.child((-0.4 * cw, (0.24 - 0.5) * ch, 0.0)),
+                        parent)
+    fill.scale.x = 0.15
     for sx in (-1, 1):
         screw(name + 'Screw', f, (sx * w * 0.43, h * 0.85, d / 2 + 0.0012), parent, 0.004)
     obj(name + 'Led', uv_sphere(0.005, centre=(w * 0.44, h * 0.12, d / 2 + 0.002), seg=10, rings=6),

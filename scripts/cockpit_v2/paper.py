@@ -182,11 +182,6 @@ def notes(parent):
     tape('YouGotThisTape', f, (w * 0.42, h * 0.38, 0.0003), (0.05, 0.02), -50, g, 7)
     slot('YouGotThis', f, w, h, (0.08, 0.24, 0.92, 0.95), 'YOU\nGOT THIS\n(probably)', red, 0.2)
 
-    f, w, h, gap = wall_note('ItsFine', [(1405, 47), (1512, 27), (1525, 127), (1417, 142)], g)
-    sticky('ItsFine', f, w, h, YELLOW, g, 2, [(ink.cat, (0.5, 0.3), 0.36, brown)], corner=0.004)
-    pin('ItsFinePin', f, (-w * 0.38, h * 0.4, 0.0006), '#D4473A', g, gap)
-    slot('ItsFine', f, w, h, (0.08, 0.58, 0.92, 0.94), "IT'S FINE", brown, 0.22)
-
     f, w, h, gap = wall_note('Chaos', [(1542, 112), (1642, 80), (1652, 275), (1552, 295)], g)
     sticky('Chaos', f, w, h, PINK, g, 3, [(ink.bulb, (0.55, 0.17), 0.17, red)], curl=0.005)
     pin('ChaosPin', f, (0, h * 0.44, 0.0006), '#EAC04A', g, gap)
@@ -237,24 +232,7 @@ def notes(parent):
     pin('SmallStepsPin', f, (0, h * 0.36, 0.0003), '#F2EEE6', g, gap)
     slot('SmallSteps', f, w, h, (0.16, 0.32, 0.84, 0.78), 'SMALL\nSTEPS', INK['white'], 0.2)
 
-    # Console notes, taped down.
-    f, w, h = frame_from([(822, 714), (947, 697), (964, 764), (829, 782)], (hw.CONSOLE.at((0, 0.004, 0)),
-                                                                             hw.CONSOLE.dir((0, 1, 0))))
-    sticky('DoTheThing', f, w, h, YELLOW, g, 8, [(ink.heart, (0.8, 0.2), 0.16, '#D4473A')], curl=0.002)
-    tape('DoTheThingTape', f, (-w * 0.42, h * 0.3, 0.0003), (0.04, 0.016), 60, g, 3)
-    slot('DoTheThing', f, w, h, (0.06, 0.08, 0.94, 0.95), 'DO\nTHE THING\n(please)', brown, 0.22)
-
-    # Lies flat on the tray, right of the notebook.
-    f, w, h = frame_from([(978, 788), (1140, 792), (1154, 945), (985, 940)], (Vector((0, 0.8905, 0)), Vector((0, 1, 0))))
-    f.o += Vector((0, 0, 0.045))                       # clear of the console lip
-    c = ink.paper(*tex_size(w, h), PARCHMENT, 9, grain=0.05, vignette=0.12)
-    ink.stain(c, (0.72, 0.18), 0.14)
-    ink.heart(c, (0.8, 0.1), 0.06, '#D4473A')
-    sheet('TodoList', f, w, h, paper_mat('TodoList', c), g, curl=0.0, corner=0.003)
-    tape('TodoListTapeL', f, (-w * 0.45, -h * 0.42, 0.0003), (0.05, 0.02), 35, g, 4)
-    tape('TodoListTapeR', f, (w * 0.42, -h * 0.4, 0.0003), (0.05, 0.02), -30, g, 5)
-    slot('TodoList', f, w, h, (0.1, 0.08, 0.92, 0.95),
-         '1. MOP\n2. EXIST\n3. SNACK\n4. MAYBE TIDY?\n5. BE PROUD\n     (for real)', brown, 0.1, align='left')
+    # Cut 2026-10-15 (user): TodoList, ItsFine, DoTheThing (repeated jokes; art_direction.md notes audit).
 
     # Polaroid: white card, printed photo, caption slot.
     f, w, h, gap = wall_note('Polaroid', [(4, 10), (168, 6), (180, 152), (14, 164)], g)
