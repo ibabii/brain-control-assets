@@ -7,6 +7,8 @@
   "shoes": "sneakers_f"
  },
  "paint": {
+  "CK2_Print": "print",
+  "CK2_PrintInk": "print_ink",
   "CK2_ShirtE8765E": "top",
   "CK2_Rib": "rib",
   "CK2_Skin": "skin",
@@ -28,7 +30,9 @@
   "rib": "#C95F4A",
   "top": "#E8765E",
   "bottom": "#2D5C5B",
-  "shoes": "#F8F4EA"
+  "shoes": "#F8F4EA",
+  "print": "#F8F4EA",
+  "print_ink": "#4E2629"
  },
  "shapes": {
   "Build_Slim": 0.0,

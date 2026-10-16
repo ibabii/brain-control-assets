@@ -15,6 +15,7 @@ import sys
 
 import bpy
 from mathutils import Matrix, Vector
+from mathutils.bvhtree import BVHTree
 from mathutils.kdtree import KDTree
 
 BASE = os.environ.get('CHAR_BASE', 'male')
@@ -122,8 +123,40 @@ def tshirt(parent, rib):
     if FEMALE:
         o = union('Shirt', [o, tube('ShirtLoft', SHIRT_TORSO)], 0.008, mat, 2)
     shirt = adopt(o, parent, (0, 1.1, 0))
+    if FEMALE:
+        cat_print(shirt, parent)
     hb.band('ShirtCollar', hb.Frame((0, 1.405, 0.0)), 0.066, 0.062, 0.022, 0.12, rib, parent)
     return shirt
+
+
+PRINT = '#F8F4EA', '#4E2629'          # cat print + its ink (user: helps the chest read); paint slots print/print_ink
+
+
+def cat_print(shirt, parent):
+    """Cute cat face across the chest, spanning both sides (dense decals on the tee, so they stretch and bounce
+    with it): a cream head with pointy ears, ink eyes with glints, nose and a 'w' mouth."""
+    surf, fr = hb.Surface(shirt), hb.Frame((0, 0, 0))
+    cy, hw, hh = 1.205, 0.094, 0.066
+    head = []
+    for i in range(192):
+        t = 2 * math.pi * i / 192
+        r = 1.0
+        for ta in (math.radians(50), math.radians(130)):                  # ears: sharp bumps up and out
+            d = abs((t - ta + math.pi) % (2 * math.pi) - math.pi)
+            r += 0.6 * max(0.0, 1 - d / 0.3) ** 1.6
+        head.append((hw * r * math.cos(t), cy + hh * r * math.sin(t)))
+    paper, ink = lib.mat('Print', PRINT[0], 0.85), lib.mat('PrintInk', PRINT[1], 0.8)
+    hb.decal('ShirtPrint', surf, head, fr, paper, parent, offset=0.0036, rings=48)
+    feats = [hb.ellipse(0.012, 0.0155, 24, sx * 0.036, cy + 0.008) for sx in (-1, 1)]
+    feats.append([(0.0, cy - 0.022), (-0.011, cy - 0.011), (0.011, cy - 0.011)])                 # nose
+    xs = [-0.024 + 0.048 * i / 24 for i in range(25)]
+    top = [(x, cy - 0.028 - 0.009 * abs(math.sin(math.pi * (x + 0.024) / 0.024))) for x in xs]
+    feats.append(top + [(x, y - 0.006) for x, y in reversed(top)])     # 'w' mouth
+    for k, f in enumerate(feats):
+        hb.decal('ShirtPrintInk%d' % k, surf, f, fr, ink, parent, offset=0.0048, rings=4)
+    for sx in (-1, 1):                                                   # eye glints
+        hb.decal('ShirtPrintGlint%d' % (sx + 1), surf, hb.ellipse(0.0042, 0.0042, 12, sx * 0.036 + 0.004, cy + 0.0145),
+                 fr, paper, parent, offset=0.0058, rings=2)
 
 
 def body_weights(p):
@@ -574,7 +607,7 @@ def main():
     t.balance()
     trees['Shirt'] = t
     for o in meshes:
-        if o.name.startswith(('ShirtCollar', 'ShirtSleeve')):
+        if o.name.startswith(('ShirtCollar', 'ShirtSleeve', 'ShirtPrint')):
             wts[o.name] = [top4(w) for w in transfer(o, canon['Shirt'], wts['Shirt'], trees['Shirt'])]
     # blend shapes: fields on the body and the layers; attachments copy their layer's offsets (they stay on it)
     fields = {'Build_Slim': lambda c: build_offset(c, False), 'Build_Heavy': lambda c: build_offset(c, True)}
@@ -602,7 +635,7 @@ def main():
         own['Shirt']['Chest_Size'] = relax(bpy.data.objects['Shirt'], own['Shirt']['Chest_Size'])
 
     def host_of(name):
-        if name.startswith(('ShirtCollar', 'ShirtSleeve')):
+        if name.startswith(('ShirtCollar', 'ShirtSleeve', 'ShirtPrint')):
             return 'Shirt'
         return 'Pants' if name.startswith('PantCuff') else 'Top' if name.startswith(LAYERS) else None
 
@@ -613,9 +646,22 @@ def main():
         if host is None:
             return {}
         out = {}
+        face = None
+        if name.startswith('ShirtPrint'):                     # a print rides the exact tee face under it
+            hp = bpy.data.objects[host].data.polygons
+            bvh = BVHTree.FromPolygons(canon[host], [list(f.vertices) for f in hp])
+            face = []
+            for c in canon[name]:
+                loc, _, fi, _ = bvh.find_nearest(c)
+                vs = list(hp[fi].vertices)
+                ws = [1.0 / max((canon[host][i] - loc).length, 1e-5) ** 2 for i in vs]
+                face.append([(i, w / sum(ws)) for i, w in zip(vs, ws)])
         for k, offs in keys_for(host).items():
             col = []
-            for c in canon[name]:
+            for n_, c in enumerate(canon[name]):
+                if face:
+                    col.append(sum((offs[i] * w for i, w in face[n_]), Vector()))
+                    continue
                 acc, tw = Vector(), 0.0
                 for _, i, d in trees[host].find_n(c, 4):
                     acc += offs[i] / max(d, 1e-4)
@@ -689,7 +735,7 @@ def main():
 
 
 
-BANDS = {'Shirt': ('ShirtCollar', 'ShirtSleeveL', 'ShirtSleeveR'), 'Top': ('Hem', 'Pocket', 'Collar', 'CuffL', 'CuffR', 'StringL', 'StringR'), 'Pants': ('PantCuffL', 'PantCuffR')}
+BANDS = {'Shirt': ('ShirtCollar', 'ShirtSleeveL', 'ShirtSleeveR', 'ShirtPrint'), 'Top': ('Hem', 'Pocket', 'Collar', 'CuffL', 'CuffR', 'StringL', 'StringR'), 'Pants': ('PantCuffL', 'PantCuffR')}
 
 
 def clearance(rig):
@@ -782,7 +828,22 @@ def _json(path, data):
         json.dump(data, f, indent=1)
 
 
+def _fcurve_sets(act):
+    if getattr(act, 'fcurves', None) is not None and not getattr(act, 'layers', None):
+        yield act.fcurves                                            # legacy action
+    for layer in getattr(act, 'layers', []):                         # slotted actions (Blender 4.4+)
+        for strip in layer.strips:
+            for bag in strip.channelbags:
+                yield bag.fcurves
+
+
 def drop_bones(rig, names):
+    """Remove bones from the build rig and their tracks from every clip (base clips key body bones only)."""
+    paths = tuple('pose.bones["%s"]' % n for n in names)
+    for act in bpy.data.actions:
+        for fcs in _fcurve_sets(act):
+            for fc in [f for f in fcs if f.data_path.startswith(paths)]:
+                fcs.remove(fc)
     bpy.context.view_layer.objects.active = rig
     bpy.ops.object.mode_set(mode='EDIT')
     for n in names:
@@ -813,9 +874,13 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
     hb.rig_json(os.path.join(out, base + '_rig.json'), hidden)    # hidden + expressions: the default head's face parts
     rj = json.load(open(os.path.join(out, base + '_rig.json')))
     rj['first_person'] += ['Body_LowerArmL', 'Body_LowerArmR']      # bare forearms under a T-shirt
+    if CURLS:                                                       # part bones are not body bones
+        part = {b[0] for b in curl_bones()}
+        for c in rj['clips'].values():
+            c['bones'] = [b for b in c.get('bones', []) if b not in part]
     _json(os.path.join(out, base + '_rig.json'), rj)
     parts = {'head': HEAD_ID, 'hair': HAIR_ID, 'top': ('tshirt' if FEMALE else 'hoodie') + SFX, 'bottom': 'joggers' + SFX, 'shoes': 'sneakers' + SFX}
-    colors = dict(COLORS, top=SHIRT[0], rib=SHIRT[1]) if FEMALE else COLORS
+    colors = dict(COLORS, top=SHIRT[0], rib=SHIRT[1], print=PRINT[0], print_ink=PRINT[1]) if FEMALE else COLORS
     cj = {'parts': parts, 'paint': PAINT, 'colors': colors, 'shapes': {'Build_Slim': 0.0, 'Build_Heavy': 0.0}}
     if hb.SPEC['chest']:
         cj['shapes']['Chest_Size'] = 0.8
@@ -835,7 +900,7 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
     print('CHAR_BUILT', base, len(regions), 'regions:', ' '.join(sorted(o.name for o in regions)))
 
 
-PAINT = {'CK2_Shirt' + SHIRT[0][1:]: 'top', 'CK2_Rib': 'rib', 'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush', 'CK2_BlushHot': 'blush*0.88'}
+PAINT = {'CK2_Print': 'print', 'CK2_PrintInk': 'print_ink', 'CK2_Shirt' + SHIRT[0][1:]: 'top', 'CK2_Rib': 'rib', 'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush', 'CK2_BlushHot': 'blush*0.88'}
 COLORS = {'skin': hb.SKIN, 'hair': hb.HAIR, 'eyes': '#2E2624', 'blush': 'auto'}
 for _m, _slot in (('Top', 'top'), ('Pants', 'bottom'), ('PantCuff', 'bottom'), ('Shoe', 'shoes')):
     _key = {'Top': 'top', 'Pants': 'pants', 'PantCuff': 'pants', 'Shoe': 'shoe'}[_m]
