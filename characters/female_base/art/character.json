@@ -1,0 +1,38 @@
+{
+ "paint": {
+  "CK2_Skin": "skin",
+  "CK2_Hair": "hair",
+  "CK2_Brow": "hair",
+  "CK2_Pupil": "eyes",
+  "CK2_Blush": "blush",
+  "CK2_TopD9A04C": "top",
+  "CK2_Pants2D5C5B": "bottom",
+  "CK2_PantCuff2D5C5B": "bottom",
+  "CK2_ShoeF8F4EA": "shoes"
+ },
+ "colors": {
+  "skin": "#F2A99A",
+  "hair": "#6A4636",
+  "eyes": "#2E2624",
+  "blush": "#EE9488",
+  "top": "#D9A04C",
+  "bottom": "#2D5C5B",
+  "shoes": "#F8F4EA"
+ },
+ "shapes": {
+  "Chest_Size": 0.5
+ },
+ "chest": {
+  "chains": [
+   [
+    "LeftBreast",
+    "LeftBreast"
+   ],
+   [
+    "RightBreast",
+    "RightBreast"
+   ]
+  ],
+  "radius": 0.05
+ }
+}

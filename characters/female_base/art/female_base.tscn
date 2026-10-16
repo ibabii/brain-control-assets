@@ -1,0 +1,5 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://characters/female_base/art/female_base.glb" id="1"]
+
+[node name="female_base" instance=ExtResource("1")]

@@ -1,0 +1,1968 @@
+{
+ "markers": [
+  {
+   "name": "Grip_L",
+   "bone": "LeftHand",
+   "pos": [
+    -0.7607039213180542,
+    1.2956392765045166,
+    -0.0652725100517273
+   ],
+   "basis": [
+    [
+     0.2101665586233139,
+     0.04467224329710007,
+     -0.9766445159912109
+    ],
+    [
+     -0.09530037641525269,
+     0.9951343536376953,
+     0.02501005493104458
+    ],
+    [
+     0.9730097651481628,
+     0.08781830966472626,
+     0.21340124309062958
+    ]
+   ]
+  },
+  {
+   "name": "Sole_L",
+   "bone": "LeftFoot",
+   "pos": [
+    -0.13500000536441803,
+    0.0,
+    -0.05000000074505806
+   ],
+   "basis": [
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ]
+   ]
+  },
+  {
+   "name": "Grip_R",
+   "bone": "RightHand",
+   "pos": [
+    0.7607039213180542,
+    1.2956392765045166,
+    -0.0652725100517273
+   ],
+   "basis": [
+    [
+     -0.2101665586233139,
+     0.04467224329710007,
+     -0.9766445159912109
+    ],
+    [
+     0.09530037641525269,
+     0.9951343536376953,
+     0.02501005493104458
+    ],
+    [
+     0.9730097651481628,
+     -0.08781830966472626,
+     -0.21340124309062958
+    ]
+   ]
+  },
+  {
+   "name": "Sole_R",
+   "bone": "RightFoot",
+   "pos": [
+    0.13500000536441803,
+    0.0,
+    -0.05000000074505806
+   ],
+   "basis": [
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ]
+   ]
+  },
+  {
+   "name": "EyeCam",
+   "bone": "Head",
+   "pos": [
+    0.0,
+    1.625,
+    -0.10000000149011612
+   ],
+   "basis": [
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ]
+   ]
+  },
+  {
+   "name": "Foam",
+   "bone": "Head",
+   "pos": [
+    0.0,
+    1.5119999647140503,
+    -0.1203400045633316
+   ],
+   "basis": [
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     0,
+     0,
+     1
+    ]
+   ]
+  }
+ ],
+ "ragdoll": [
+  {
+   "name": "Physical Bone Hips",
+   "bone": "Hips",
+   "mass": 11.0,
+   "shape": "capsule",
+   "radius": 0.13,
+   "height": 0.36,
+   "centre": [
+    0.0,
+    0.8799999952316284,
+    0.0
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "joint": {
+    "type": "none",
+    "pos": [
+     0.0,
+     0.8399999737739563,
+     0.0
+    ],
+    "along": [
+     0.0,
+     1.0,
+     0.0
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "Physical Bone Spine",
+   "bone": "Spine",
+   "mass": 9.0,
+   "shape": "capsule",
+   "radius": 0.13,
+   "height": 0.38,
+   "centre": [
+    0.0,
+    1.0399999618530273,
+    -0.012000000104308128
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "joint": {
+    "type": "cone",
+    "pos": [
+     0.0,
+     0.9800000190734863,
+     0.0
+    ],
+    "along": [
+     0.0,
+     0.9991331100463867,
+     -0.041630543768405914
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "swing": 25,
+    "twist": 25
+   }
+  },
+  {
+   "name": "Physical Bone Chest",
+   "bone": "Chest",
+   "mass": 14.0,
+   "shape": "capsule",
+   "radius": 0.135,
+   "height": 0.42,
+   "centre": [
+    0.0,
+    1.25,
+    0.0
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "joint": {
+    "type": "cone",
+    "pos": [
+     0.0,
+     1.100000023841858,
+     -0.004999999888241291
+    ],
+    "along": [
+     0.0,
+     0.9993628263473511,
+     0.035691533237695694
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "swing": 25,
+    "twist": 25
+   }
+  },
+  {
+   "name": "Physical Bone Head",
+   "bone": "Head",
+   "mass": 6.0,
+   "shape": "sphere",
+   "radius": 0.15255,
+   "height": 0.3164,
+   "centre": [
+    0.0,
+    1.6193499565124512,
+    0.012999996542930603
+   ],
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "joint": {
+    "type": "cone",
+    "pos": [
+     0.0,
+     1.4700000286102295,
+     0.0
+    ],
+    "along": [
+     0.0,
+     1.0,
+     0.0
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "swing": 35,
+    "twist": 40
+   }
+  },
+  {
+   "name": "Physical Bone LeftUpperArm",
+   "bone": "LeftUpperArm",
+   "mass": 2.5,
+   "shape": "capsule",
+   "radius": 0.062,
+   "height": 0.34440003627052773,
+   "centre": [
+    -0.33500000834465027,
+    1.3550000190734863,
+    0.0
+   ],
+   "axis": [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   "joint": {
+    "type": "cone",
+    "pos": [
+     -0.20000000298023224,
+     1.3550000190734863,
+     0.0
+    ],
+    "along": [
+     -1.0,
+     0.0,
+     0.0
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "swing": 100,
+    "twist": 40
+   }
+  },
+  {
+   "name": "Physical Bone LeftLowerArm",
+   "bone": "LeftLowerArm",
+   "mass": 1.6,
+   "shape": "capsule",
+   "radius": 0.055,
+   "height": 0.30599997307914933,
+   "centre": [
+    -0.5867611765861511,
+    1.3444617986679077,
+    -0.02560814656317234
+   ],
+   "axis": [
+    -0.9730096459388733,
+    -0.08781851083040237,
+    -0.21340124309062958
+   ],
+   "joint": {
+    "type": "hinge",
+    "pos": [
+     -0.4700000286102295,
+     1.3550000190734863,
+     0.0
+    ],
+    "along": [
+     -0.9730096459388733,
+     -0.08781851083040237,
+     -0.21340124309062958
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "lower": -135,
+    "upper": 0
+   }
+  },
+  {
+   "name": "Physical Bone LeftHand",
+   "bone": "LeftHand",
+   "mass": 0.6,
+   "shape": "sphere",
+   "radius": 0.042,
+   "height": 0.094,
+   "centre": [
+    -0.7244640588760376,
+    1.3320335149765015,
+    -0.055809251964092255
+   ],
+   "axis": [
+    -0.9730098843574524,
+    -0.08781734853982925,
+    -0.21340113878250122
+   ],
+   "joint": {
+    "type": "cone",
+    "pos": [
+     -0.7035223245620728,
+     1.333923578262329,
+     -0.05121629312634468
+    ],
+    "along": [
+     -0.9730097651481628,
+     -0.08781734108924866,
+     -0.21340110898017883
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "swing": 40,
+    "twist": 25
+   }
+  },
+  {
+   "name": "Physical Bone LeftUpperLeg",
+   "bone": "LeftUpperLeg",
+   "mass": 8.0,
+   "shape": "capsule",
+   "radius": 0.083,
+   "height": 0.4606041390546684,
+   "centre": [
+    -0.10899999737739563,
+    0.6399999856948853,
+    -0.009999999776482582
+   ],
+   "axis": [
+    -0.04986092075705528,
+    -0.9972184300422668,
+    -0.0554010234773159
+   ],
+   "joint": {
+    "type": "cone",
+    "pos": [
+     -0.10000000149011612,
+     0.8199999928474426,
+     0.0
+    ],
+    "along": [
+     -0.04986092075705528,
+     -0.9972184300422668,
+     -0.0554010234773159
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "swing": 45,
+    "twist": 20
+   }
+  },
+  {
+   "name": "Physical Bone LeftLowerLeg",
+   "bone": "LeftLowerLeg",
+   "mass": 4.0,
+   "shape": "capsule",
+   "radius": 0.074,
+   "height": 0.4547426307476964,
+   "centre": [
+    -0.12650001049041748,
+    0.2775000035762787,
+    -0.009999999776482582
+   ],
+   "axis": [
+    -0.04645538330078125,
+    -0.9974241852760315,
+    0.05465337634086609
+   ],
+   "joint": {
+    "type": "hinge",
+    "pos": [
+     -0.11800000071525574,
+     0.46000000834465027,
+     -0.019999999552965164
+    ],
+    "along": [
+     -0.04645538330078125,
+     -0.9974241852760315,
+     0.05465337634086609
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "lower": 0,
+    "upper": 125
+   }
+  },
+  {
+   "name": "Physical Bone LeftFoot",
+   "bone": "LeftFoot",
+   "mass": 1.2,
+   "shape": "capsule",
+   "radius": 0.05,
+   "height": 0.26,
+   "centre": [
+    -0.13500000536441803,
+    0.05999999865889549,
+    -0.05000000074505806
+   ],
+   "axis": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "joint": {
+    "type": "cone",
+    "pos": [
+     -0.13500000536441803,
+     0.0949999988079071,
+     0.0
+    ],
+    "along": [
+     0.0,
+     -0.47885215282440186,
+     -0.8778955936431885
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "swing": 25,
+    "twist": 10
+   }
+  },
+  {
+   "name": "Physical Bone RightUpperArm",
+   "bone": "RightUpperArm",
+   "mass": 2.5,
+   "shape": "capsule",
+   "radius": 0.062,
+   "height": 0.34440003627052773,
+   "centre": [
+    0.33500000834465027,
+    1.3550000190734863,
+    0.0
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "joint": {
+    "type": "cone",
+    "pos": [
+     0.20000000298023224,
+     1.3550000190734863,
+     0.0
+    ],
+    "along": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "swing": 100,
+    "twist": 40
+   }
+  },
+  {
+   "name": "Physical Bone RightLowerArm",
+   "bone": "RightLowerArm",
+   "mass": 1.6,
+   "shape": "capsule",
+   "radius": 0.055,
+   "height": 0.30599997307914933,
+   "centre": [
+    0.5867611765861511,
+    1.3444617986679077,
+    -0.02560814656317234
+   ],
+   "axis": [
+    0.9730096459388733,
+    -0.08781851083040237,
+    -0.21340124309062958
+   ],
+   "joint": {
+    "type": "hinge",
+    "pos": [
+     0.4700000286102295,
+     1.3550000190734863,
+     0.0
+    ],
+    "along": [
+     0.9730096459388733,
+     -0.08781851083040237,
+     -0.21340124309062958
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "lower": -135,
+    "upper": 0
+   }
+  },
+  {
+   "name": "Physical Bone RightHand",
+   "bone": "RightHand",
+   "mass": 0.6,
+   "shape": "sphere",
+   "radius": 0.042,
+   "height": 0.094,
+   "centre": [
+    0.7244640588760376,
+    1.3320335149765015,
+    -0.055809251964092255
+   ],
+   "axis": [
+    0.9730098843574524,
+    -0.08781734853982925,
+    -0.21340113878250122
+   ],
+   "joint": {
+    "type": "cone",
+    "pos": [
+     0.7035223245620728,
+     1.333923578262329,
+     -0.05121629312634468
+    ],
+    "along": [
+     0.9730097651481628,
+     -0.08781734108924866,
+     -0.21340110898017883
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "swing": 40,
+    "twist": 25
+   }
+  },
+  {
+   "name": "Physical Bone RightUpperLeg",
+   "bone": "RightUpperLeg",
+   "mass": 8.0,
+   "shape": "capsule",
+   "radius": 0.083,
+   "height": 0.4606041390546684,
+   "centre": [
+    0.10899999737739563,
+    0.6399999856948853,
+    -0.009999999776482582
+   ],
+   "axis": [
+    0.04986092075705528,
+    -0.9972184300422668,
+    -0.0554010234773159
+   ],
+   "joint": {
+    "type": "cone",
+    "pos": [
+     0.10000000149011612,
+     0.8199999928474426,
+     0.0
+    ],
+    "along": [
+     0.04986092075705528,
+     -0.9972184300422668,
+     -0.0554010234773159
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "swing": 45,
+    "twist": 20
+   }
+  },
+  {
+   "name": "Physical Bone RightLowerLeg",
+   "bone": "RightLowerLeg",
+   "mass": 4.0,
+   "shape": "capsule",
+   "radius": 0.074,
+   "height": 0.4547426307476964,
+   "centre": [
+    0.12650001049041748,
+    0.2775000035762787,
+    -0.009999999776482582
+   ],
+   "axis": [
+    0.04645538330078125,
+    -0.9974241852760315,
+    0.05465337634086609
+   ],
+   "joint": {
+    "type": "hinge",
+    "pos": [
+     0.11800000071525574,
+     0.46000000834465027,
+     -0.019999999552965164
+    ],
+    "along": [
+     0.04645538330078125,
+     -0.9974241852760315,
+     0.05465337634086609
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "lower": 0,
+    "upper": 125
+   }
+  },
+  {
+   "name": "Physical Bone RightFoot",
+   "bone": "RightFoot",
+   "mass": 1.2,
+   "shape": "capsule",
+   "radius": 0.05,
+   "height": 0.26,
+   "centre": [
+    0.13500000536441803,
+    0.05999999865889549,
+    -0.05000000074505806
+   ],
+   "axis": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "joint": {
+    "type": "cone",
+    "pos": [
+     0.13500000536441803,
+     0.0949999988079071,
+     0.0
+    ],
+    "along": [
+     0.0,
+     -0.47885215282440186,
+     -0.8778955936431885
+    ],
+    "bend": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "swing": 25,
+    "twist": 10
+   }
+  }
+ ],
+ "hidden": [
+  "Flat",
+  "Grimace",
+  "GrimaceLine",
+  "LidHalfL",
+  "LidHalfR",
+  "O",
+  "Open",
+  "Teeth",
+  "Tongue",
+  "Wobble"
+ ],
+ "expressions": {
+  "rest": {
+   "show": [],
+   "brow": [
+    0.0,
+    0.0
+   ],
+   "pupil": 1.0,
+   "look": null
+  },
+  "alarm": {
+   "show": [
+    "O"
+   ],
+   "hide": [
+    "LidL",
+    "LidR"
+   ],
+   "brow": [
+    0.0,
+    18.0
+   ],
+   "pupil": 0.62,
+   "look": null
+  },
+  "dazed": {
+   "show": [
+    "LidHalfL",
+    "LidHalfR",
+    "Wobble"
+   ],
+   "hide": [
+    "LidL",
+    "LidR"
+   ],
+   "brow": [
+    0.002,
+    8.0
+   ],
+   "pupil": 1.0,
+   "look": [
+    [
+     9.0,
+     -4.0
+    ],
+    [
+     -9.0,
+     3.0
+    ]
+   ]
+  },
+  "neutral": {
+   "show": [
+    "Flat"
+   ],
+   "brow": [
+    0.0,
+    0.0
+   ],
+   "pupil": 1.0,
+   "look": null
+  },
+  "happy": {
+   "lid": 30.0,
+   "brow": [
+    0.01,
+    -8.0
+   ],
+   "look": [
+    [
+     0.0,
+     4.0
+    ],
+    [
+     0.0,
+     4.0
+    ]
+   ],
+   "pupil": 1.08,
+   "show": [
+    "Open",
+    "Tongue"
+   ]
+  },
+  "panic": {
+   "lid": 75.0,
+   "brow": [
+    0.009,
+    18.0
+   ],
+   "look": null,
+   "pupil": 0.74,
+   "show": [
+    "Open"
+   ],
+   "mouth": 1.35
+  },
+  "sleepy": {
+   "lid": -22.0,
+   "brow": [
+    -0.006,
+    -4.0
+   ],
+   "look": [
+    [
+     0.0,
+     -6.0
+    ],
+    [
+     0.0,
+     -6.0
+    ]
+   ],
+   "pupil": 1.0,
+   "show": []
+  },
+  "embarrassed": {
+   "lid": 20.0,
+   "brow": [
+    0.008,
+    20.0
+   ],
+   "look": [
+    [
+     -16.0,
+     -8.0
+    ],
+    [
+     -16.0,
+     -8.0
+    ]
+   ],
+   "pupil": 1.0,
+   "show": [
+    "Grimace",
+    "GrimaceLine",
+    "BlushL",
+    "BlushR"
+   ]
+  }
+ },
+ "loops": [
+  "idle",
+  "brush_loop",
+  "walk_loop"
+ ],
+ "clips": {
+  "RESET": {
+   "layer": "all",
+   "bones": [
+    "Root",
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ]
+  },
+  "rest": {
+   "layer": "all",
+   "bones": [
+    "Root",
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ]
+  },
+  "idle": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ]
+  },
+  "faceplant": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.84,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.1721,
+     -0.96
+    ],
+    "pitch": -90.0,
+    "yaw": 116.6
+   },
+   "length": 1.6
+  },
+  "sit_tub": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     -0.06,
+     0.31
+    ],
+    "pitch": 50.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     -0.11,
+     0.31
+    ],
+    "pitch": 60.0,
+    "yaw": 0.0
+   },
+   "length": 2.0
+  },
+  "get_up_back": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.1881,
+     -0.0
+    ],
+    "pitch": 90.0,
+    "yaw": 49.2
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.84,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 2.267
+  },
+  "get_up_front": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.1721,
+     -0.0
+    ],
+    "pitch": -90.0,
+    "yaw": 116.6
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.84,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 2.467
+  },
+  "stumble": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.76,
+     -0.86
+    ],
+    "pitch": -50.0,
+    "yaw": 0.0
+   },
+   "length": 1.2
+  },
+  "climb_out_tub": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     -0.11,
+     0.31
+    ],
+    "pitch": 60.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.28,
+     -0.32
+    ],
+    "pitch": -3.0,
+    "yaw": 0.0
+   },
+   "length": 2.2
+  },
+  "walk_loop": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.783,
+     -0.0
+    ],
+    "pitch": -3.0,
+    "yaw": -5.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.783,
+     -0.0
+    ],
+    "pitch": -3.0,
+    "yaw": -5.0
+   },
+   "length": 1.0,
+   "locomotion": {
+    "stride": 1.0,
+    "cycle": 1.0,
+    "speed": 1.0
+   }
+  },
+  "turn_L": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -2.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 90.0
+   },
+   "length": 0.933
+  },
+  "turn_R": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -2.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": 0.0,
+    "yaw": -90.0
+   },
+   "length": 0.933
+  },
+  "step": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -2.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.3
+    ],
+    "pitch": -2.0,
+    "yaw": 0.0
+   },
+   "length": 1.0
+  },
+  "sit_floor": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -2.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.1604,
+     0.2
+    ],
+    "pitch": 28.0,
+    "yaw": 0.0
+   },
+   "length": 1.333
+  },
+  "brace": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.79,
+     0.02
+    ],
+    "pitch": -4.0,
+    "yaw": 0.0
+   },
+   "length": 0.533
+  },
+  "squat": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.83,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.42,
+     0.12
+    ],
+    "pitch": -28.0,
+    "yaw": 0.0
+   },
+   "length": 1.133
+  },
+  "brush_loop": {
+   "layer": "upper",
+   "bones": [
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.84,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.84,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 0.5
+  },
+  "hand_grip_L": {
+   "layer": "hand",
+   "bones": [
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal"
+   ]
+  },
+  "hand_relaxed_L": {
+   "layer": "hand",
+   "bones": [
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal"
+   ]
+  },
+  "hand_spread_L": {
+   "layer": "hand",
+   "bones": [
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal"
+   ]
+  },
+  "squeeze_L": {
+   "layer": "hand",
+   "bones": [
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal",
+    "LeftHand"
+   ]
+  },
+  "hand_grip_R": {
+   "layer": "hand",
+   "bones": [
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ]
+  },
+  "hand_relaxed_R": {
+   "layer": "hand",
+   "bones": [
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ]
+  },
+  "hand_spread_R": {
+   "layer": "hand",
+   "bones": [
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ]
+  },
+  "squeeze_R": {
+   "layer": "hand",
+   "bones": [
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal",
+    "RightHand"
+   ]
+  }
+ },
+ "first_person": [
+  "HandL",
+  "HandR",
+  "NailsL",
+  "NailsR",
+  "CuffL",
+  "CuffR"
+ ],
+ "look": {
+  "neck": "Neck",
+  "head": "Head",
+  "share": [
+   0.35,
+   0.65
+  ],
+  "yaw": 70,
+  "pitch": [
+   -40,
+   30
+  ],
+  "eyes": [
+   "LookL",
+   "LookR"
+  ],
+  "eye_yaw": 25,
+  "eye_pitch": 15
+ },
+ "render_layer": 2,
+ "ragdoll_layer": 2,
+ "ragdoll_mask": 1,
+ "ik": {
+  "Left": {
+   "arm": [
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand"
+   ],
+   "leg": [
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot"
+   ],
+   "elbow_pole": [
+    -0.47,
+    1.355,
+    0.35
+   ],
+   "knee_pole": [
+    -0.118,
+    0.46,
+    -0.47
+   ]
+  },
+  "Right": {
+   "arm": [
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand"
+   ],
+   "leg": [
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot"
+   ],
+   "elbow_pole": [
+    0.47,
+    1.355,
+    0.35
+   ],
+   "knee_pole": [
+    0.118,
+    0.46,
+    -0.47
+   ]
+  }
+ },
+ "bones": [
+  "Root",
+  "Hips",
+  "Spine",
+  "Chest",
+  "UpperChest",
+  "Neck",
+  "Head",
+  "LeftShoulder",
+  "LeftUpperArm",
+  "LeftLowerArm",
+  "LeftHand",
+  "LeftThumbMetacarpal",
+  "LeftThumbProximal",
+  "LeftThumbDistal",
+  "LeftIndexProximal",
+  "LeftIndexIntermediate",
+  "LeftIndexDistal",
+  "LeftMiddleProximal",
+  "LeftMiddleIntermediate",
+  "LeftMiddleDistal",
+  "LeftRingProximal",
+  "LeftRingIntermediate",
+  "LeftRingDistal",
+  "LeftUpperLeg",
+  "LeftLowerLeg",
+  "LeftFoot",
+  "LeftToes",
+  "RightShoulder",
+  "RightUpperArm",
+  "RightLowerArm",
+  "RightHand",
+  "RightThumbMetacarpal",
+  "RightThumbProximal",
+  "RightThumbDistal",
+  "RightIndexProximal",
+  "RightIndexIntermediate",
+  "RightIndexDistal",
+  "RightMiddleProximal",
+  "RightMiddleIntermediate",
+  "RightMiddleDistal",
+  "RightRingProximal",
+  "RightRingIntermediate",
+  "RightRingDistal",
+  "RightUpperLeg",
+  "RightLowerLeg",
+  "RightFoot",
+  "RightToes"
+ ],
+ "motion": {
+  "hips_height": 0.84
+ }
+}

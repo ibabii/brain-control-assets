@@ -7,6 +7,7 @@ extends Node3D
 ##   clip    one Human playing --clip NAME, one tile per --times "0,0.5,.." (seconds) and per shot; --tub sits it on
 ##           the bathroom tub's Seat
 ## godot --path . res://previews/human/human_rig_preview.tscn -- --capture NAME --mode pose [--shots "name@eye@look[@fov];..."]
+##   [--model res://folder]  human.glb + human_rig.json from that folder (default human/art; character mocks)
 ##   [--grey]  neutral light-grey studio with a back fill (turnarounds, e.g. --mode tpose)
 
 const POSES := {   # bone: [local axis, degrees] applied on top of the rest pose
@@ -19,6 +20,7 @@ const POSES := {   # bone: [local axis, degrees] applied on top of the rest pose
 		'RightUpperLeg': [Vector3.FORWARD, 30]},
 }
 
+var model_dir := ''
 var camera: Camera3D
 var humans: Array[Node3D] = []
 var data: Dictionary
@@ -26,7 +28,9 @@ var data: Dictionary
 
 func _ready() -> void:
 	get_window().content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
-	data = JSON.parse_string(FileAccess.get_file_as_string('res://human/art/human_rig.json'))
+	var args0 := OS.get_cmdline_user_args()
+	model_dir = args0[args0.find('--model') + 1] if '--model' in args0 else 'res://human/art'   # folder with human.glb + json
+	data = JSON.parse_string(FileAccess.get_file_as_string(model_dir + '/human_rig.json'))
 	_stage()
 	camera = Camera3D.new()
 	camera.fov = 30
@@ -82,7 +86,7 @@ func _ready() -> void:
 
 
 func _human(pos: Vector3) -> Node3D:
-	var h: Node3D = load('res://human/art/human.tscn').instantiate()
+	var h: Node3D = load(model_dir + '/human.glb').instantiate()
 	h.position = pos
 	add_child(h)
 	humans.append(h)

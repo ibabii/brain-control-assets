@@ -360,7 +360,7 @@ def clip_bones(rig, layer, side=None, wrist=False):
     return [b for b in names if b.startswith(n) and is_finger(b)] + ([n + 'Hand'] if wrist else [])
 
 
-def clips(rig, arm_up, landmarks):
+def clips(rig, arm_up, landmarks, full=True, mock=False):
     """NLA tracks (glTF exports one animation each): RESET/rest, idle (arms hanging), hand_{grip,relaxed,spread}_{L,R}."""
     bpy.context.scene.render.fps = FPS
     rig.animation_data_create()
@@ -395,9 +395,10 @@ def clips(rig, arm_up, landmarks):
     import pose as PZ
     PZ.ARM_UP = arm_up
     PZ.MARKERS = {m['name']: m for m in markers(landmarks)}
-    for name, fn in body_clips.FULL.items():
+    full_set = dict(body_clips.FULL, **(body_clips.MOCK if mock else {})) if full else {}
+    for name, fn in full_set.items():               # other bodies share these by retarget (character mock)
         names.append(body_clip(rig, name, fn(), boxes=body_clips.BOXES.get(name)))
-    for name, (fn, side) in body_clips.UPPER.items():
+    for name, (fn, side) in (body_clips.UPPER.items() if full else ()):
         names.append(body_clip(rig, name, fn(rig), layer='upper', side=side))
     LOOPS.extend(n for n in body_clips.LOOPS if n not in LOOPS)
     for s in (-1, 1):

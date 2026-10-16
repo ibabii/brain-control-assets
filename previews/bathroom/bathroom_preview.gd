@@ -2,7 +2,7 @@ extends Node3D
 ## Bathroom look-dev with the game's greybox lights: room + props at layout.json, a stand-in mirror (SSR),
 ## optionally the Human at the `human` mark and every hidden effect shown.
 ## godot --path . res://previews/bathroom/bathroom_preview.tscn -- --capture NAME [--size 1200x675]
-##   [--human] [--fx] [--fall --t 3] [--door DEG (Hinge open angle)] [--shots "name@eye@look[@fov];..."]   (2-column contact sheet in screenshots/NAME.png)
+##   [--human [--human-model ID]] [--fx] [--fall --t 3] [--door DEG (Hinge open angle)] [--shots "name@eye@look[@fov];..."]   (2-column contact sheet in screenshots/NAME.png)
 ## Named views: fp (first-person at the sink), reveal (game reveal mark), door, mirror (from the glass back).
 
 const VIEWS := {
@@ -52,12 +52,17 @@ func _ready() -> void:
 	if args.has('--door'):
 		find_child('Hinge', true, false).rotation_degrees.y = float(args[args.find('--door') + 1])
 	if '--human' in args:
-		human = load('res://previews/human/human_A.glb').instantiate()
+		var hm := args[args.find('--human-model') + 1] if '--human-model' in args else ''   # character mock id
+		human = load('res://previews/characters/mock/%s/human.glb' % hm if hm else 'res://previews/human/human_A.glb').instantiate()
 		human.position = Vector3(0, 0, 0.2)
 		add_child(human)
 		_rest_pose(human)
-		for n in ['Open', 'Tongue', 'Teeth', 'Grimace', 'GrimaceLine', 'BlushL', 'BlushR']:
-			human.find_child(n, true, false).visible = false
+		var rig: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(
+				'res://previews/characters/mock/%s/human_rig.json' % hm if hm else 'res://human/art/human_rig.json'))
+		for n in rig.hidden:                               # the rig json's start-hidden face parts
+			var x := human.find_child(n, true, false)
+			if x:
+				x.visible = false
 	if '--fall' in args:                                # rigged Human tipping toward the tub, ragdoll on
 		var fh: Node3D = load('res://human/art/human.tscn').instantiate()
 		fh.position = Vector3(-0.55, 0, 0.75)

@@ -363,6 +363,21 @@ UPPER = {'brush_loop': (brush_loop, 1)}
 LOOPS = ['brush_loop', 'walk_loop']
 
 
+def squat():
+    """Deep squat and hold (character-system mock: poke-through check): heels down, knees forward and out, torso
+    leaning in, arms forward for balance."""
+    def k(h, z, lean, arm, knee_out=0.0):
+        return {'hips': ((0, h, z), (-lean, 0, 0)), 'world': FLAT,
+                'ik': {'LeftLeg': ((-0.16, ANK, 0.0), (-0.16 - knee_out, 0.6, -0.8)),
+                       'RightLeg': ((0.16, ANK, 0.0), (0.16 + knee_out, 0.6, -0.8))},
+                'rot': merge(arm, {'Spine': (-lean * 0.4, 0, 0), 'Head': (lean * 0.7, 0, 0)})}
+    return [(0, k(0.83, 0, 0, arms(3, 6, 3, 6, 8))), (12, k(0.6, 0.06, 18, arms(40, 12, 40, 12, 15), 0.1)),
+            (22, k(0.42, 0.12, 28, arms(75, 12, 75, 12, 20), 0.25)), (34, k(0.42, 0.12, 28, arms(75, 12, 75, 12, 20), 0.25))]
+
+
+MOCK = {'squat': squat}                 # character-system mock only (not in the shipped Human)
+
+
 FULL = {'faceplant': faceplant, 'sit_tub': sit_tub, 'get_up_back': get_up_back, 'get_up_front': get_up_front,
         **FULL_EXTRA}
 BOXES = {'sit_tub': TUB, 'climb_out_tub': TUB}

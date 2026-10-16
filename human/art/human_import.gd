@@ -9,7 +9,8 @@ const SKEL_TO := "Rig/Skeleton"
 
 
 func _post_import(scene: Node) -> Object:
-	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://human/art/human_rig.json"))
+	# The rig json sits beside the GLB as <name>_rig.json (human/art/human_rig.json; characters/<art>/art/<art>_rig.json).
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(get_source_file().get_basename() + "_rig.json"))
 	var rig: Node3D = scene.get_node("Rig")
 	var skel: Skeleton3D = rig.get_node("Skeleton3D")
 	skel.name = "Skeleton"
@@ -46,7 +47,21 @@ func _post_import(scene: Node) -> Object:
 		att.add_child(marker)
 		marker.owner = scene
 	_ragdoll(scene, skel, to_skel, data)
+	if data.has("motion"):
+		_normalise_motion(lib, skel, float(data.motion.hips_height))
 	return scene
+
+
+## Character-system mock: Hips position tracks divided by the hip height and Skeleton.motion_scale set to it, so any
+## body plays any body's clips (Godot multiplies position tracks by the target's motion_scale).
+func _normalise_motion(lib: AnimationLibrary, skel: Skeleton3D, hips: float) -> void:
+	skel.motion_scale = hips
+	for clip in lib.get_animation_list():
+		var a := lib.get_animation(clip)
+		for t in a.get_track_count():
+			if a.track_get_type(t) == Animation.TYPE_POSITION_3D:
+				for k in a.track_get_key_count(t):
+					a.track_set_key_value(t, k, a.track_get_key_value(t, k) / hips)
 
 
 ## The exporter samples every bone into every clip. Keep only the bones the json `clips` table lists for the clip

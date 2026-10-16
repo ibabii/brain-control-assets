@@ -4,6 +4,7 @@ Godot coords throughout (lib convention): feet at the origin, +Y up, faces -Z, t
 Writes human/art/human.glb (colourway A) and previews/human/human_<id>.glb for every colourway.
 Face parts move by node transforms and visibility only (art contract): eyes, lids, brows, mouth set, blush.
 """
+import json
 import math
 import os
 import sys
@@ -29,15 +30,28 @@ COLOURWAYS = {
     'B': dict(top='#3F6F6C', rib='#355F5C', pants='#D8C7A8', shoe='#F8F4EA', sole='#454C48', lace='#D9A04C'),
     'C': dict(top='#A9584C', rib='#97493F', pants='#454C48', shoe='#F1E4CF', sole='#D9A04C', lace='#F8F4EA'),
 }
+# Character-system mock (2026-10-16, coordination/character_system_plan.md): a spec from env HUMAN_SPEC (json).
+# The defaults rebuild the shipped Human exactly. look B = the ref style (bigger eyes, thick brows, blush, button nose,
+# chunky hair, matte clay); head = head scale about the eye; sex/build = body volumes (build -1 slim .. +1 heavy);
+# sy/narrow = height scale below the neck and shoulder narrowing (warp, after weights); chest = female chest key +
+# spring bones; clips 'basic' = RESET/rest/idle/hands only (other bodies share the full set by retarget).
+SPEC = dict(look='now', head=1.0, sex='male', build=0.0, sy=1.0, narrow=0.0, chest=False, clips='all', hair='short',
+            mock=False)
+SPEC.update(json.loads(os.environ.get('HUMAN_SPEC', '{}')))
+LOOK_B = SPEC['look'] == 'B'
+IDENT = SPEC['sy'] == 1.0 and not SPEC['narrow'] and SPEC['head'] == 1.0   # no warp: the shipped Human, untouched
+FEMALE = SPEC['sex'] == 'female'
+BUILD = SPEC['build']
 HAND_SCALE = 1.12                          # on top of the brain hand's own 1.2
 
 # Skeleton-ish landmarks (also the future rig joints).
 EYE_Y = 1.625
 NECK = Vector((0, 1.47, 0.0))
+HEAD_PIVOT = Vector((0, EYE_Y, -0.1))                # look B head scale pivot (= the EyeCam marker)
 SHOULDER = Vector((0.20, 1.355, 0.0))
 # The arms are modelled and bound in an A-pose (ARM_UP more than they hang), so the voxel union can't fuse sleeve and
 # torso; the `rest` and `idle` clips lower them to the hanging pose the design shows.
-ARM_UP = 33.0
+ARM_UP = float(os.environ.get('HUMAN_ARM_UP', 33.0))   # character-system mock: 78 = T-pose bind
 _UP = Matrix.Rotation(math.radians(ARM_UP), 3, 'Z')                  # Godot Z: lifts the right arm outward
 _HANG = Vector((math.sin(math.radians(12)), -math.cos(math.radians(12)), 0.0))
 ELBOW = SHOULDER + _UP @ _HANG * 0.27
@@ -61,10 +75,15 @@ def mirror(v, s):
 def head_skin():
     mb = meta('HeadSkin', 0.006)
     ell(mb, (0, 1.635, 0.0), (0.128, 0.145, 0.132))               # cranium (top 1.78)
-    ell(mb, (0, 1.548, -0.028), (0.112, 0.082, 0.102))            # jaw and chin
-    for s in (-1, 1):
-        ell(mb, (s * 0.062, 1.565, -0.062), (0.058, 0.048, 0.058))   # round cheeks
-    ell(mb, (0, 1.586, -0.137), (0.029, 0.027, 0.027))            # bulb nose
+    ell(mb, (0, 1.548, -0.028), (0.104, 0.078, 0.096) if FEMALE else (0.112, 0.082, 0.102))   # jaw and chin
+    if LOOK_B:                                                       # rounder cheeks, small button nose
+        for s in (-1, 1):
+            ell(mb, (s * 0.064, 1.562, -0.064), (0.062, 0.052, 0.06))
+        ell(mb, (0, 1.582, -0.134), (0.021, 0.019, 0.021))
+    else:
+        for s in (-1, 1):
+            ell(mb, (s * 0.062, 1.565, -0.062), (0.058, 0.048, 0.058))   # round cheeks
+        ell(mb, (0, 1.586, -0.137), (0.029, 0.027, 0.027))            # bulb nose
     cap(mb, (0, 1.36, 0.012), (0, 1.50, 0.0), 0.054)               # neck (into the collar)
     ears = meta('Ears', 0.004)                                       # own family: a crease, not a cheek lump
     for s in (-1, 1):
@@ -87,8 +106,13 @@ def hairline(phi):
 
 def hair(head):
     """Chunky hair: balls on the scalp above the hairline (scalloped edge = clumps), swept fringe, cowlick."""
+    if SPEC['hair'] == 'bun':
+        return hair_bun(head)
+    if LOOK_B:
+        return hair_chunky(head)
     surf = Surface(head)
     mb = meta('Hair', 0.0055)
+    k = 1.4 if LOOK_B else 1.0                                       # look B: bigger sculpted chunks
     placed = []
     for v, n in zip(surf.verts, surf.normals):
         phi = math.atan2(v.x, -v.z)
@@ -96,38 +120,160 @@ def hair(head):
             continue
         if abs(v.x) > 0.105 and 1.55 < v.y < 1.66 and -0.03 < v.z < 0.045:           # leave the ears out
             continue
-        if any((v - p).length < 0.017 for p in placed):
+        if any((v - p).length < 0.017 * k for p in placed):
             continue
         placed.append(v)
-        ball(mb, v + n * 0.0045, 0.019)
+        ball(mb, v + n * (0.009 if LOOK_B else 0.0045), 0.019 * k)
     # Fringe: clumps from the crown sweeping forward and to the Human's right, tips above the brows.
     for pts, r0, r1 in (
             ([(-0.07, 1.775, -0.04), (-0.01, 1.752, -0.105), (0.045, 1.725, -0.128), (0.085, 1.706, -0.112)], 0.030, 0.015),
             ([(-0.10, 1.755, -0.015), (-0.075, 1.736, -0.095), (-0.035, 1.712, -0.132)], 0.028, 0.014),
             ([(0.02, 1.785, -0.03), (0.075, 1.75, -0.09), (0.112, 1.712, -0.075)], 0.028, 0.014),
             ([(-0.11, 1.735, -0.02), (-0.122, 1.70, -0.075)], 0.022, 0.012)):
-        chain(mb, pts, r0, r1)
+        if LOOK_B:                                                   # tips lifted off the brows
+            pts = [(x, y + 0.012 * i / (len(pts) - 1), z) for i, (x, y, z) in enumerate(pts)]
+        chain(mb, pts, r0 * k, r1 * k)
     # Bedhead cowlick at the back of the crown.
     for tip in ((-0.03, 1.835, 0.09), (0.0, 1.85, 0.075), (0.032, 1.83, 0.095)):     # soft three-tuft cowlick
-        chain(mb, [(0.0, 1.77, 0.06), tip], 0.022, 0.011)
+        chain(mb, [(0.0, 1.77, 0.06), tip], 0.022 * k, 0.011 * k)
     return solid('Hair', [mb], 0.0045, 4500, lib.mat('Hair', HAIR, 0.72))
+
+
+CRANIUM = Vector((0, 1.64, 0.0))
+
+
+def scalp(surf, d, lift):
+    """Point on the head along direction d from the cranium centre, lifted off the skin along the normal."""
+    d = Vector(d).normalized()
+    loc, n = surf.hit(CRANIUM + d * 0.4, -d)
+    return loc + n * lift
+
+
+def scalp_dir(phi, y):
+    """Direction from the cranium centre toward azimuth phi (0 = front, + = the Human's right) at height y."""
+    el = math.asin(max(-0.95, min(0.95, (y - CRANIUM.y) / 0.15)))
+    return Vector((math.cos(el) * math.sin(phi), math.sin(el), -math.cos(el) * math.cos(phi)))
+
+
+def strand(mb, surf, d0, d1, r0, r1, lift0, lift1, n=10, rise=0.0):
+    """A sculpted clump: tapered balls along the scalp from direction d0 to d1."""
+    d0, d1 = Vector(d0).normalized(), Vector(d1).normalized()
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        p = scalp(surf, d0.slerp(d1, t), lift0 + (lift1 - lift0) * t)
+        pts.append(p + Vector((0, rise * t * t, 0)))
+    chain(mb, pts, r0, r1, step=0.005)
+
+
+def scalp_cap(surf, mb, drop=0.0, spacing=0.016, r=0.016, lift=0.004, front=0.0):
+    """Smooth under-layer: no skin shows between the clumps. drop lowers the sides/back, front raises the front."""
+    placed = []
+    for v, n in zip(surf.verts, surf.normals):
+        phi = math.atan2(v.x, -v.z)
+        edge = hairline(phi) - (drop if abs(phi) > 1.2 else 0.0) + front * _ss(1 - abs(phi) / 0.9)
+        if v.y < edge or v.y < 1.45:
+            continue
+        if abs(v.x) > 0.105 and 1.55 < v.y < 1.66 and -0.03 < v.z < 0.045:
+            continue
+        if any((v - p).length < spacing for p in placed):
+            continue
+        placed.append(v)
+        ball(mb, v + n * lift, r)
+
+
+def hair_chunky(head):
+    """Look B (ref style): tousled sculpted clumps from the crown whorl, uneven ends flicking out, shorter sides
+    (temples and ears show), a few big fringe clumps swept to the Human's right with lifted tips; over a cap."""
+    surf = Surface(head)
+    cap_ = meta('HairCap', 0.0055)
+    scalp_cap(surf, cap_, drop=-0.012)
+    mb = meta('Hair', 0.0055)
+    crown = Vector((0.0, 1.0, 0.35))
+    n = 15
+    for i in range(n):
+        phi = -math.pi + (i + 0.5) * 2 * math.pi / n
+        if abs(phi) < 0.75:
+            continue
+        side = 0.75 < abs(phi) < 2.2
+        y = hairline(phi) + (0.022 if side else 0.0) + 0.012 * math.sin(i * 2.3)       # uneven, shorter sides
+        strand(mb, surf, crown, scalp_dir(phi, y), 0.028, 0.017, 0.02, 0.013, rise=0.004)
+    for k, (x0, x1, y1, r) in enumerate(((-0.075, 0.035, 1.722, 0.03), (-0.03, 0.08, 1.712, 0.029),
+                                         (0.02, 0.112, 1.704, 0.026), (-0.11, -0.04, 1.728, 0.026))):
+        d0 = scalp_dir(math.atan2(x0, 0.1), 1.79)
+        d1 = scalp_dir(math.asin(max(-1, min(1, x1 / 0.13))), y1)
+        strand(mb, surf, d0, d1, r, r * 0.6, 0.018, 0.014, rise=0.014)              # fringe: tips lift
+    for tip in ((-0.035, 1.85, 0.095), (0.0, 1.868, 0.078), (0.036, 1.845, 0.1)):     # cowlick
+        chain(mb, [(0.0, 1.785, 0.06), tip], 0.028, 0.013)
+    return solid('Hair', [cap_, mb], 0.004, 6000, lib.mat('Hair', HAIR, 0.72))
+
+
+def hair_bun(head):
+    """Female base (mock): clumps pulled up from the hairline into a lumpy top bun, a side-swept fringe and two
+    springy curls framing the face; over a smooth cap."""
+    surf = Surface(head)
+    cap_ = meta('HairCap', 0.0055)
+    scalp_cap(surf, cap_, drop=0.03, front=0.012)
+    mb = meta('Hair', 0.0055)
+    top = Vector((0, 0.95, 0.3))
+    for i in range(18):
+        phi = -math.pi + (i + 0.5) * 2 * math.pi / 18
+        if abs(phi) < 0.75:
+            continue                                                 # the fringe covers the front
+        y = hairline(phi) - (0.03 if abs(phi) > 1.2 else 0.0)
+        strand(mb, surf, scalp_dir(phi, y), top, 0.019, 0.024, 0.008, 0.014)
+    bun = Vector((0, 1.865, 0.045))
+    for a in range(6):                                                # bun: a ring of chunky lumps and a top knot
+        t = a * math.pi / 3
+        ball(mb, bun + Vector((0.034 * math.cos(t), 0.006 * math.sin(2 * t), 0.034 * math.sin(t))), 0.032)
+    ball(mb, bun + Vector((0.004, 0.032, -0.002)), 0.03)
+    for x0, x1, y1, r in ((0.05, -0.04, 1.722, 0.024), (0.045, -0.09, 1.716, 0.022), (0.06, 0.1, 1.724, 0.02)):
+        d0 = scalp_dir(math.atan2(x0, 0.1), 1.8)                       # side part: curtain fringe above the brows
+        d1 = scalp_dir(math.asin(max(-1, min(1, x1 / 0.13))), y1)
+        strand(mb, surf, d0, d1, r, r * 0.65, 0.012, 0.01, rise=0.01)
+    for s in (-1, 1):                                                 # springy curls in front of the ears
+        pts = [(s * (0.128 + 0.016 * math.cos(t)), 1.69 - 0.19 * t / (3 * math.pi), -0.062 + 0.016 * math.sin(t))
+               for t in [3 * math.pi * i / 24 for i in range(25)]]
+        chain(mb, pts, 0.014, 0.01, step=0.004)
+    return solid('Hair', [cap_, mb], 0.004, 6500, lib.mat('Hair', HAIR, 0.72))
+
+
+def volumes():
+    """Torso/limb volumes for the spec: the shipped Human at sex male, build 0."""
+    b, f = BUILD, FEMALE
+    v = dict(chest=(0.185, 0.17, 0.126), belly=(0.192, 0.15, 0.142), belly_z=-0.018, flare=(0.196, 0.07, 0.136),
+             shoulder=0.066, limb=1.0, pelvis=(0.178, 0.125, 0.126), leg=1.0)
+    if f:                                                         # narrower waist, wider hips, softer shoulders
+        v.update(chest=(0.172, 0.165, 0.124), belly=(0.17, 0.15, 0.13), flare=(0.214, 0.075, 0.14), shoulder=0.06,
+                 limb=0.93, pelvis=(0.2, 0.128, 0.136), leg=1.04)
+    c, bl, fl, pe = v['chest'], v['belly'], v['flare'], v['pelvis']
+    v.update(chest=(c[0] * (1 + 0.1 * b), c[1], c[2] * (1 + 0.14 * b)),
+             belly=(bl[0] + 0.045 * b, bl[1] + 0.01 * max(b, 0), bl[2] + 0.055 * b), belly_z=v['belly_z'] - 0.02 * b,
+             flare=(fl[0] + 0.035 * b, fl[1], fl[2] + 0.035 * b), shoulder=v['shoulder'] + 0.008 * b,
+             limb=v['limb'] * (1 + 0.13 * b), pelvis=(pe[0] + 0.03 * b, pe[1], pe[2] + 0.03 * b),
+             leg=v['leg'] * (1 + 0.13 * b))
+    return v
+
+
+TOP_VOL = volumes()
 
 
 def top(cw):
     """Sweatshirt: torso + hood family, one family per sleeve (no webbing to the body), unioned."""
     body = meta('TopBody', 0.008)
-    ell(body, (0, 1.22, 0.0), (0.185, 0.17, 0.126))               # chest
-    ell(body, (0, 1.035, -0.018), (0.192, 0.15, 0.142))           # soft belly
-    ell(body, (0, 0.925, 0.0), (0.196, 0.07, 0.136))              # loose hem flare
-    cap(body, (-0.15, 1.342, 0.006), (0.15, 1.342, 0.006), 0.066)    # sloped shoulders
+    v = TOP_VOL
+    ell(body, (0, 1.22, 0.0), v['chest'])                         # chest
+    ell(body, (0, 1.035, v['belly_z']), v['belly'])               # soft belly
+    ell(body, (0, 0.925, 0.0), v['flare'])                        # loose hem flare
+    cap(body, (-0.15, 1.342, 0.006), (0.15, 1.342, 0.006), v['shoulder'])    # sloped shoulders
     ell(body, (0, 1.425, 0.085), (0.15, 0.07, 0.08))              # bunched hood behind the neck
     fams = [body]
     for s in (-1, 1):
         sl = meta('Sleeve%d' % s, 0.008)
         sh, el, wr = mirror(SHOULDER, s), mirror(ELBOW, s), mirror(WRIST, s)
-        ball(sl, sh + Vector((-s * 0.008, -0.01, 0)), 0.064)
-        cap(sl, sh, el, 0.063)
-        cap(sl, el, wr - mirror(FORE, s) * 0.105, 0.058)            # rounded end stops short of the cuff
+        ball(sl, sh + Vector((-s * 0.008, -0.01, 0)), 0.064 * v['limb'])
+        cap(sl, sh, el, 0.063 * v['limb'])
+        cap(sl, el, wr - mirror(FORE, s) * 0.105, 0.058 * v['limb'])            # rounded end stops short of the cuff
         fams.append(sl)
     R.PARTS['top'] = {'body': R.meta_tree(body), 'L': R.meta_tree(fams[1]), 'R': R.meta_tree(fams[2])}
     return solid('Top', fams, 0.006, 5000, lib.mat('Top' + cw['top'][1:], cw['top'], 0.9))
@@ -135,13 +281,13 @@ def top(cw):
 
 def pants(cw):
     pel = meta('Pelvis', 0.008)
-    ell(pel, (0, 0.86, 0.004), (0.178, 0.125, 0.126))
+    ell(pel, (0, 0.86, 0.004), TOP_VOL['pelvis'])
     fams = [pel]
     for s in (-1, 1):
         lg = meta('Leg%d' % s, 0.008)
         h, k, a = mirror(HIP, s), mirror(KNEE, s), mirror(ANKLE, s)
-        cap(lg, h, k, 0.084)
-        cap(lg, k, a + Vector((0, 0.07, 0)), 0.076)                # rounded end hides inside the cuff
+        cap(lg, h, k, 0.084 * TOP_VOL['leg'])
+        cap(lg, k, a + Vector((0, 0.07, 0)), 0.076 * TOP_VOL['leg'])                # rounded end hides inside the cuff
         fams.append(lg)
     R.PARTS['pants'] = {'body': R.meta_tree(pel), 'L': R.meta_tree(fams[1]), 'R': R.meta_tree(fams[2])}
     return solid('Pants', fams, 0.006, 3500, lib.mat('Pants' + cw['pants'][1:], cw['pants'], 0.88))
@@ -312,17 +458,24 @@ def face(head_node, skin_obj):
     ink = lib.mat('Mouth', INK, 0.7)
     front = Frame((0, 0, 0))                                         # projection along +Z (from the front)
     for s, side in ((-1, 'L'), (1, 'R')):
-        hit, _ = surf.front(s * 0.05, EYE_Y)
-        e = Vector((s * 0.05, EYE_Y, hit.z + 0.011))
+        ex = 0.052 if LOOK_B else 0.05
+        hit, _ = surf.front(s * ex, EYE_Y)
+        e = Vector((s * ex, EYE_Y, hit.z + 0.011))
         eye = lib.empty('Eye' + side, e, head_node)
-        semi = (0.029, 0.037, 0.024)
+        semi = (0.032, 0.04, 0.025) if LOOK_B else (0.029, 0.037, 0.024)
         w = lib.sphere('White' + side, 1.0, white, Frame(e), eye, scale=semi, seg=24, rings=14)
         look = lib.empty('Look' + side, e, eye)                       # rotate for gaze
         wsurf = Surface(w)
-        p = decal('Pupil' + side, wsurf, ellipse(0.0145, 0.018, 20, -s * 0.003, -0.002), Frame((e.x, e.y, 0)),
+        pr = (0.0195, 0.0235) if LOOK_B else (0.0145, 0.018)          # look B: big dark eyes, bright highlight
+        p = decal('Pupil' + side, wsurf, ellipse(pr[0], pr[1], 20, -s * 0.003, -0.002), Frame((e.x, e.y, 0)),
                   pupil, look, offset=0.0009)
-        g = decal('Glint' + side, wsurf, ellipse(0.0045, 0.0045, 10, -s * 0.003 + 0.006, 0.008), Frame((e.x, e.y, 0)),
+        gr = 0.0062 if LOOK_B else 0.0045
+        go = (0.007, 0.009) if LOOK_B else (0.006, 0.008)
+        g = decal('Glint' + side, wsurf, ellipse(gr, gr, 10, -s * 0.003 + go[0], go[1]), Frame((e.x, e.y, 0)),
                   glint, look, offset=0.0018)
+        if LOOK_B:
+            decal('Glint2' + side, wsurf, ellipse(0.0026, 0.0026, 8, -s * 0.003 - 0.006, -0.009),
+                  Frame((e.x, e.y, 0)), glint, look, offset=0.0018)
         # Upper lid: closed half-ellipsoid shell around the eye; rotation about X opens (+) / closes (-).
         # LidHalf: the same lid baked half-closed (dazed), hidden.
         for lname, ang in (('Lid', 45), ('LidHalf', -8)):
@@ -337,11 +490,28 @@ def face(head_node, skin_obj):
             if lname == 'LidHalf':
                 lid['hidden'] = True
         # Brow: chunky clump on the forehead.
-        pts = on_curve(surf, [(s * 0.022, 1.676), (s * 0.05, 1.688), (s * 0.08, 1.678)], front, 0.006)
-        lib.tube('Brow' + side, pts, 0.0095, lib.mat('Brow', BROW, 0.75), head_node, res=6, bevel_res=2)
-        bl = decal('Blush' + side, surf, ellipse(0.026, 0.016, 18, s * 0.083, 1.567), front,
-                   lib.mat('Blush', BLUSH, 0.7), head_node, offset=0.0015)
-        bl['hidden'] = True
+        if LOOK_B:                                                  # thick, short, rounded brows (tapered clay)
+            pts = on_curve(surf, [(s * 0.028, 1.683), (s * 0.052, 1.693), (s * 0.075, 1.686)], front, 0.008)
+            mb = meta('Brow' + side, 0.0025)
+            chain(mb, pts, *((0.0108, 0.0078) if FEMALE else (0.0128, 0.0098)), step=0.003)
+            adopt(solid('Brow' + side, [mb], 0.0012, 900, lib.mat('Brow', BROW, 0.75)), head_node, pts[1])
+        else:
+            pts = on_curve(surf, [(s * 0.022, 1.676), (s * 0.05, 1.688), (s * 0.08, 1.678)], front, 0.006)
+            lib.tube('Brow' + side, pts, 0.0095, lib.mat('Brow', BROW, 0.75), head_node, res=6, bevel_res=2)
+        if LOOK_B:                                                  # warm cheeks, always on
+            decal('Blush' + side, surf, ellipse(0.03, 0.018, 18, s * 0.086, 1.56), front,
+                  lib.mat('Blush', '#EE9488', 0.9), head_node, offset=0.0015)
+        else:
+            bl = decal('Blush' + side, surf, ellipse(0.026, 0.016, 18, s * 0.083, 1.567), front,
+                       lib.mat('Blush', BLUSH, 0.7), head_node, offset=0.0015)
+            bl['hidden'] = True
+        if FEMALE:                                                  # a short lash wing at the outer upper corner
+            mb = meta('Lash' + side, 0.002)
+            for a, l in ((0.35, 0.011), (0.7, 0.01)):
+                c = e + Vector((s * semi[0] * math.cos(a) * 0.95, semi[1] * math.sin(a) * 0.95, -0.014))
+                tip = c + Vector((s * l * math.cos(a + 0.2), l * math.sin(a + 0.2), -0.002))
+                chain(mb, [c, (c + tip) / 2 + Vector((s * 0.001, 0.0015, 0)), tip], 0.0034, 0.0018, step=0.0015)
+            adopt(solid('Lash' + side, [mb], 0.0009, 500, lib.mat('Brow', BROW, 0.75)), head_node, e)
     mouth = lib.empty('Mouth', (0, 1.522, -0.11), head_node)
     smile = on_curve(surf, [(-0.036, 1.531), (-0.018, 1.521), (0, 1.518), (0.018, 1.521), (0.036, 1.531)], front, 0.002)
     lib.tube('Smile', smile, 0.0042, ink, mouth, res=8, bevel_res=2)
@@ -402,11 +572,17 @@ def build(cw_id):
     skin = adopt(head_skin(), head, NECK)
     hr = adopt(hair(skin), head, NECK)
     face(head, skin)
+    k = SPEC['head']
+    if k != 1.0:                                  # bigger head, scaled about the eye so the eye camera stays put
+        new = HEAD_PIVOT + (NECK - HEAD_PIVOT) * k
+        head.matrix_world = Matrix.Translation(B(new)) @ Matrix.Scale(k, 4)
+        bpy.context.view_layer.update()
     adopt(top(cw), body, (0, 1.1, 0))
     adopt(pants(cw), body, (0, 0.5, 0))
     rib_img = rib_texture(cw['rib'])
     rib = lib.mat('Rib' + cw['rib'][1:], cw['rib'], 0.9, image=rib_img[0], normal=rib_img[1])
-    band('Hem', Frame((0, 0.875, 0.0)), 0.188, 0.132, 0.05, 0.04, rib, body)
+    fl = TOP_VOL['flare']
+    band('Hem', Frame((0, 0.875, 0.0)), fl[0] - 0.008, fl[2] - 0.004, 0.05, 0.04, rib, body)
     top_obj = bpy.data.objects['Top']
     tsurf = Surface(top_obj)
 
@@ -417,8 +593,10 @@ def build(cw_id):
     for s, side in ((-1, 'L'), (1, 'R')):
         wr = mirror(WRIST, s)
         d = mirror(FORE, s)
-        band('Cuff' + side, frame_along(wr - d * 0.042, d), 0.046, 0.046, 0.05, 0.1, rib, body)
-        band('PantCuff' + side, Frame(mirror(ANKLE, s) + Vector((0, -0.002, 0))), 0.083, 0.083, 0.05, 0.05,
+        lr = 0.046 * TOP_VOL['limb']
+        band('Cuff' + side, frame_along(wr - d * 0.042, d), lr, lr, 0.05, 0.1, rib, body)
+        pr = 0.083 * TOP_VOL['leg']
+        band('PantCuff' + side, Frame(mirror(ANKLE, s) + Vector((0, -0.002, 0))), pr, pr, 0.05, 0.05,
              lib.mat('PantCuff' + cw['pants'][1:], cw['pants'], 0.88), body)
     lace_m = lib.mat('Lace' + cw['lace'][1:], cw['lace'], 0.85)
     for s in (-1, 1):
@@ -434,6 +612,12 @@ def build(cw_id):
           rings=5, depth=0.006)
     shoes(cw, body)
     hands(body)
+    if LOOK_B:                                    # matte clay: no sheen except the eyes
+        for m in bpy.data.materials:
+            if m.node_tree and not any(x in m.name for x in ('Eye', 'Pupil', 'Glint', 'Teeth', 'Tongue')):
+                for n in m.node_tree.nodes:
+                    if n.type == 'BSDF_PRINCIPLED':
+                        n.inputs['Roughness'].default_value = max(n.inputs['Roughness'].default_value, 0.92)
     rig_up(root, head)
     lib.count_tris()
     return root
@@ -446,26 +630,162 @@ SKIN_KIND = [('Top', 'top', 4), ('Pants', 'pants', 4), ('HeadSkin', 'neck', 3), 
 
 
 def rig_up(root, head):
-    """Humanoid skeleton, weights, head parts on the Head bone, clips (contract: interfaces.md "Human rig")."""
-    table = R.bone_table(LANDMARKS)
+    """Humanoid skeleton, weights, head parts on the Head bone, clips (contract: interfaces.md "Human rig").
+    Weights come from the canonical (shipped male) shape; the spec warp then moves vertices and bones together."""
+    table = rig_table()
     rig = R.armature(table, root)
     for o in [x for x in bpy.data.objects if x.type == 'MESH']:
         if o.name.startswith(('Hand', 'Nails')):
             if o.name.startswith('Hand'):
                 R.soften_knuckles(o, -1 if o.name.endswith('L') else 1)
+            wr = mirror(WRIST, -1 if o.name.endswith('L') else 1)
+            if not IDENT:
+                o.matrix_world = Matrix.Translation(B(warp(wr) - wr)) @ o.matrix_world   # rigid with the wrist
             R.skin(o, [], rig)                                        # vertex groups already set in hands()
             continue
         kind = next(((k, n) for pre, k, n in SKIN_KIND if o.name.startswith(pre)), None)
         if kind is None:                                              # hair and face parts ride the Head bone
             continue
         ws = R.weights_for(o, kind[0], LANDMARKS)
-        R.skin(o, R.smooth(o, ws, kind[1]) if kind[1] else ws, rig)
+        ws = R.smooth(o, ws, kind[1]) if kind[1] else ws
+        mw = o.matrix_world.copy()
+        canon = [G(mw @ v.co) for v in o.data.vertices]
+        if SPEC['chest'] and kind[0] in ('top', 'torso'):
+            ws = [chest_weights(c, w) for c, w in zip(canon, ws)]
+        inv = mw.inverted()
+        for v, c in zip(o.data.vertices, canon if not IDENT else ()):
+            v.co = inv @ B(warp(c))
+        R.skin(o, ws, rig)
+        if SPEC['chest'] and kind[0] in ('top', 'torso') and any(bust(c)[0] > 0 for c in canon):
+            o.shape_key_add(name='Basis')
+            sk = o.shape_key_add(name='Chest_Size')                   # 0 flat .. 1 full (contract: interfaces.md Characters)
+            for i, c in enumerate(canon):
+                sk.data[i].co = inv @ B(warp(c + bust(c)[1]))
+    if not IDENT:
+        head.matrix_world = Matrix.Translation(B(warp(NECK) - NECK)) @ head.matrix_world   # hair and face: rigid
+        bpy.context.view_layer.update()
     R.attach(head, rig, 'Head')
-    rig['clips'] = R.clips(rig, ARM_UP, LANDMARKS)
+    rig['clips'] = R.clips(rig, ARM_UP, LANDMARKS, full=SPEC['clips'] == 'all', mock=SPEC['mock'])
     body = bpy.data.objects.get('Body')
     if body and not body.children:
         bpy.data.objects.remove(body, do_unlink=True)
     return rig
+
+
+def spec_markers():
+    if IDENT:
+        return R.markers(LANDMARKS)
+    out = []
+    for m in R.markers(LANDMARKS):
+        p = Vector(m['pos'])
+        if m['bone'] == 'Head':
+            p = head_xf(p)
+        elif m['name'].startswith('Grip'):
+            wr = mirror(WRIST, -1 if m['name'].endswith('L') else 1)
+            p = p + warp(wr) - wr
+        else:
+            p = warp(p)
+        out.append(dict(m, pos=list(p)))
+    return out
+
+
+def spec_ragdoll():
+    """Canonical ragdoll through the warp (vertical bodies shorten with sy; the head scales with the head)."""
+    if IDENT:
+        return R.ragdoll(R.bone_table(LANDMARKS))
+    out = []
+    for b in R.ragdoll(R.bone_table(LANDMARKS)):
+        b = dict(b, joint=dict(b['joint']))
+        if b['bone'] == 'Head':
+            b['centre'] = list(head_xf(b['centre']))
+            b['radius'] = b['radius'] * SPEC['head']
+            b['height'] = b['height'] * SPEC['head']
+        else:
+            b['centre'] = list(warp(b['centre']))
+            if abs(b['axis'][1]) > 0.7:
+                b['height'] = b['height'] * SPEC['sy']
+        b['joint']['pos'] = list(warp(b['joint']['pos']))
+        out.append(b)
+    return out
+
+
+# --- spec warp and chest (character-system mock) --------------------------------------------------------------
+
+def _ss(x):
+    x = max(0.0, min(1.0, x))
+    return x * x * (3 - 2 * x)
+
+
+def warp(p):
+    """Canonical (shipped male) body -> the spec: height scale below the neck (head carried rigidly), narrower
+    shoulders (arms shift in, the upper torso narrows). Identity for the shipped Human."""
+    if IDENT:
+        return p
+    p = Vector(p)
+    sy, nar = SPEC['sy'], SPEC['narrow']
+    y = p.y * sy if p.y <= NECK.y else p.y + NECK.y * (sy - 1)
+    x = p.x
+    if nar:
+        t = _ss((p.y - 1.12) / 0.16)
+        ax = abs(x)
+        ax = ax - nar * t if ax > 0.2 else ax * (1 - nar * t / 0.2)
+        x = math.copysign(ax, x)
+    return Vector((x, y, p.z))
+
+
+def head_xf(p):
+    """Where a canonical head point ends up: scaled about the eye (look B), then shifted with the neck."""
+    if IDENT:
+        return p
+    p = Vector(p)
+    return HEAD_PIVOT + (p - HEAD_PIVOT) * SPEC['head'] + (warp(NECK) - NECK)
+
+
+BUST = Vector((0.088, 1.205, -0.1))
+
+
+def bust(p):
+    """Chest key in canonical space: (influence 0..1, offset at size 1). Two soft rounds joined across the middle (a
+    hoodie bridges them: no cleavage), rounded on top, a short taper below back to the ribs (not a belly)."""
+    if p.z > -0.02:
+        return 0.0, Vector()
+    ax = abs(p.x)
+    gx = 1.0 if ax < BUST.x else _ss(1 - (ax - BUST.x) / 0.07)
+    gx *= 0.82 + 0.18 * _ss(1 - abs(ax - BUST.x) / 0.06)              # a little fuller over each side
+    dy = p.y - BUST.y
+    gy = _ss(1 - dy / 0.075) if dy >= 0 else max(0.0, 1 + dy / 0.11) ** 1.6
+    g = gx * gy * _ss((-0.02 - p.z) / 0.06)
+    return g, Vector((0, -0.004 * (1 if dy >= 0 else -1), -0.045)) * g
+
+
+def chest_weights(p, w):
+    """Blend the bust region onto the Left/RightBreast spring bones."""
+    out = dict(w)
+    for s in (-1, 1):
+        if p.z > -0.02:
+            break
+        g = _ss(1 - abs(abs(p.x) - BUST.x) / 0.08) * _ss(1 - abs(p.y - BUST.y) / 0.1) if p.x * s > 0 else 0.0
+        g *= _ss((-0.02 - p.z) / 0.06) * 0.85
+        if g > 0:
+            out = {k: v * (1 - g) for k, v in out.items()}
+            out[R.side_name(s) + 'Breast'] = g
+    return out
+
+
+def rig_table():
+    """The bone table for this spec: canonical joints through the warp, head bones with the head, chest bones."""
+    t = []
+    for name, h, tl, up, par in R.bone_table(LANDMARKS):
+        if IDENT:
+            t.append((name, h, tl, up, par))
+            continue
+        f = head_xf if name == 'Head' else warp
+        t.append((name, warp(h), f(tl), up, par))
+    if SPEC['chest']:
+        for s in (-1, 1):
+            c = Vector((BUST.x * s, BUST.y, -0.03))
+            t.append((R.side_name(s) + 'Breast', warp(c), warp(c + Vector((0, 0, -0.1))), Vector((0, 1, 0)), 'Chest'))
+    return t
 
 
 def export(root, path):
@@ -481,9 +801,9 @@ def export(root, path):
 
 def rig_json(path, hidden):
     import json
-    table = R.bone_table(LANDMARKS)
+    table = rig_table()
     s = lambda v: [round(x, 5) for x in v]
-    data = {'markers': R.markers(LANDMARKS), 'ragdoll': R.ragdoll(table), 'hidden': hidden, 'expressions': EXPRESSIONS, 'loops': R.LOOPS,
+    data = {'markers': spec_markers(), 'ragdoll': spec_ragdoll(), 'hidden': hidden, 'expressions': EXPRESSIONS, 'loops': R.LOOPS,
             'clips': R.CLIPS,
             'first_person': ['HandL', 'HandR', 'NailsL', 'NailsR', 'CuffL', 'CuffR'],   # meshes the player's own camera sees
             'look': {'neck': 'Neck', 'head': 'Head', 'share': [0.35, 0.65], 'yaw': 70, 'pitch': [-40, 30],
@@ -491,18 +811,36 @@ def rig_json(path, hidden):
             'render_layer': 2, 'ragdoll_layer': 2, 'ragdoll_mask': 1,
             'ik': {side: {'arm': [side + 'UpperArm', side + 'LowerArm', side + 'Hand'],
                           'leg': [side + 'UpperLeg', side + 'LowerLeg', side + 'Foot'],
-                          'elbow_pole': s(mirror(ELBOW, -1 if side == 'Left' else 1) + Vector((0, 0, 0.35))),
-                          'knee_pole': s(mirror(KNEE, -1 if side == 'Left' else 1) + Vector((0, 0, -0.45)))}
+                          'elbow_pole': s(warp(mirror(ELBOW, -1 if side == 'Left' else 1)) + Vector((0, 0, 0.35))),
+                          'knee_pole': s(warp(mirror(KNEE, -1 if side == 'Left' else 1)) + Vector((0, 0, -0.45)))}
                    for side in ('Left', 'Right')},
             'bones': [b[0] for b in table]}
+    if SPEC['mock']:                              # shared clips: Hips position tracks normalised by the hip height
+        data['motion'] = {'hips_height': round(warp(Vector((0, 0.84, 0))).y, 5)}
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=1)
+
+
+def char_json(path, cw):
+    """character.json (contract: interfaces.md "Characters"): colour slots for the shared materials, the chest."""
+    paint = {'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush',
+             'CK2_Top' + cw['top'][1:]: 'top', 'CK2_Pants' + cw['pants'][1:]: 'bottom',
+             'CK2_PantCuff' + cw['pants'][1:]: 'bottom', 'CK2_Shoe' + cw['shoe'][1:]: 'shoes'}
+    colors = {'skin': SKIN, 'hair': HAIR, 'eyes': '#2E2624', 'blush': '#EE9488' if LOOK_B else BLUSH,
+              'top': cw['top'], 'bottom': cw['pants'], 'shoes': cw['shoe']}
+    data = {'paint': paint, 'colors': colors}
+    if SPEC['chest']:
+        data['shapes'] = {'Chest_Size': 0.5}
+        data['chest'] = {'chains': [['LeftBreast', 'LeftBreast'], ['RightBreast', 'RightBreast']], 'radius': 0.05}
     with open(path, 'w') as f:
         json.dump(data, f, indent=1)
 
 
 def main():
     only = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
-    out_art = os.path.join(lib.ROOT, 'human', 'art')
-    out_prev = os.path.join(lib.ROOT, 'previews', 'human')
+    out_art = os.environ.get('HUMAN_OUT') or os.path.join(lib.ROOT, 'human', 'art')     # mock builds go elsewhere
+    name = os.environ.get('HUMAN_NAME', 'human')                                         # <name>.glb + <name>_rig.json
+    out_prev = os.environ.get('HUMAN_OUT') or os.path.join(lib.ROOT, 'previews', 'human')
     os.makedirs(out_art, exist_ok=True)
     os.makedirs(out_prev, exist_ok=True)
     for cw_id in COLOURWAYS:
@@ -512,11 +850,14 @@ def main():
         export(root, os.path.join(out_prev, 'human_%s.glb' % cw_id))
         print('HUMAN %s tris=%d' % (cw_id, lib.count_tris()))
         if cw_id == 'A':
-            hidden = export(root, os.path.join(out_art, 'human.glb'))
-            rig_json(os.path.join(out_art, 'human_rig.json'), hidden)
+            hidden = export(root, os.path.join(out_art, name + '.glb'))
+            rig_json(os.path.join(out_art, name + '_rig.json'), hidden)
+            char_json(os.path.join(out_art, 'character.json'), COLOURWAYS['A'])
             os.makedirs(os.path.join(lib.ROOT, 'source', 'human'), exist_ok=True)
-            bpy.ops.wm.save_as_mainfile(filepath=os.path.join(lib.ROOT, 'source', 'human', 'human.blend'))
+            if not os.environ.get('HUMAN_OUT'):
+                bpy.ops.wm.save_as_mainfile(filepath=os.path.join(lib.ROOT, 'source', 'human', 'human.blend'))
     print('HUMAN_BUILT')
 
 
-main()
+if __name__ == '__main__':
+    main()
