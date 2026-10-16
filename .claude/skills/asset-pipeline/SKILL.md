@@ -55,8 +55,9 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
 
 - `scripts/tools/cockpit_cycle.sh`: build, audit with each CLIP pair, reimport and verify in one call (env knobs pass
   through, e.g. `NB_YAW=12`). Use it instead of chaining four commands per iteration.
-- `scripts/tools/aspects.sh NAME [preview args]`: seat view at 16:9, 4:3, 21:9 and Deck plus a 2×2 sheet. Anything at
-  a frame edge, or with a px rule (caps, gaps), is checked at all four aspects. Preview result lines print per aspect.
+- `scripts/tools/aspects.sh NAME [preview args]`: seat view at 16:9, 16:10 (Deck) and 21:9 plus a sheet. The frame is
+  locked to 16:10–21:9 with bars outside (user, 2026-10-16); `ASPECTS_43=1` adds 4:3 as a bars check only. Anything at
+  a frame edge, or with a px rule (caps, gaps), is checked at every aspect. Preview result lines print per aspect.
 - `Blender -b source/cockpit/cockpit_v2.blend --python scripts/tools/probe.py -- NAME...` prints world bounds and
   the 1080p seat rect; `-- --near x,y,z R` lists what is within R of a point.
 - `Godot --headless -s scripts/tools/sheet.gd -- OUT.png 800 2 a.png b.png ...` makes a contact sheet from any PNGs.
