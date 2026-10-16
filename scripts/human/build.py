@@ -313,14 +313,13 @@ def hair_chunky(head):
         mb = meta('Whorl%d' % j, 0.0045)
         lock(mb, surf, pts, 0.022, 0.015)
         fams.append(mb)
-    mb = meta('Crown', 0.0055)                                       # tufts lifting off the top
-    for tip in ((-0.03, 1.865, 0.075), (0.028, 1.875, 0.06)):
-        chain(mb, [(0.0, 1.8, 0.045), tip], 0.026, 0.012)
+    mb = meta('Cowlick', 0.0045)                                     # one rounded flick leaning back off the whorl
+    lock(mb, surf, [(math.pi, 1.785, 0.022), (math.pi + 0.1, 1.775, 0.045), (math.pi + 0.16, 1.758, 0.062)], 0.021, 0.017)
     fams.append(mb)
     return union_shell(solid('Hair', fams, 0.003, 9000, lib.mat('Hair', HAIR, 0.9)), shell, 0.003, 10000)
 
 
-BUN = Vector((0, 1.84, 0.012))                                       # bun centre (canonical head space)
+BUN, BUN_S = Vector((0, 1.856, 0.012)), 1.4                          # bun centre (canonical head space), scale
 
 
 def hair_bun(head):
@@ -347,29 +346,30 @@ def hair_bun(head):
         mb = meta('Front%d' % i, 0.0045)
         lock(mb, surf, pts, 0.0125, 0.0105)
         fams.append(mb)
-    bun = BUN
+    bun, z = BUN, BUN_S                                              # messy-bun scale (crops/female_head_body.png)
     core = meta('BunCore', 0.0055)
-    ball(core, bun, 0.03)
-    ball(core, bun + Vector((0, -0.054, -0.008)), 0.034)                 # seat it on the crown, inside the rolls
+    ball(core, bun, 0.03 * z)
+    ball(core, bun + Vector((0, -0.062, -0.01)), 0.044)              # seat it on the crown, inside the rolls
     fams.append(core)
     for j, (h, tilt, a0) in enumerate(((-0.024, 0.2, 0.0), (0.002, -0.15, 2.1), (0.026, 0.12, 4.0))):
         mb = meta('Roll%d' % j, 0.004)                               # round bun: three thick locks wrapped round it,
-        rr = math.sqrt(0.04 ** 2 - h * h)                            # a tube apart (a groove between), slightly askew
+        h *= z                                                       # a tube apart (a groove between), slightly askew
+        rr = math.sqrt((0.04 * z) ** 2 - h * h)
         pts = [bun + Vector((rr * math.cos(a0 + t), h + tilt * rr * math.cos(a0 + t - 0.8), rr * math.sin(a0 + t)))
                for t in [k * 2 * math.pi * 0.9 / 30 for k in range(31)]]
-        chain(mb, pts, 0.0125, 0.0105, step=0.003)
+        chain(mb, pts, 0.0125 * z, 0.0105 * z, step=0.003)
         fams.append(mb)
     knot = meta('BunKnot', 0.004)                                    # the tucked end on top
-    ball(knot, bun + Vector((0.004, 0.038, 0.002)), 0.02)
+    ball(knot, bun + Vector((0.004, 0.038, 0.002)) * z, 0.02 * z)
     fams.append(knot)
     for j, (az, up) in enumerate(((0.5, 0.1), (2.7, -0.15), (4.3, 0.3))):  # loose curls springing out of the bun
         mb = meta('BunCurl%d' % j, 0.0035)
         o = Vector((math.cos(az), up, math.sin(az))).normalized()
         u = o.cross(Vector((0, 1, 0))).normalized()
         w = o.cross(u)
-        pts = [bun + o * (0.045 + 0.04 * t) + Vector((0, -0.03 * t * t, 0))
+        pts = [bun + o * (0.045 * z + 0.045 * t) + Vector((0, -0.03 * t * t, 0))
                + (u * math.cos(t * 12) + w * math.sin(t * 12)) * 0.009 for t in [k / 30 for k in range(31)]]
-        chain(mb, pts, 0.0062, 0.0042, step=0.0025)
+        chain(mb, pts, 0.0066, 0.0044, step=0.0025)
         fams.append(mb)
     for k, (x0, x1, y1, r) in enumerate(((0.05, -0.05, 1.724, 0.024), (0.04, -0.1, 1.71, 0.02))):
         mb = meta('Fringe%d' % k, 0.0055)
@@ -683,13 +683,13 @@ def face(head_node, skin_obj):
                 lid['hidden'] = True
         # Brow: chunky clump on the forehead.
         if LOOK_B:                                                  # thick, short, rounded brows (tapered clay)
-            pts = on_curve(surf, [(s * 0.028, 1.683), (s * 0.052, 1.693), (s * 0.075, 1.686)], front, 0.004)
+            pts = on_curve(surf, [(s * 0.028, 1.683), (s * 0.052, 1.693), (s * 0.072, 1.686)], front, 0.002)
             if FEMALE:                                              # lighter: thinner, softer colour, a gentle arch
                 pts = on_curve(surf, [(s * 0.03, 1.688), (s * 0.055, 1.699), (s * 0.08, 1.69)], front, 0.004)
             mb = meta('Brow' + side, 0.0025)
             chain(mb, pts, *((0.0072, 0.0052) if FEMALE else (0.0128, 0.0098)), step=0.003)
             brow = solid('Brow' + side, [mb], 0.0012, 900, lib.mat('Brow', '#86583F' if FEMALE else BROW, 0.75))
-            hug(brow, surf, 0.0035 if FEMALE else 0.0045)
+            hug(brow, surf, 0.0035 if FEMALE else 0.0034)
             adopt(brow, head_node, pts[1])
         else:
             pts = on_curve(surf, [(s * 0.022, 1.676), (s * 0.05, 1.688), (s * 0.08, 1.678)], front, 0.006)

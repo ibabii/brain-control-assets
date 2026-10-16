@@ -83,8 +83,8 @@
    "kind": "hair",
    "root": "hair_bun_Bun",
    "end": "hair_bun_Bun",
-   "radius": 0.035,
-   "tip": 0.02,
+   "radius": 0.05,
+   "tip": 0.03,
    "stiffness": 1.4,
    "drag": 0.45,
    "gravity": 0.15
