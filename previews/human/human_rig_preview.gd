@@ -7,6 +7,7 @@ extends Node3D
 ##   clip    one Human playing --clip NAME, one tile per --times "0,0.5,.." (seconds) and per shot; --tub sits it on
 ##           the bathroom tub's Seat
 ## godot --path . res://previews/human/human_rig_preview.tscn -- --capture NAME --mode pose [--shots "name@eye@look[@fov];..."]
+##   [--grey]  neutral light-grey studio with a back fill (turnarounds, e.g. --mode tpose)
 
 const POSES := {   # bone: [local axis, degrees] applied on top of the rest pose
 	'tpose': {},       # filled in _tpose: arms horizontal, forearms straight, fingers spread
@@ -198,7 +199,8 @@ func _ragdoll() -> void:
 func _stage() -> void:
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color('#E9DCC6')
+	var grey := '--grey' in OS.get_cmdline_user_args()
+	env.background_color = Color('#D9D9D9') if grey else Color('#E9DCC6')
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(1, 0.93, 0.86)
 	env.ambient_light_energy = 0.55
@@ -216,7 +218,12 @@ func _stage() -> void:
 	var pm := PlaneMesh.new()
 	pm.size = Vector2(8, 8)
 	var fm := StandardMaterial3D.new()
-	fm.albedo_color = Color('#F1E4CF')
+	fm.albedo_color = Color('#E6E6E6') if grey else Color('#F1E4CF')
+	if grey:   # fill from behind so the back view isn't flat
+		var fill := DirectionalLight3D.new()
+		fill.light_energy = 0.6
+		fill.rotation_degrees = Vector3(-30, -20, 0)
+		add_child(fill)
 	pm.material = fm
 	floor.mesh = pm
 	add_child(floor)
