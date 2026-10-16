@@ -508,12 +508,12 @@ def ragdoll(table):
                      'centre': list(c), 'axis': list(cap_axis.normalized()),
                      'joint': dict(type=joint, pos=list(h), along=list(axis), bend=list(bend), **lim)})
     body('Hips', 11.0, 0.13, 'none', across=(1, 0, 0), length=0.36, centre=Vector((0, 0.88, 0)))
-    body('Spine', 9.0, 0.13, 'cone', across=(1, 0, 0), length=0.38, centre=Vector((0, 1.04, -0.012)), swing=20, twist=15)
-    body('Chest', 14.0, 0.135, 'cone', across=(1, 0, 0), length=0.42, centre=Vector((0, 1.25, 0)), swing=20, twist=15)
+    body('Spine', 9.0, 0.13, 'cone', across=(1, 0, 0), length=0.38, centre=Vector((0, 1.04, -0.012)), swing=25, twist=25)   # active ragdoll: torso twist (2026-10-16)
+    body('Chest', 14.0, 0.135, 'cone', across=(1, 0, 0), length=0.42, centre=Vector((0, 1.25, 0)), swing=25, twist=25)
     body('Head', 6.0, 0.135, 'cone', length=0.06, centre=Vector((0, 1.62, 0.0)), swing=35, twist=40)
     for s in (-1, 1):
         n = side_name(s)
-        body(n + 'UpperArm', 2.5, 0.062, 'cone', swing=75, twist=40)
+        body(n + 'UpperArm', 2.5, 0.062, 'cone', swing=100, twist=40)   # arms over the head when flailing
         body(n + 'LowerArm', 1.6, 0.055, 'hinge', lower=-135, upper=0)
         body(n + 'Hand', 0.6, 0.042, 'cone', swing=40, twist=25)
         body(n + 'UpperLeg', 8.0, 0.083, 'cone', swing=45, twist=20)
