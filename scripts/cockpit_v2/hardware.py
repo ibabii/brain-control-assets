@@ -234,24 +234,12 @@ def console(root):
     rim = [(x, y) for x, y in rrect(0.30, 0.25, 0.03, 4)]
     lib.slab('SlotRim', rim, 0.016, 0.005, M('housing_dark', 0.6), top.child((SLOT_X, 0.01, 0.0)), group,
              holes=[list(reversed(rrect(0.26, 0.21, 0.02, 4)))])
-    # Right plate for UNDO / DISTRACT (positions read from the concept on the console plane).
-    lib.slab('ButtonPlate', _round_poly([(0.58, 0.13), (0.655, 0.13), (0.675, -0.11), (0.58, -0.11)], 0.025), 0.014,
-             0.004, M('inset', 0.6), top.child((0, 0, -0.004)), group)
-    # Decorative only (user call 2026-10-14): small matte caps, taped over, with an OUT OF ORDER note.
-    # The note text is a Label3D in cockpit_art.tscn (ConsoleDecals/OutOfOrder).
-    for name, x, z, col in (('UndoButton', 0.624, -0.075, 'undo'), ('DistractButton', 0.624, 0.03, 'distract')):
-        f = top.child((x, -z, 0.006))
-        lib.slab(name + 'Rim', circle(0.034, 28), 0.01, 0.004, M('rubber', 0.85), f, group)
-        lib.slab(name, circle(0.027, 28), 0.014, 0.005, M(col, 0.9), f.child((0, 0, 0.005)), group)
-        for a in (40, -40):
-            lib.tape_strip(name + 'Tape', f.child((0, 0, 0.0198), (0, 0, a + (5 if name[0] == 'U' else -7))),
-                           (0.068, 0.014), group, seed=a + len(name))       # long enough to wrap onto the rim
-    note = top.child((0.625, -0.09, 0.0115), (0, 0, -6))   # plate top is at 0.010; front edge, below the caps
-    lib.box('OutOfOrderNote', (0.078, 0.042, 0.002), lib.mat('LabelPaper', '#F4ECDC', 0.85), note, group)
-    tape(group, note, (-0.04, 0.0, 0.001), (0.016, 0.03), 4)
-    # Screws in a row along the back and front of the flat top, clear of the controls, plate and the console note.
+    # The UNDO/DISTRACT plate is gone (user 2026-10-15): plain top, a front screw to pair the back one, a faint mug ring.
+    lib.slab('MugRing', circle(0.038, 28), 0.0008, 0.0, lib.mat('MugRing', '#C2A27C', 0.7), top.child((0.62, -0.02, 0.0002)),
+             group, holes=[list(reversed(circle(0.032, 28)))])
+    # Screws in a row along the back and front of the flat top, clear of the controls and the console note.
     for x, y in ((-0.6, 0.152), (-0.3, 0.152), (0.33, 0.152), (0.6, 0.152), (-0.6, -0.112), (-0.38, -0.112),
-                 (-0.16, -0.112)):
+                 (-0.16, -0.112), (0.6, -0.112)):
         screw(group, top, (x, y, 0.0), on=slab)
     # Small knobs (decor) like the concept.
     for x, y in ((-0.5, 0.075), (0.11, 0.15)):          # left knob moved off the keys' new spot

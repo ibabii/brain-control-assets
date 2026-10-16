@@ -12,8 +12,8 @@
     "intercom": "cockpit/art/intercom/intercom.tscn (instanced as Intercom in cockpit_art.tscn) + intercom.glb, dotmatrix_5x7.json",
     "answering_machine": "cockpit/art/answering_machine/answering_machine.tscn (instanced as AnsweringMachine in cockpit_art.tscn) + .glb"
   },
-  "model_sha256": "0ef612d666b5c8b9b2fd4f43bba43e64f76e9bd77c249255b4b6248fccef42ac",
-  "triangles": 326206,
+  "model_sha256": "f89d029678b7435c79af0cd21bc331661075e521a4dae8d643489bc8ea90e7b8",
+  "triangles": 323426,
   "source": "source/cockpit/cockpit_v2.blend",
   "rebuild": "Blender -b --factory-startup --python scripts/cockpit_v2/build.py",
   "gameplay_hooks": {
@@ -108,7 +108,7 @@
   "modules": {
     "intercom": {
       "file": "cockpit/art/intercom/intercom.glb",
-      "sha256": "6bb53a98908aaa6cdc33c9eec433e18ecfc2d7d3da89001c108fef9b97ac6866"
+      "sha256": "42fa9a0a0fcb503423024786a72469df55535186ffff13c20601fbf53a7aae30"
     },
     "answering_machine": {
       "file": "cockpit/art/answering_machine/answering_machine.glb",

@@ -20,9 +20,8 @@ ZTOL = 0.0004          # surfaces closer than this flicker (z-fight)
 ZAREA = 2e-4           # 2 cm2 of shared surface
 # Designed joins (part sunk into the part it is mounted on). Patterns match name prefixes.
 ALLOW = [('ConsoleSlab', 'ConsoleRim'), ('ConsoleSlab', 'ConsoleSkirt'), ('ConsoleRim', 'ConsoleSkirt'),
-         ('ConsoleSlab', 'SlotInset'), ('SlotInset', 'SlotRim'), ('ConsoleSlab', 'SlotRim'), ('ConsoleSlab', 'ButtonPlate'),
-         ('ButtonPlate', 'UndoButton'), ('ButtonPlate', 'DistractButton'), ('UndoButton', 'UndoButton'),
-         ('DistractButton', 'DistractButton'), ('ConsoleSlab', 'Knob'), ('ConsoleSlab', 'Housing'),
+         ('ConsoleSlab', 'SlotInset'), ('SlotInset', 'SlotRim'), ('ConsoleSlab', 'SlotRim'), ('ConsoleSlab', 'MugRing'),
+         ('ConsoleSlab', 'Knob'), ('ConsoleSlab', 'Housing'),
          ('ConsoleSlab', 'Base'), ('SlotInset', 'Base'), ('SlotInset', 'Housing'), ('ConsoleSlab', 'Plate'), ('SlotInset', 'Plate'),
          ('ConsoleSlab', 'Screw'), ('ConsoleRim', 'Screw'), ('DeskTop', 'Deck'), ('DeskTop', 'Tray'),
          ('DeskTop', 'Console'), ('Tray', 'Console'), ('DeskTop', 'BrainFolds'), ('Deck', 'BrainFolds'),

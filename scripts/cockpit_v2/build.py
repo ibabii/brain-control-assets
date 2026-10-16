@@ -29,10 +29,12 @@ shelf_top = hardware.build(root)
 bulbs = dressing.build(root, shelf_top)
 ic, ic_layout = intercom.build(root)
 lib.conform_tapes()                       # after everything exists: drape tape onto what it holds
-# Contract names the machine's reel group `Tape`; a hardware tape strip took the name first (rename after the
-# tape cache, which keys on names).
-bpy.data.objects['Tape'].name = 'HwTape'
-next(o for o in dressing.MACHINE[0].children if o.name.startswith('Tape.')).name = 'Tape'
+# Contract names the machine's reel group `Tape`; if another tape strip took the name first, rename after the
+# tape cache, which keys on names.
+reels = next(o for o in dressing.MACHINE[0].children if o.name.split('.')[0] == 'Tape')
+if reels.name != 'Tape':
+    bpy.data.objects['Tape'].name = 'HwTape'
+    reels.name = 'Tape'
 
 os.makedirs(lib.ROOT + '/cockpit/art', exist_ok=True)
 glb = lib.ROOT + '/cockpit/art/cockpit_art.glb'
