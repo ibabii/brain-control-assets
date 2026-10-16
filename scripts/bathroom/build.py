@@ -1042,13 +1042,15 @@ def colliders():
     cz = (ZB + ZF) / 2
     tub_x, tub_z = -1.15, 0.55
     side = (0.8 - 0.62) / 2
-    boxes = [('Floor', (0, -0.05, cz), (w, 0.1, d)), ('Ceiling', (0, H + 0.05, cz), (w, 0.1, d)),
-             ('WallBack', (0, H / 2, ZB - 0.05), (w, H, 0.1)),
+    t = 1.0    # floor and walls 1 m thick, growing outward (inner faces fixed): a hard ragdoll fall can't punch through
+    ow, od = w + 2 * t, d + 2 * t    # overlap at the corners
+    boxes = [('Floor', (0, -t / 2, cz), (ow, t, od)), ('Ceiling', (0, H + 0.05, cz), (w, 0.1, d)),
+             ('WallBack', (0, H / 2, ZB - t / 2), (ow, H, t)),
              # Front wall split around the doorway (x 0.58..1.42, up to DOOR height).
-             ('WallFrontL', ((XL + DOOR_X[1]) / 2, H / 2, ZF + 0.05), (DOOR_X[1] - XL, H, 0.1)),
-             ('WallFrontR', ((DOOR_X[0] + XR) / 2, H / 2, ZF + 0.05), (XR - DOOR_X[0], H, 0.1)),
-             ('WallFrontTop', (sum(DOOR_X) / 2, (DOOR[2] + H) / 2, ZF + 0.05), (DOOR_X[0] - DOOR_X[1], H - DOOR[2], 0.1)),
-             ('WallLeft', (XL - 0.05, H / 2, cz), (0.1, H, d)), ('WallRight', (XR + 0.05, H / 2, cz), (0.1, H, d)),
+             ('WallFrontL', ((XL - t + DOOR_X[1]) / 2, H / 2, ZF + t / 2), (DOOR_X[1] - XL + t, H, t)),
+             ('WallFrontR', ((DOOR_X[0] + XR + t) / 2, H / 2, ZF + t / 2), (XR + t - DOOR_X[0], H, t)),
+             ('WallFrontTop', (sum(DOOR_X) / 2, (DOOR[2] + H) / 2, ZF + t / 2), (DOOR_X[0] - DOOR_X[1], H - DOOR[2], t)),
+             ('WallLeft', (XL - t / 2, H / 2, cz), (t, H, od)), ('WallRight', (XR + t / 2, H / 2, cz), (t, H, od)),
              ('Vanity', (0, 0.435, -0.45), (0.96, 0.87, 0.5)),
              ('TubFloor', (tub_x, 0.06, tub_z), (0.8, 0.12, 1.7)),
              ('TubSideWall', (tub_x - 0.4 + side / 2, 0.275, tub_z), (side, 0.55, 1.7)),
