@@ -1,0 +1,5 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://characters/parts/tshirt_m/art/tshirt_m.glb" id="1"]
+
+[node name="tshirt_m" instance=ExtResource("1")]

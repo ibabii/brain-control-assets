@@ -1206,7 +1206,9 @@
   "NailsL",
   "NailsR",
   "CuffL",
-  "CuffR"
+  "CuffR",
+  "Body_LowerArmL",
+  "Body_LowerArmR"
  ],
  "look": {
   "neck": "Neck",

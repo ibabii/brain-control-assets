@@ -883,19 +883,39 @@ def head_xf(p):
 BUST = Vector((0.088, 1.205, -0.1))
 
 
-def bust(p):
-    """Chest key in canonical space: (influence 0..1, offset at size 1). Two soft rounds joined across the middle (a
-    hoodie bridges them: no cleavage), rounded on top, tapering below back to the ribs. Size 1 is twice the first
-    mock's (user, 2026-10-16: bigger; the old 1.0 is ~0.5); the region grows with it so it stays a soft clay round."""
+BUST_A, BUST_H = 0.095, 0.09                     # footprint radius, height at size 1
+
+
+def _cap(r):
+    """Spherical cap of footprint BUST_A and height BUST_H at distance r (a ball, not a cone), soft at the rim."""
+    rb = (BUST_A ** 2 + BUST_H ** 2) / (2 * BUST_H)
+    r = r * 0.92                                       # footprint a little wider than A: the rim fades out
+    return max(0.0, math.sqrt(max(0.0, rb * rb - r * r)) - (rb - BUST_H)) * _ss((BUST_A + 0.02 - r) / 0.06)
+
+
+def bust(p, bridge=True):
+    """Chest key in canonical space: (influence 0..1, offset at size 1). A round cap per side, a little fuller below
+    the centre; with `bridge` (clothes) the middle fills in and the cloth drapes down from the fullest line (no
+    tuck under), the bare body keeps its round underside. User 2026-10-16: bigger,
+    rounder, less peaky."""
     if p.z > -0.02:
         return 0.0, Vector()
-    ax = abs(p.x)
-    gx = 1.0 if ax < BUST.x else _ss(1 - (ax - BUST.x) / 0.085)
-    gx *= 0.78 + 0.22 * _ss(1 - abs(ax - BUST.x) / 0.07)              # fuller over each side
     dy = p.y - BUST.y
-    gy = _ss(1 - dy / 0.09) if dy >= 0 else max(0.0, 1 + dy / 0.15) ** 1.5
-    g = gx * gy * _ss((-0.02 - p.z) / 0.06)
-    return g, Vector((0, -0.012 if dy < 0 else -0.004, -0.09)) * g
+    ry = dy if dy >= 0 else dy * 0.85
+    h, lat = 0.0, 0.0
+    for s in (-1, 1):
+        dx = p.x - s * BUST.x
+        c = _cap(math.hypot(dx, ry))
+        if bridge and ry < 0:                                         # cloth drapes down from the fullest line
+            c = max(c, _cap(abs(dx)) * _ss(1 + ry / 0.24))
+        h = max(h, c)
+        lat += 0.25 * c * s * max(0.0, s * dx) / BUST_A              # spreads outward only: no fold in the middle
+    if bridge and abs(p.x) < BUST.x:                                  # a saddle between them, not a shelf
+        mid = (BUST.x - abs(p.x)) * 0.55
+        h = max(h, _cap(math.hypot(mid, ry)), _cap(mid) * _ss(1 + ry / 0.24) if ry < 0 else 0.0)
+    k = _ss((-0.02 - p.z) / 0.06)
+    h, lat = h * k, lat * k
+    return h / BUST_H, Vector((lat, 0.0, -h))
 
 
 def chest_weights(p, w):
@@ -963,14 +983,14 @@ def rig_json(path, hidden):
 
 def char_json(path, cw):
     """character.json (contract: interfaces.md "Characters"): colour slots for the shared materials, the chest."""
-    paint = {'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush',
+    paint = {'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush',
              'CK2_Top' + cw['top'][1:]: 'top', 'CK2_Pants' + cw['pants'][1:]: 'bottom',
              'CK2_PantCuff' + cw['pants'][1:]: 'bottom', 'CK2_Shoe' + cw['shoe'][1:]: 'shoes'}
     colors = {'skin': SKIN, 'hair': HAIR, 'eyes': '#2E2624', 'blush': '#EE9488' if LOOK_B else BLUSH,
               'top': cw['top'], 'bottom': cw['pants'], 'shoes': cw['shoe']}
     data = {'paint': paint, 'colors': colors}
     if SPEC['chest']:
-        data['shapes'] = {'Chest_Size': 0.5}
+        data['shapes'] = {'Chest_Size': 0.7}
         data['chest'] = {'chains': [['LeftBreast', 'LeftBreast'], ['RightBreast', 'RightBreast']], 'radius': 0.05}
     with open(path, 'w') as f:
         json.dump(data, f, indent=1)

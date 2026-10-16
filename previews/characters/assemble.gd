@@ -58,8 +58,10 @@ static func build(base: String, over: Dictionary = {}) -> Node3D:
 		for i in m.mesh.get_surface_count():
 			var mat: Material = m.mesh.surface_get_material(i)
 			if mat and cj.paint.has(mat.resource_name) and mat is StandardMaterial3D:
+				var slot: PackedStringArray = cj.paint[mat.resource_name].split('*')   # "hair*0.82": shaded slot
 				var d: StandardMaterial3D = mat.duplicate()
-				d.albedo_color = Color(colors[cj.paint[mat.resource_name]])
+				d.albedo_color = Color(colors[slot[0]]).darkened(1.0 - float(slot[1])) if slot.size() > 1 \
+					else Color(colors[slot[0]])
 				m.set_surface_override_material(i, d)
 	return ch
 

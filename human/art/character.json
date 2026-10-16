@@ -2,7 +2,7 @@
  "paint": {
   "CK2_Skin": "skin",
   "CK2_Hair": "hair",
-  "CK2_Brow": "hair",
+  "CK2_Brow": "hair*0.82",
   "CK2_Pupil": "eyes",
   "CK2_Blush": "blush",
   "CK2_TopD9A04C": "top",

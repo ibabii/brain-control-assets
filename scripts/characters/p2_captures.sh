@@ -7,7 +7,7 @@ D=previews/characters/screenshots
 mp() { perl -e 'alarm 240; exec @ARGV' $G --path . res://previews/characters/mock_preview.tscn -- "$@" 2>&1 | grep -E "SCRIPT ERROR|_SHEET" | sed 's/.*screenshots\//  /'; }
 N=":top=:bottom=:shoes="
 B4="male_base:Build_Slim=1,male_base:Build_Heavy=1,female_base:Build_Slim=1,female_base:Build_Heavy=1"
-L="male_base:Build_Slim=1:c.top=E46F5C:c.rib=C9574A:c.skin=E2A184,male_base,male_base:Build_Heavy=1:c.top=6E8FC9:c.rib=5A78AE:c.bottom=3D3A4A:c.skin=6E4330:c.hair=2A1E1A,female_base:Build_Slim=1:c.top=9BC59D:c.rib=7FAA82:c.skin=B9784F:c.hair=2A1E1A,female_base,female_base:Build_Heavy=1:Chest_Size=1:c.top=C77DB0:c.rib=A96495:c.skin=F1C6AC:c.hair=C98B4F"
+L="male_base:Build_Slim=1:c.top=E46F5C:c.rib=C9574A:c.skin=E2A184,male_base,male_base:Build_Heavy=1:c.top=6E8FC9:c.rib=5A78AE:c.bottom=3D3A4A:c.skin=6E4330:c.hair=2A1E1A,female_base:Build_Slim=1:c.top=9BC59D:c.rib=7FAA82:c.skin=B9784F:c.hair=2A1E1A,female_base,female_base:Build_Heavy=1:Chest_Size=1:c.top=7FB3D5:c.rib=5E93B8:c.skin=F1C6AC:c.hair=C98B4F"
 mp --capture p2_lineup --models "$L" --spacing 0.75 --clip rest --from male_base --times 0 --size 2400x1100 --cols 1 \
   --shots "front@0,0.95,-14@0,0.95,0@17;q@-7,2.2,-12@0,0.95,0@17;faces@0,1.55,-6@0,1.5,0@26"
 mp --capture p2_bare --models "male_base$N,male_base$N:Build_Heavy=1,female_base$N,female_base$N:Build_Heavy=1" \

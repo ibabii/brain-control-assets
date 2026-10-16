@@ -2,20 +2,24 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://brr5gh3kopt03"
-path="res://.godot/imported/chest_sizes_side.png-ea4acd32180c52edb25f2f1481257906.ctex"
+uid="uid://uxp6vl8ch3vn"
+path.s3tc="res://.godot/imported/tshirt_f_RibFFFFFF.png-35084555a0cdb423c8d9191738bab8c8.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
+}
+generator_parameters={
+"md5": "143555c0340ce6170e1ce3e0a00c57ef"
 }
 
 [deps]
 
-source_file="res://previews/characters/screenshots/chest_sizes_side.png"
-dest_files=["res://.godot/imported/chest_sizes_side.png-ea4acd32180c52edb25f2f1481257906.ctex"]
+source_file="res://characters/parts/tshirt_f/art/tshirt_f_RibFFFFFF.png"
+dest_files=["res://.godot/imported/tshirt_f_RibFFFFFF.png-35084555a0cdb423c8d9191738bab8c8.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -23,7 +27,7 @@ compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
-mipmaps/generate=false
+mipmaps/generate=true
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""
@@ -37,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

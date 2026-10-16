@@ -646,12 +646,22 @@ def glb_signature(path, decimals=5):
 
     def rows(i, dec=decimals):
         a = js['accessors'][i]
-        if 'bufferView' not in a:                    # glTF: an accessor without data is all zeros
-            return np.zeros((a['count'], comps[a['type']]))
-        v = views[a['bufferView']]
-        arr = np.frombuffer(binary, dtype[a['componentType']], a['count'] * comps[a['type']],
-                            v.get('byteOffset', 0) + a.get('byteOffset', 0)).reshape(a['count'], comps[a['type']])
-        return np.round(arr.astype(np.float64), dec)
+        n, c = a['count'], comps[a['type']]
+        if 'bufferView' in a:
+            v = views[a['bufferView']]
+            arr = np.frombuffer(binary, dtype[a['componentType']], n * c,
+                                v.get('byteOffset', 0) + a.get('byteOffset', 0)).reshape(n, c).astype(np.float64)
+        else:                                        # glTF: an accessor without data is all zeros
+            arr = np.zeros((n, c))
+        sp = a.get('sparse')                         # morph targets are often sparse: apply the listed values
+        if sp:
+            iv, vv = views[sp['indices']['bufferView']], views[sp['values']['bufferView']]
+            idx = np.frombuffer(binary, dtype[sp['indices']['componentType']], sp['count'],
+                                iv.get('byteOffset', 0) + sp['indices'].get('byteOffset', 0)).astype(np.int64)
+            arr = arr.copy()
+            arr[idx] = np.frombuffer(binary, dtype[a['componentType']], sp['count'] * c,
+                                     vv.get('byteOffset', 0) + sp['values'].get('byteOffset', 0)).reshape(-1, c)
+        return np.round(arr, dec)
 
     def prim_sig(p):                     # vertex order, index width and triangle order don't matter
         # Smooth normals jitter ~3e-5 between identical builds (weld order): compare them at 3 decimals.

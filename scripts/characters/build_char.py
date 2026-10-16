@@ -32,6 +32,7 @@ PARTS = {  # part id -> (slot, mesh name prefixes, hides)
                ['Body_Torso', 'Body_UpperArmL', 'Body_UpperArmR', 'Body_LowerArmL', 'Body_LowerArmR']),
     'joggers': ('bottom', ('Pants', 'PantCuff'),
                 ['Body_Hips', 'Body_UpperLegL', 'Body_UpperLegR', 'Body_LowerLegL', 'Body_LowerLegR']),
+    'tshirt': ('top', ('Shirt',), ['Body_Torso']),
     'sneakers': ('shoes', ('Sole', 'Upper', 'Lace', 'Stripe'), ['Body_FootL', 'Body_FootR']),
 }
 SFX = '_f' if FEMALE else '_m'
@@ -54,7 +55,7 @@ def mannequin(parent):
     ell(torso, (0, 0.88, 0.004), (pe[0] - 0.02, pe[1] - 0.01, pe[2] - 0.02))
     cap(torso, (-0.15, 1.33, 0.004), (0.15, 1.33, 0.004), v['shoulder'] - 0.018)
     cap(torso, (0, 1.30, 0.008), (0, 1.43, 0.008), 0.048)                       # neck stub (into the head's neck)
-    fams, R.PARTS['body'] = [torso], {}
+    fams = [torso]
     for s, side in ((-1, 'L'), (1, 'R')):
         arm = meta('BodyArm' + side, 0.007)
         sh, el, wr = m(s, hb.SHOULDER), m(s, hb.ELBOW), m(s, hb.WRIST)
@@ -66,26 +67,56 @@ def mannequin(parent):
         cap(leg, k, a + Vector((0, 0.03, 0)), 0.055 * v['leg'])
         foot = meta('BodyFoot' + side, 0.006)
         cap(foot, a + Vector((0, -0.01, 0.03)), Vector((a.x, 0.035, -0.15)), 0.04)
-        R.PARTS['body'].update({side: R.meta_tree(arm), 'L' + side: R.meta_tree(leg), 'F' + side: R.meta_tree(foot)})
         fams += [arm, leg, foot]
-    R.PARTS['body']['torso'] = R.meta_tree(torso)
     return adopt(solid('BodySkin', fams, 0.006, 9000, lib.mat('Skin', hb.SKIN, 0.55)), parent, (0, 0.9, 0))
 
 
+SHIRT = '#E8765E', '#C95F4A'          # coral tee + its crew neck / sleeve bands (user: not yellow or purple)
+
+
+def tshirt(parent, rib):
+    """Fitted T-shirt over the mannequin: short sleeves, crew neck, hem just over the joggers' waist. Weights and
+    blend shapes come from the body (so it follows the chest springs and the build keys)."""
+    v = hb.TOP_VOL
+    m = lambda s, x: hb.mirror(x, s)
+    t = meta('ShirtBody', 0.007)
+    c, bl, pe = v['chest'], v['belly'], v['pelvis']
+    ell(t, (0, 1.22, 0.0), (c[0] - 0.018, c[1] - 0.006, c[2] - 0.018))
+    ell(t, (0, 1.04, v['belly_z'] * 0.5), (bl[0] - 0.022, bl[1] - 0.006, bl[2] - 0.022))
+    wy = lambda r: r * math.sqrt(max(0.0, 1 - ((0.95 - 0.86) / pe[1]) ** 2))    # joggers' half-width at y 0.95
+    ell(t, (0, 0.965, v['belly_z'] * 0.3), (wy(pe[0]) + 0.02, 0.09, wy(pe[2]) + 0.02))    # hem over the waist, no roll
+    cap(t, (-0.15, 1.335, 0.004), (0.15, 1.335, 0.004), v['shoulder'] - 0.008)
+    fams = [t]
+    for s in (-1, 1):
+        sl = meta('ShirtSleeve%d' % s, 0.007)
+        sh, el = m(s, hb.SHOULDER), m(s, hb.ELBOW)
+        end = sh + (el - sh) * 0.5
+        ball(sl, sh + Vector((-s * 0.006, -0.008, 0)), 0.056 * v['limb'])
+        cap(sl, sh, end, 0.058 * v['limb'])
+        fams.append(sl)
+        r = 0.058 * v['limb'] * 1.04                  # a hair over the sleeve end: caps its edge cleanly
+        hb.band('ShirtSleeve' + ('L' if s < 0 else 'R'), hb.frame_along(end, el - sh), r, r, 0.026, 0.06, rib, parent)
+    shirt = adopt(solid('Shirt', fams, 0.004, 14000, lib.mat('Shirt' + SHIRT[0][1:], SHIRT[0], 0.9)), parent,
+                  (0, 1.1, 0))
+    hb.band('ShirtCollar', hb.Frame((0, 1.405, 0.0)), 0.066, 0.062, 0.022, 0.12, rib, parent)
+    return shirt
+
+
 def body_weights(p):
-    """Mannequin weights: the nearest family decides torso / arm / leg / foot, soft seams between them."""
-    share = R._part_blend(p, R.PARTS['body'])
-    w = {}
-    for part, f in share.items():
-        if part == 'torso':
-            pw = R.torso(p)
-        elif part in ('L', 'R'):
-            pw = R.arm_w(p, -1 if part == 'L' else 1, hb.LANDMARKS)
-        elif part[0] == 'L':
-            pw = R.leg_w(p, -1 if part[1] == 'L' else 1, hb.LANDMARKS)
-        else:
-            pw = {R.side_name(-1 if part[1] == 'L' else 1) + 'Foot': 1.0}
-        w = R.mix(w, pw, f) if w else {k: x * f for k, x in pw.items()}
+    """Mannequin weights along the limb axes (not by nearest blob: in the T-pose bind the shoulder cap reaches into
+    the arm), soft seams at the shoulders, hips and ankles."""
+    L = hb.LANDMARKS
+    s = -1 if p.x < 0 else 1
+    w = R.torso(p)
+    sh, el = hb.mirror(L['SHOULDER'], s), hb.mirror(L['ELBOW'], s)
+    t = (p - sh).dot((el - sh).normalized())
+    if p.y > 1.05 and t > -0.13:
+        w = R.mix(w, R.arm_w(p, s, L), hb._ss((t + 0.07) / 0.06))
+    elif p.y < L['HIP'].y + 0.08:
+        w = R.mix(w, R.leg_w(p, s, L), hb._ss((L['HIP'].y + 0.03 - p.y) / 0.08) * hb._ss(abs(p.x) / 0.02))
+        f = hb._ss((L['ANKLE_J'].y + 0.02 - p.y) / 0.04)
+        if f > 0:
+            w = R.mix(w, {R.side_name(s) + 'Foot': 1.0}, f)
     return w
 
 
@@ -157,44 +188,63 @@ def top4(w):
 
 # --- regions --------------------------------------------------------------------------------------------------
 
-def region_of(bone):
-    side = 'L' if bone.startswith('Left') else 'R' if bone.startswith('Right') else ''
-    for key, reg in (('UpperArm', 'UpperArm'), ('LowerArm', 'LowerArm'), ('UpperLeg', 'UpperLeg'),
-                     ('LowerLeg', 'LowerLeg'), ('Foot', 'Foot'), ('Toes', 'Foot')):
-        if key in bone:
-            return reg + side
-    return 'Hips' if bone == 'Hips' else 'Torso'
+def region_at(p):
+    """Body region of a canonical point (bind pose), by the limb axes: arms past the shoulder joint, legs below the
+    crotch, hips below the waist, the rest torso (neck included)."""
+    L = hb.LANDMARKS
+    side = 'L' if p.x < 0 else 'R'
+    s = -1 if p.x < 0 else 1
+    sh, el = hb.mirror(L['SHOULDER'], s), hb.mirror(L['ELBOW'], s)
+    ax = (el - sh).normalized()
+    if (p - sh).dot(ax) > -0.02 and p.y > 1.0:
+        return ('UpperArm' if (p - sh).dot(ax) < (el - sh).length else 'LowerArm') + side
+    if p.y < L['HIP'].y - 0.03 and abs(p.x) > 0.004:
+        if p.y < L['ANKLE_J'].y + 0.02:
+            return 'Foot' + side
+        return ('LowerLeg' if p.y < L['KNEE'].y else 'UpperLeg') + side
+    return 'Hips' if p.y < 0.98 else 'Torso'
 
 
-def split_regions(o):
-    """BodySkin -> Body_<Region> objects by each face's dominant bone (groups and shape keys come along)."""
-    gname = {g.index: g.name for g in o.vertex_groups}
-    dom = []
-    for v in o.data.vertices:
-        g = max(v.groups, key=lambda x: x.weight) if v.groups else None
-        dom.append(region_of(gname[g.group]) if g else 'Torso')
-    face_reg = []
+def split_regions(o, canon):
+    """BodySkin -> Body_<Region> objects by region_at of each face's vertices (groups and shape keys come along).
+    The region is a face attribute (face order changes with every separate), selected in face mode."""
+    import bmesh
+    dom = [region_at(c) for c in canon]
+    names = sorted(set(dom))
+    att = o.data.attributes.new('region', 'INT', 'FACE')
     for f in o.data.polygons:
         regs = [dom[i] for i in f.vertices]
-        face_reg.append(max(set(regs), key=regs.count))
+        att.data[f.index].value = names.index(max(set(regs), key=regs.count))
     out = []
-    for reg in sorted(set(face_reg)):
+    for k, reg in enumerate(names):
         bpy.ops.object.mode_set(mode='OBJECT')
         for x in bpy.data.objects:
             x.select_set(x == o)
         bpy.context.view_layer.objects.active = o
-        for f, r in zip(o.data.polygons, face_reg):
-            f.select = r == reg
-        if not any(f.select for f in o.data.polygons):
-            continue
         bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_mode(type='FACE')
+        bm = bmesh.from_edit_mesh(o.data)
+        lay = bm.faces.layers.int['region']
+        for v in bm.verts:
+            v.select = False
+        for e in bm.edges:
+            e.select = False
+        n = 0
+        for f in bm.faces:
+            f.select = f[lay] == k
+            n += f.select
+        bm.select_flush_mode()
+        bmesh.update_edit_mesh(o.data)
+        if not n:
+            continue
         bpy.ops.mesh.separate(type='SELECTED')
         bpy.ops.object.mode_set(mode='OBJECT')
         new = [x for x in bpy.context.selected_objects if x != o][0]
         new.name = 'Body_' + reg
         new.data.name = new.name
-        face_reg = [r for r in face_reg if r != reg]
+        new.data.attributes.remove(new.data.attributes['region'])
         out.append(new)
+    bpy.ops.object.mode_set(mode='OBJECT')
     bpy.data.objects.remove(o, do_unlink=True)
     return out
 
@@ -226,6 +276,7 @@ def main():
             o.data.materials[0] = rib
     hb.hands(body)
     mannequin(body)
+    tshirt(body, rib)
     hb.matte()
     table = hb.rig_table()
     rig = R.armature(table, root)
@@ -268,23 +319,47 @@ def main():
             wts[o.name] = [top4(w) for w in transfer(o, canon['Top'], wts['Top'], trees['Top'])]
         elif o.name.startswith('PantCuff'):
             wts[o.name] = [top4(w) for w in transfer(o, canon['Pants'], wts['Pants'], trees['Pants'])]
+    for n in ('BodySkin',):
+        t = KDTree(len(canon[n]))
+        for i, p in enumerate(canon[n]):
+            t.insert(p, i)
+        t.balance()
+        trees[n] = t
+    shirt = bpy.data.objects['Shirt']
+    wts['Shirt'] = R.smooth(shirt, [top4(w) for w in transfer(shirt, canon['BodySkin'], wts['BodySkin'],
+                                                               trees['BodySkin'])], 2)
+    t = KDTree(len(canon['Shirt']))
+    for i, p in enumerate(canon['Shirt']):
+        t.insert(p, i)
+    t.balance()
+    trees['Shirt'] = t
+    for o in meshes:
+        if o.name.startswith(('ShirtCollar', 'ShirtSleeve')):
+            wts[o.name] = [top4(w) for w in transfer(o, canon['Shirt'], wts['Shirt'], trees['Shirt'])]
     # blend shapes: fields on the body and the layers; attachments copy their layer's offsets (they stay on it)
     fields = {'Build_Slim': lambda c: build_offset(c, False), 'Build_Heavy': lambda c: build_offset(c, True)}
     if hb.SPEC['chest']:
         fields['Chest_Size'] = lambda c: hb.bust(c)[1]
     own = {}
-    for n in ('BodySkin', 'Top', 'Pants'):
-        own[n] = {k: [f(c) for c in canon[n]] for k, f in fields.items()
+    for n in ('BodySkin', 'Top', 'Pants', 'Shirt'):            # smooth fields (a copy by nearest points ripples)
+        fs = dict(fields, Chest_Size=lambda c: hb.bust(c, False)[1]) if n == 'BodySkin' and 'Chest_Size' in fields \
+            else fields
+        own[n] = {k: [f(c) for c in canon[n]] for k, f in fs.items()
                   if k != 'Chest_Size' or any(hb.bust(c)[0] > 0 for c in canon[n])}
+
+    def host_of(name):
+        if name.startswith(('ShirtCollar', 'ShirtSleeve')):
+            return 'Shirt'
+        return 'Pants' if name.startswith('PantCuff') else 'Top' if name.startswith(LAYERS) else None
 
     def keys_for(name):
         if name in own:
             return own[name]
-        host = 'Pants' if name.startswith('PantCuff') else 'Top' if name.startswith(LAYERS) else None
+        host = host_of(name)
         if host is None:
             return {}
         out = {}
-        for k, offs in own[host].items():
+        for k, offs in keys_for(host).items():
             col = []
             for c in canon[name]:
                 acc, tw = Vector(), 0.0
@@ -294,6 +369,7 @@ def main():
                 col.append(acc / tw)
             if any(v.length > 1e-5 for v in col):
                 out[k] = col
+        own[name] = out
         return out
 
     # warp to the spec, skin, blend shapes
@@ -320,7 +396,7 @@ def main():
     if not hb.IDENT:
         head.matrix_world = Matrix.Translation(B(hb.warp(hb.NECK) - hb.NECK)) @ head.matrix_world
         bpy.context.view_layer.update()
-    regions = split_regions(bpy.data.objects['BodySkin'])
+    regions = split_regions(bpy.data.objects['BodySkin'], canon['BodySkin'])
     for o in bpy.data.objects:
         ensure_uvs(o)
     # clips: the face rides the Head bone while baking (ground checks), then goes back to character space at rest
@@ -349,7 +425,7 @@ def main():
 
 
 
-BANDS = {'Top': ('Hem', 'Pocket', 'Collar', 'CuffL', 'CuffR', 'StringL', 'StringR'), 'Pants': ('PantCuffL', 'PantCuffR')}
+BANDS = {'Shirt': ('ShirtCollar', 'ShirtSleeveL', 'ShirtSleeveR'), 'Top': ('Hem', 'Pocket', 'Collar', 'CuffL', 'CuffR', 'StringL', 'StringR'), 'Pants': ('PantCuffL', 'PantCuffR')}
 
 
 def clearance(rig):
@@ -452,10 +528,14 @@ def export_all(rig, head, hair, regions):
     face.append(bpy.data.objects['HeadSkin'])
     hidden = [o.name for o in face if o.get('hidden')]
     hb.rig_json(os.path.join(out, base + '_rig.json'), hidden)    # hidden + expressions: the default head's face parts
-    parts = {'head': HEAD_ID, 'hair': HAIR_ID, 'top': 'hoodie' + SFX, 'bottom': 'joggers' + SFX, 'shoes': 'sneakers' + SFX}
-    cj = {'parts': parts, 'paint': PAINT, 'colors': COLORS, 'shapes': {'Build_Slim': 0.0, 'Build_Heavy': 0.0}}
+    rj = json.load(open(os.path.join(out, base + '_rig.json')))
+    rj['first_person'] += ['Body_LowerArmL', 'Body_LowerArmR']      # bare forearms under a T-shirt
+    _json(os.path.join(out, base + '_rig.json'), rj)
+    parts = {'head': HEAD_ID, 'hair': HAIR_ID, 'top': ('tshirt' if FEMALE else 'hoodie') + SFX, 'bottom': 'joggers' + SFX, 'shoes': 'sneakers' + SFX}
+    colors = dict(COLORS, top=SHIRT[0], rib=SHIRT[1]) if FEMALE else COLORS
+    cj = {'parts': parts, 'paint': PAINT, 'colors': colors, 'shapes': {'Build_Slim': 0.0, 'Build_Heavy': 0.0}}
     if hb.SPEC['chest']:
-        cj['shapes']['Chest_Size'] = 0.5
+        cj['shapes']['Chest_Size'] = 0.7
         cj['chest'] = {'chains': [['LeftBreast', 'LeftBreast'], ['RightBreast', 'RightBreast']], 'radius': 0.05,
                        'tip_dir': [0, 0, -1], 'tip': 0.1}
     _json(os.path.join(out, 'character.json'), cj)
@@ -476,7 +556,7 @@ def export_all(rig, head, hair, regions):
     print('CHAR_BUILT', base, len(regions), 'regions:', ' '.join(sorted(o.name for o in regions)))
 
 
-PAINT = {'CK2_Rib': 'rib', 'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush'}
+PAINT = {'CK2_Shirt' + SHIRT[0][1:]: 'top', 'CK2_Rib': 'rib', 'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush'}
 COLORS = {'skin': hb.SKIN, 'hair': hb.HAIR, 'eyes': '#2E2624', 'blush': '#EE9488'}
 for _m, _slot in (('Top', 'top'), ('Pants', 'bottom'), ('PantCuff', 'bottom'), ('Shoe', 'shoes')):
     _key = {'Top': 'top', 'Pants': 'pants', 'PantCuff': 'pants', 'Shoe': 'shoe'}[_m]
