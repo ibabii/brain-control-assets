@@ -1919,8 +1919,21 @@
    "LookL",
    "LookR"
   ],
-  "eye_yaw": 11,
-  "eye_pitch": 7
+  "eye_yaw": 7,
+  "eye_pitch": 4,
+  "eye_up": {
+   "brow": [
+    0.004,
+    0.0
+   ]
+  },
+  "eye_down": {
+   "lid": 12.0,
+   "brow": [
+    -0.002,
+    -4.0
+   ]
+  }
  },
  "render_layer": 2,
  "ragdoll_layer": 2,
