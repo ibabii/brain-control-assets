@@ -390,6 +390,9 @@ def top(cw):
     return solid('Top', fams, 0.006, 5000, lib.mat('Top' + cw['top'][1:], cw['top'], 0.9))
 
 
+PANTS_TRIS = 3500                                   # the character builds raise it (smoother thighs)
+
+
 def pants(cw):
     pel = meta('Pelvis', 0.008)
     ell(pel, (0, 0.86, 0.004), TOP_VOL['pelvis'])
@@ -401,7 +404,7 @@ def pants(cw):
         cap(lg, k, a + Vector((0, 0.07, 0)), 0.076 * TOP_VOL['leg'])                # rounded end hides inside the cuff
         fams.append(lg)
     R.PARTS['pants'] = {'body': R.meta_tree(pel), 'L': R.meta_tree(fams[1]), 'R': R.meta_tree(fams[2])}
-    return solid('Pants', fams, 0.006, 3500, lib.mat('Pants' + cw['pants'][1:], cw['pants'], 0.88))
+    return solid('Pants', fams, 0.006, PANTS_TRIS, lib.mat('Pants' + cw['pants'][1:], cw['pants'], 0.88))
 
 
 def rib_texture(color):
@@ -911,7 +914,7 @@ def head_xf(p):
     return HEAD_PIVOT + (p - HEAD_PIVOT) * SPEC['head'] + (warp(NECK) - NECK)
 
 
-BUST = Vector((0.088, 1.205, -0.1))
+BUST = Vector((0.088, 1.235, -0.1))               # high, about armpit level (art director 2026-10-16)
 
 
 BUST_A, BUST_H = 0.095, 0.09                     # footprint radius, height at size 1
@@ -932,8 +935,8 @@ def _smax(a, b, k=0.012):
 
 def bust(p, bridge=True):
     """Chest key in canonical space: (influence 0..1, offset at size 1). A round cap per side, a little fuller below
-    the centre. With `bridge` (clothes): a lower saddle between them and a short drape under each, so the two rounds
-    still read from the front; the bare body keeps its round underside. Shapes join by a smooth max (no crease).
+    the centre. With `bridge` (clothes): the cloth stretches across between them at full height (one smooth shape,
+    no centre line) and tucks back underneath with a short drape; the bare body keeps its round underside. Shapes join by a smooth max (no crease).
     User 2026-10-16: bigger, rounder, less peaky; front view must show two rounds, not a wide torso."""
     if p.z > -0.02:
         return 0.0, Vector()
@@ -947,9 +950,11 @@ def bust(p, bridge=True):
             c = _smax(c, 0.7 * _cap(abs(dx)) * _ss(1 + ry / 0.13))
         h = _smax(h, c)
         lat += 0.25 * c * s * max(0.0, s * dx) / BUST_A              # spreads outward only: no fold in the middle
-    if bridge and abs(p.x) < BUST.x:                                  # a low saddle: the two rounds separate
-        mid = (BUST.x - abs(p.x)) * 0.9
-        h = _smax(h, 0.8 * _cap(math.hypot(mid, ry)), 0.02)
+    if bridge and abs(p.x) < BUST.x:                                  # cloth stretches across: no dip, no line
+        c = _cap(abs(ry))
+        if ry < 0:
+            c = _smax(c, 0.7 * _cap(0.0) * _ss(1 + ry / 0.13))
+        h = _smax(h, c)
     k = _ss((-0.02 - p.z) / 0.06)
     h, lat = h * k, lat * k
     return h / BUST_H, Vector((lat, 0.0, -h))

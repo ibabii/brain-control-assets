@@ -99,7 +99,7 @@ def tshirt(parent, rib):
         fams.append(sl)
         r = 0.058 * v['limb'] * 1.04                  # a hair over the sleeve end: caps its edge cleanly
         hb.band('ShirtSleeve' + ('L' if s < 0 else 'R'), hb.frame_along(end, el - sh), r, r, 0.026, 0.06, rib, parent)
-    shirt = adopt(solid('Shirt', fams, 0.004, 14000, lib.mat('Shirt' + SHIRT[0][1:], SHIRT[0], 0.9)), parent,
+    shirt = adopt(solid('Shirt', fams, 0.008, 10 ** 6, lib.mat('Shirt' + SHIRT[0][1:], SHIRT[0], 0.9)), parent,
                   (0, 1.1, 0))
     hb.band('ShirtCollar', hb.Frame((0, 1.405, 0.0)), 0.066, 0.062, 0.022, 0.12, rib, parent)
     return shirt
@@ -184,7 +184,7 @@ def hip_slim(p):
         return p
     t = max(0.0, min(1.0, (L['HIP'].y - p.y) / (L['HIP'].y - L['KNEE'].y)))
     axis = L['HIP'].x + (L['KNEE'].x - L['HIP'].x) * t
-    cx = axis * max(-1.0, min(1.0, p.x / 0.03)) * leg              # 0 at the pelvis and the crotch centre
+    cx = axis * math.copysign(hb._ss(abs(p.x) / 0.09), p.x) * leg  # 0 at the pelvis and crotch; a wide ramp (no folds)
     return Vector((cx + (p.x - cx) * (1 - k), p.y, p.z))
 
 
@@ -346,6 +346,7 @@ def main():
     root = lib.empty('Character', (0, 0, 0))
     body = lib.empty('Body', (0, 0, 0), root)
     head = hb.head_parts(root)
+    hb.PANTS_TRIS = 9000                                    # denser joggers: no faceted streaks down the thighs
     hb.outfit(cw, 'A', body)
     img, nrm = hb.rib_texture('#FFFFFF')                    # neutral ribs: the 'rib' paint slot tints them
     rib = lib.mat('Rib', '#FFFFFF', 0.9, image=img, normal=nrm)
@@ -426,6 +427,20 @@ def main():
             else fields
         own[n] = {k: [f(c) for c in canon[n]] for k, f in fs.items()
                   if k != 'Chest_Size' or any(hb.bust(c)[0] > 0 for c in canon[n])}
+
+    def relax(o, offs, passes=6):
+        nb = [[] for _ in o.data.vertices]
+        for e in o.data.edges:
+            a, b = e.vertices
+            nb[a].append(b)
+            nb[b].append(a)
+        for _ in range(passes):
+            offs = [(offs[i] + sum((offs[j] for j in n), Vector()) / len(n)) / 2 if n else offs[i]
+                    for i, n in enumerate(nb)]
+        return offs
+
+    if 'Chest_Size' in own['Shirt']:                         # dense voxel cloth: relax the key (no ripples)
+        own['Shirt']['Chest_Size'] = relax(bpy.data.objects['Shirt'], own['Shirt']['Chest_Size'])
 
     def host_of(name):
         if name.startswith(('ShirtCollar', 'ShirtSleeve')):
@@ -592,7 +607,7 @@ def _export(path, objs, anims):
     kw = dict(export_animation_mode='NLA_TRACKS', export_force_sampling=True) if anims else dict(export_animations=False)
     lib.export_glb(filepath=path, export_format='GLB', export_yup=True, use_selection=True, export_cameras=False,
                    export_lights=False, export_extras=True, export_skins=True, export_morph=True,
-                   export_morph_normal=True, **kw)
+                   export_morph_normal=os.environ.get('CHAR_MORPH_NORMAL', '1') == '1', **kw)
 
 
 def _tscn(folder, name):
