@@ -75,7 +75,7 @@ def mirror(v, s):
 def head_skin():
     mb = meta('HeadSkin', 0.006)
     ell(mb, (0, 1.635, 0.0), (0.128, 0.145, 0.132))               # cranium (top 1.78)
-    ell(mb, (0, 1.552, -0.028), (0.112, 0.074, 0.098) if FEMALE else (0.112, 0.082, 0.102))   # jaw (female: soft, round)
+    ell(mb, (0, 1.552 if FEMALE else 1.548, -0.028), (0.112, 0.074, 0.098) if FEMALE else (0.112, 0.082, 0.102))   # jaw
     if LOOK_B:                                                       # rounder cheeks, small button nose
         for s in (-1, 1):
             ell(mb, (s * 0.064, 1.56 if FEMALE else 1.562, -0.064), (0.064, 0.055, 0.06) if FEMALE else (0.062, 0.052, 0.06))
@@ -683,20 +683,22 @@ EXPRESSIONS = {
 
 # --- assembly -------------------------------------------------------------------------------------------------
 
-def build(cw_id):
-    cw = COLOURWAYS[cw_id]
-    lib.reset()
-    root = lib.empty('Human', (0, 0, 0))
-    body = lib.empty('Body', (0, 0, 0), root)
+def head_parts(root):
+    """Head skin, hair and face under a 'Face' empty at the neck (look B: scaled about the eye)."""
     head = lib.empty('Face', NECK, root)          # head parts (not 'Head': that is the bone)
     skin = adopt(head_skin(), head, NECK)
-    hr = adopt(hair(skin), head, NECK)
+    adopt(hair(skin), head, NECK)
     face(head, skin)
     k = SPEC['head']
     if k != 1.0:                                  # bigger head, scaled about the eye so the eye camera stays put
         new = HEAD_PIVOT + (NECK - HEAD_PIVOT) * k
         head.matrix_world = Matrix.Translation(B(new)) @ Matrix.Scale(k, 4)
         bpy.context.view_layer.update()
+    return head
+
+
+def outfit(cw, cw_id, body):
+    """Outfit 1: hoodie (Top + rib bands, strings, pocket), joggers (Pants + cuffs), sneakers."""
     adopt(top(cw), body, (0, 1.1, 0))
     adopt(pants(cw), body, (0, 0.5, 0))
     rib_img = rib_texture(cw['rib'])
@@ -731,13 +733,27 @@ def build(cw_id):
     decal('Pocket', tsurf, pocket, Frame(), lib.mat('Top' + cw['top'][1:], cw['top'], 0.9), body, offset=0.005,
           rings=5, depth=0.006)
     shoes(cw, body)
+
+
+def matte():
+    """Look B: matte clay, no sheen except the eyes."""
+    for m in bpy.data.materials:
+        if m.node_tree and not any(x in m.name for x in ('Eye', 'Pupil', 'Glint', 'Teeth', 'Tongue')):
+            for n in m.node_tree.nodes:
+                if n.type == 'BSDF_PRINCIPLED':
+                    n.inputs['Roughness'].default_value = max(n.inputs['Roughness'].default_value, 0.92)
+
+
+def build(cw_id):
+    cw = COLOURWAYS[cw_id]
+    lib.reset()
+    root = lib.empty('Human', (0, 0, 0))
+    body = lib.empty('Body', (0, 0, 0), root)
+    head = head_parts(root)
+    outfit(cw, cw_id, body)
     hands(body)
-    if LOOK_B:                                    # matte clay: no sheen except the eyes
-        for m in bpy.data.materials:
-            if m.node_tree and not any(x in m.name for x in ('Eye', 'Pupil', 'Glint', 'Teeth', 'Tongue')):
-                for n in m.node_tree.nodes:
-                    if n.type == 'BSDF_PRINCIPLED':
-                        n.inputs['Roughness'].default_value = max(n.inputs['Roughness'].default_value, 0.92)
+    if LOOK_B:
+        matte()
     rig_up(root, head)
     lib.count_tris()
     return root

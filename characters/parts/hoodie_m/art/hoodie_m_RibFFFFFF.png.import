@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c5bo0g5mopywk"
-path.s3tc="res://.godot/imported/female_base_RibC58E3F.png-d2b64be93bfb673d488c666413118eca.s3tc.ctex"
+uid="uid://dm68f2ksd8sr6"
+path.s3tc="res://.godot/imported/hoodie_m_RibFFFFFF.png-319a5d2cde17a61bf2f06506022bd52d.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "df2910b911a73d98d7ad1f33fa65c3dc"
+"md5": "143555c0340ce6170e1ce3e0a00c57ef"
 }
 
 [deps]
 
-source_file="res://characters/female_base/art/female_base_RibC58E3F.png"
-dest_files=["res://.godot/imported/female_base_RibC58E3F.png-d2b64be93bfb673d488c666413118eca.s3tc.ctex"]
+source_file="res://characters/parts/hoodie_m/art/hoodie_m_RibFFFFFF.png"
+dest_files=["res://.godot/imported/hoodie_m_RibFFFFFF.png-319a5d2cde17a61bf2f06506022bd52d.s3tc.ctex"]
 
 [params]
 

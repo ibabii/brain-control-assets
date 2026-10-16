@@ -1,5 +1,13 @@
 {
+ "parts": {
+  "head": "head_female",
+  "hair": "hair_bun",
+  "top": "hoodie_f",
+  "bottom": "joggers_f",
+  "shoes": "sneakers_f"
+ },
  "paint": {
+  "CK2_Rib": "rib",
   "CK2_Skin": "skin",
   "CK2_Hair": "hair",
   "CK2_Brow": "hair",
@@ -15,11 +23,14 @@
   "hair": "#6A4636",
   "eyes": "#2E2624",
   "blush": "#EE9488",
+  "rib": "#C58E3F",
   "top": "#D9A04C",
   "bottom": "#2D5C5B",
   "shoes": "#F8F4EA"
  },
  "shapes": {
+  "Build_Slim": 0.0,
+  "Build_Heavy": 0.0,
   "Chest_Size": 0.5
  },
  "chest": {
@@ -33,6 +44,12 @@
     "RightBreast"
    ]
   ],
-  "radius": 0.05
+  "radius": 0.05,
+  "tip_dir": [
+   0,
+   0,
+   -1
+  ],
+  "tip": 0.1
  }
 }

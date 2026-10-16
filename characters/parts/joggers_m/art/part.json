@@ -1,0 +1,10 @@
+{
+ "slot": "bottom",
+ "hides": [
+  "Body_Hips",
+  "Body_UpperLegL",
+  "Body_UpperLegR",
+  "Body_LowerLegL",
+  "Body_LowerLegR"
+ ]
+}

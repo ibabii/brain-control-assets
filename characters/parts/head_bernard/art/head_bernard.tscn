@@ -1,0 +1,5 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://characters/parts/head_bernard/art/head_bernard.glb" id="1"]
+
+[node name="head_bernard" instance=ExtResource("1")]

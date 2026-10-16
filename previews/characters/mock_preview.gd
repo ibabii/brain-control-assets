@@ -34,7 +34,7 @@ func _ready() -> void:
 	var x0 := float(_arg('--x', '0'))
 	for i in n:
 		var id := ids[mini(i, ids.size() - 1)]
-		var h: Node3D = load(MOCK + id + '/human.glb').instantiate()
+		var h: Node3D = _load(id)
 		h.position = Vector3(x0 + ((n - 1) / 2.0 - i) * spacing, 0, float(_arg('--z', '0')))   # camera at -Z: screen left = +X
 		h.rotation_degrees.y = float(_arg('--yaw', '0'))
 		add_child(h)
@@ -63,6 +63,24 @@ func _ready() -> void:
 		_capture(_arg('--capture', 'mock'))
 
 
+## Phase 1 mock id, or a phase 2 base with overrides: male_base:Build_Heavy=1:top=:c.skin=B9784F
+## (shape=value, slot=part id ('' = none), c.<colour slot>=hex).
+func _load(id: String) -> Node3D:
+	if not id.contains('_base'):
+		return load(MOCK + id + '/human.glb').instantiate()
+	var bits := id.split(':')
+	var over := {'parts': {}, 'shapes': {}, 'colors': {}}
+	for b in bits.slice(1):
+		var kv := b.split('=')
+		if kv[0].begins_with('c.'):
+			over.colors[kv[0].substr(2)] = '#' + kv[1]
+		elif kv[0] in ['head', 'hair', 'top', 'bottom', 'shoes']:
+			over.parts[kv[0]] = kv[1]
+		else:
+			over.shapes[kv[0]] = float(kv[1])
+	return CharacterAssembler.build(bits[0], over)
+
+
 func _arg(k: String, d: String) -> String:
 	return args[args.find(k) + 1] if k in args else d
 
@@ -71,7 +89,7 @@ func _arg(k: String, d: String) -> String:
 func _share(src_id: String) -> void:
 	var lib: AnimationLibrary = null
 	if src_id != '':
-		var src: Node3D = load(MOCK + src_id + '/human.glb').instantiate()
+		var src: Node3D = _load(src_id)
 		lib = src.get_node('Anim').get_animation_library('').duplicate()   # its own copy: the source body plays it too
 		src.free()
 	for h in humans:

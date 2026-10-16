@@ -1,0 +1,35 @@
+{
+ "parts": {
+  "head": "head_bernard",
+  "hair": "hair_bernard",
+  "top": "hoodie_m",
+  "bottom": "joggers_m",
+  "shoes": "sneakers_m"
+ },
+ "paint": {
+  "CK2_Rib": "rib",
+  "CK2_Skin": "skin",
+  "CK2_Hair": "hair",
+  "CK2_Brow": "hair",
+  "CK2_Pupil": "eyes",
+  "CK2_Blush": "blush",
+  "CK2_TopD9A04C": "top",
+  "CK2_Pants2D5C5B": "bottom",
+  "CK2_PantCuff2D5C5B": "bottom",
+  "CK2_ShoeF8F4EA": "shoes"
+ },
+ "colors": {
+  "skin": "#F2A99A",
+  "hair": "#6A4636",
+  "eyes": "#2E2624",
+  "blush": "#EE9488",
+  "rib": "#C58E3F",
+  "top": "#D9A04C",
+  "bottom": "#2D5C5B",
+  "shoes": "#F8F4EA"
+ },
+ "shapes": {
+  "Build_Slim": 0.0,
+  "Build_Heavy": 0.0
+ }
+}
