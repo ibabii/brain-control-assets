@@ -7,6 +7,8 @@
   "shoes": "sneakers_m"
  },
  "paint": {
+  "CK2_Print": "print",
+  "CK2_PrintInk": "print_ink",
   "CK2_ShirtE8765E": "top",
   "CK2_Rib": "rib",
   "CK2_Skin": "skin",

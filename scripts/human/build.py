@@ -194,59 +194,49 @@ def lock(mb, surf, pts, r0, r1):
     chain(mb, path, r0, r1, step=0.004)
 
 
-def scalp_shell(head, edge, lift=0.003, thick=0.01):
-    """Smooth hair cap: the head surface above edge(phi) (a clean hairline), lifted and solidified."""
+def scalp_shell(head, edge, lift=0.003, thick=0.01, cols=128, rows=40):
+    """Smooth hair cap: a grid laid on the scalp from the hairline edge(phi) up to the crown (the edge follows the
+    curve exactly, no saw-tooth from the head's triangles), lifted and solidified."""
+    surf = Surface(head)
     bm = bmesh.new()
-    bm.from_mesh(head.data)
-    bm.transform(head.matrix_world)
-    gone = []
-    for v in bm.verts:
-        g = G(v.co)
-        if g.y < edge(math.atan2(g.x, -g.z)) or g.y < 1.45 or (abs(g.x) > 0.105 and 1.55 < g.y < 1.66 and -0.03 < g.z < 0.045):
-            gone.append(v)
-    bmesh.ops.delete(bm, geom=gone, context='VERTS')
-    for _ in range(4):                                               # drop one-face-wide slivers left by the cut
-        thin = [f for f in bm.faces if all(v.is_boundary for v in f.verts)]
-        if not thin:
-            break
-        bmesh.ops.delete(bm, geom=thin, context='FACES')
-    bm.faces.index_update()
-    islands, seen = [], set()                                         # keep the biggest piece only
-    for f in bm.faces:
-        if f.index in seen:
-            continue
-        stack, isl = [f], []
-        seen.add(f.index)
-        while stack:
-            x = stack.pop()
-            isl.append(x)
-            for e in x.edges:
-                for y in e.link_faces:
-                    if y.index not in seen:
-                        seen.add(y.index)
-                        stack.append(y)
-        islands.append(isl)
-    for isl in sorted(islands, key=len)[:-1]:
-        bmesh.ops.delete(bm, geom=isl, context='FACES')
-    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
-    for _ in range(8):                                               # smooth the hairline (cut triangles are jagged)
-        edge_v = [v for v in bm.verts if v.is_boundary]
-        new = {}
-        for v in edge_v:
-            nb = [e.other_vert(v) for e in v.link_edges if e.is_boundary]
-            if len(nb) == 2:
-                new[v] = v.co * 0.5 + (nb[0].co + nb[1].co) * 0.25
-        for v, c in new.items():
-            v.co = c
-    bm.normal_update()
-    for v in bm.verts:
-        v.co += v.normal * lift
-    bmesh.ops.solidify(bm, geom=bm.faces[:], thickness=thick)
+    grid = []
+    for j in range(rows + 1):
+        row = []
+        for i in range(cols):
+            phi = -math.pi + 2 * math.pi * i / cols
+            el0 = math.asin(max(-0.95, min(0.95, (edge(phi) - CRANIUM.y) / 0.15)))
+            el = el0 + (math.radians(88) - el0) * (j / rows) ** 0.9
+            d = Vector((math.cos(el) * math.sin(phi), math.sin(el), -math.cos(el) * math.cos(phi)))
+            p = scalp(surf, d, lift)
+            if (p - CRANIUM).length > 0.2:                            # ray caught a face part: nearest scalp point
+                loc, n = surf.tree.find_nearest(CRANIUM + d * 0.13)[:2]
+                p = Vector(loc) + Vector(n).normalized() * lift
+            row.append(bm.verts.new(B(p)))                            # Godot space -> Blender
+        grid.append(row)
+    top = bm.verts.new(B(scalp(surf, Vector((0, 1, 0)), lift)))
+    for j in range(rows):
+        for i in range(cols):
+            k = (i + 1) % cols
+            bm.faces.new((grid[j][i], grid[j][k], grid[j + 1][k], grid[j + 1][i]))
+    for i in range(cols):
+        bm.faces.new((grid[rows][i], grid[rows][(i + 1) % cols], top))
+    # inner layer toward the cranium centre (bmesh solidify spiked at the pole), closed at the hairline
+    c = B(CRANIUM)
+    inner = {v: bm.verts.new(v.co - (v.co - c).normalized() * thick) for v in list(bm.verts)}
+    for f in list(bm.faces):
+        bm.faces.new([inner[v] for v in reversed(f.verts)])
+    for i in range(cols):
+        a_, b_ = grid[0][i], grid[0][(i + 1) % cols]
+        bm.faces.new((b_, a_, inner[a_], inner[b_]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     me = bpy.data.meshes.new('HairShell')
     bm.to_mesh(me)
     bm.free()
     o = bpy.data.objects.new('HairShell', me)
     bpy.context.scene.collection.objects.link(o)
+    if os.environ.get('HAIR_DEBUG'):
+        ys = [G(v.co) for v in me.vertices]
+        print('SHELL', len(me.polygons), 'y', min(p.y for p in ys), max(p.y for p in ys), 'z', min(p.z for p in ys), max(p.z for p in ys))
     return o
 
 
@@ -280,7 +270,7 @@ def hair_chunky(head):
     """Look B (art director, crops/hair_locks_male.png): a few big separate clay locks with deep gaps (each lock its
     own metaball family, so the union keeps a crease), fringe and crown tips lifting off the scalp, over a thin cap."""
     surf = Surface(head)
-    shell = scalp_shell(head, lambda phi: hairline(phi) + 0.02 * (abs(phi) > 1.2) + 0.055 * _ss(1 - abs(phi) / 0.9))
+    shell = scalp_shell(head, lambda phi: hairline(phi) + 0.02 * (abs(phi) > 1.2) + 0.03 * _ss(1 - abs(phi) / 0.9))
     fams = []
     locks = [  # (azimuth, height, lift) ..., r0, r1: volume on top, fringe sweeps right and curls up off the forehead
         ([(-0.3, 1.83, 0.03), (-0.05, 1.80, 0.032), (0.18, 1.778, 0.04)], 0.046, 0.016),
@@ -291,6 +281,10 @@ def hair_chunky(head):
         ([(-2.2, 1.81, 0.026), (-2.45, 1.74, 0.026), (-2.55, 1.665, 0.03)], 0.042, 0.022),
         ([(2.2, 1.81, 0.026), (2.45, 1.74, 0.026), (2.55, 1.665, 0.03)], 0.042, 0.022),
         ([(3.14, 1.83, 0.026), (3.14, 1.74, 0.026), (3.14, 1.645, 0.028)], 0.042, 0.022),
+        # fringe (crops/hair_locks_male.png): rounded locks from the crown dropping over the upper forehead
+        ([(-0.2, 1.84, 0.03), (-0.32, 1.79, 0.034), (-0.42, 1.735, 0.036)], 0.036, 0.022),
+        ([(0.05, 1.845, 0.03), (0.02, 1.79, 0.034), (-0.04, 1.738, 0.037)], 0.036, 0.022),
+        ([(0.3, 1.84, 0.03), (0.38, 1.79, 0.034), (0.44, 1.742, 0.036)], 0.034, 0.02),
     ]
     for i, (pts, r0, r1) in enumerate(locks):
         mb = meta('Lock%d' % i, 0.0055)
@@ -307,30 +301,33 @@ def hair_bun(head):
     """Female base (art director, crops/female_head_body.png): wavy locks pulled up into a messy curly bun, a soft
     side-swept fringe and loose face-framing curls; each lock and curl its own family (creases between them)."""
     surf = Surface(head)
-    shell = scalp_shell(head, lambda phi: hairline(phi) - 0.03 * (abs(phi) > 1.2) + 0.012 * _ss(1 - abs(phi) / 0.9))
+    nape = lambda phi: hairline(phi) + 0.02 * _ss((abs(phi) - 1.6) / 0.8)     # pulled up: a clean nape line
+    shell = scalp_shell(head, lambda phi: nape(phi) + 0.012 * _ss(1 - abs(phi) / 0.9), lift=0.002, thick=0.014)
     fams = []
-    for i in range(9):                                               # wavy locks from the hairline up to the bun
-        phi = 0.95 + i * (2 * math.pi - 1.9) / 8
+    for i in range(13):                                              # combed-up locks from the hairline to the bun,
+        phi = 0.95 + i * (2 * math.pi - 1.9) / 12                    # hugging the head (no hanging mass)
         phi = phi if phi <= math.pi else phi - 2 * math.pi
-        y0 = hairline(phi) - (0.03 if abs(phi) > 1.2 else 0.0)
-        pts = [(phi + 0.08 * math.sin(k * 1.9), y0 + (1.86 - y0) * k / 4, 0.012 + 0.006 * (k % 2)) for k in range(5)]
+        y0 = nape(phi)
+        k_ = (abs(phi) - 0.95) / (math.pi - 0.95)
+        pts = [(phi * (1 - 0.55 * (k / 4) ** 1.5) + 0.04 * math.sin(k * 1.9), y0 + (1.84 - y0) * k / 4,
+                0.006 + 0.003 * (k % 2)) for k in range(5)]
         mb = meta('Lock%d' % i, 0.0055)
-        lock(mb, surf, pts, 0.024, 0.02)
+        lock(mb, surf, pts, 0.017, 0.013 + 0.004 * k_)
         fams.append(mb)
-    bun = Vector((0, 1.845, 0.05))
+    bun = Vector((0, 1.86, 0.045))
     for i in range(7):                                               # messy bun: curl loops round a core
         mb = meta('Curl%d' % i, 0.0045)
         a0 = i * 2 * math.pi / 7
-        c = bun + Vector((0.03 * math.cos(a0), 0.012 * math.sin(3 * a0) + (0.02 if i % 3 == 0 else 0), 0.03 * math.sin(a0)))
+        c = bun + Vector((0.036 * math.cos(a0), 0.014 * math.sin(3 * a0) + (0.022 if i % 3 == 0 else 0), 0.036 * math.sin(a0)))
         n = Vector((math.cos(a0), 0.6, math.sin(a0))).normalized()
         u = n.cross(Vector((0, 1, 0)) if abs(n.y) < 0.9 else Vector((1, 0, 0))).normalized()
         v = n.cross(u)
-        pts = [c + (u * math.cos(t) + v * math.sin(t)) * 0.027 + n * 0.006 * t / 6
+        pts = [c + (u * math.cos(t) + v * math.sin(t)) * 0.031 + n * 0.006 * t / 6
                for t in [k * 2 * math.pi * 1.1 / 16 for k in range(17)]]
         chain(mb, pts, 0.016, 0.012, step=0.004)
         fams.append(mb)
     core = meta('BunCore', 0.0055)
-    ball(core, bun, 0.048)
+    ball(core, bun, 0.052)
     ball(core, bun + Vector((0, -0.035, 0.0)), 0.045)                 # seat it on the crown
     fams.append(core)
     for k, (x0, x1, y1, r) in enumerate(((0.05, -0.05, 1.724, 0.024), (0.04, -0.1, 1.71, 0.02))):
@@ -346,7 +343,7 @@ def hair_bun(head):
                    for t in [turns * 2 * math.pi * i / 30 for i in range(31)]]
             chain(mb, pts, 0.0125, 0.008, step=0.003)
             fams.append(mb)
-    return union_shell(solid('Hair', fams, 0.003, 8000, lib.mat('Hair', HAIR, 0.72)), shell, 0.003, 8500)
+    return union_shell(solid('Hair', fams, 0.003, 12000, lib.mat('Hair', HAIR, 0.72)), shell, 0.003, 14000)
 
 
 def volumes():
@@ -1021,7 +1018,8 @@ def chest_weights(p, w):
     for s in (-1, 1):
         if p.z > -0.02:
             break
-        g = _ss(1 - abs(abs(p.x) - BUST.x) / 0.09) * _ss(1 - abs(p.y - BUST.y) / 0.12) if p.x * s > 0 else 0.0
+        dy = p.y - BUST.y                                         # wider above: a pitched bust doesn't fold the top
+        g = _ss(1 - abs(abs(p.x) - BUST.x) / 0.09) * _ss(1 - abs(dy) / (0.17 if dy > 0 else 0.12)) if p.x * s > 0 else 0.0
         g *= _ss((-0.02 - p.z) / 0.06) * 0.85
         if g > 0:
             out = {k: v * (1 - g) for k, v in out.items()}
@@ -1040,8 +1038,8 @@ def rig_table():
         t.append((name, warp(h), f(tl), up, par))
     if SPEC['chest']:
         for s in (-1, 1):
-            c = Vector((BUST.x * s, BUST.y, -0.03))
-            t.append((R.side_name(s) + 'Breast', warp(c), warp(c + Vector((0, 0, -0.1))), Vector((0, 1, 0)), 'Chest'))
+            c = Vector((BUST.x * s, BUST.y, 0.03))                # pivot deep in the chest: a pitch reads as a bounce
+            t.append((R.side_name(s) + 'Breast', warp(c), warp(c + Vector((0, 0, -0.16))), Vector((0, 1, 0)), 'Chest'))
     return t
 
 

@@ -15,7 +15,6 @@ import sys
 
 import bpy
 from mathutils import Matrix, Vector
-from mathutils.bvhtree import BVHTree
 from mathutils.kdtree import KDTree
 
 BASE = os.environ.get('CHAR_BASE', 'male')
@@ -132,10 +131,20 @@ def tshirt(parent, rib):
 PRINT = '#F8F4EA', '#4E2629'          # cat print + its ink (user: helps the chest read); paint slots print/print_ink
 
 
+def _inside(pt, poly):
+    x, y = pt
+    c = False
+    for (x0, y0), (x1, y1) in zip(poly, poly[1:] + poly[:1]):
+        if (y0 > y) != (y1 > y) and x < x0 + (y - y0) * (x1 - x0) / (y1 - y0):
+            c = not c
+    return c
+
+
 def cat_print(shirt, parent):
-    """Cute cat face across the chest, spanning both sides (dense decals on the tee, so they stretch and bounce
-    with it): a cream head with pointy ears, ink eyes with glints, nose and a 'w' mouth."""
-    surf, fr = hb.Surface(shirt), hb.Frame((0, 0, 0))
+    """Cute cat face across the chest, painted INTO the tee: its chest faces are subdivided (~2.7 mm) and take the
+    print materials by a front projection, so the print is the tee surface and can never tear when the chest moves.
+    A cream head with pointy ears, ink eyes with glints, nose and a 'w' mouth."""
+    import bmesh
     cy, hw, hh = 1.205, 0.094, 0.066
     head = []
     for i in range(192):
@@ -145,18 +154,61 @@ def cat_print(shirt, parent):
             d = abs((t - ta + math.pi) % (2 * math.pi) - math.pi)
             r += 0.6 * max(0.0, 1 - d / 0.3) ** 1.6
         head.append((hw * r * math.cos(t), cy + hh * r * math.sin(t)))
-    paper, ink = lib.mat('Print', PRINT[0], 0.85), lib.mat('PrintInk', PRINT[1], 0.8)
-    hb.decal('ShirtPrint', surf, head, fr, paper, parent, offset=0.0036, rings=48)
-    feats = [hb.ellipse(0.012, 0.0155, 24, sx * 0.036, cy + 0.008) for sx in (-1, 1)]
-    feats.append([(0.0, cy - 0.022), (-0.011, cy - 0.011), (0.011, cy - 0.011)])                 # nose
+    ink = [hb.ellipse(0.012, 0.0155, 24, sx * 0.036, cy + 0.008) for sx in (-1, 1)]
+    ink.append([(0.0, cy - 0.022), (-0.011, cy - 0.011), (0.011, cy - 0.011)])                   # nose
     xs = [-0.024 + 0.048 * i / 24 for i in range(25)]
     top = [(x, cy - 0.028 - 0.009 * abs(math.sin(math.pi * (x + 0.024) / 0.024))) for x in xs]
-    feats.append(top + [(x, y - 0.006) for x, y in reversed(top)])     # 'w' mouth
-    for k, f in enumerate(feats):
-        hb.decal('ShirtPrintInk%d' % k, surf, f, fr, ink, parent, offset=0.0048, rings=4)
-    for sx in (-1, 1):                                                   # eye glints
-        hb.decal('ShirtPrintGlint%d' % (sx + 1), surf, hb.ellipse(0.0042, 0.0042, 12, sx * 0.036 + 0.004, cy + 0.0145),
-                 fr, paper, parent, offset=0.0058, rings=2)
+    ink.append(top + [(x, y - 0.006) for x, y in reversed(top)])       # 'w' mouth
+    glints = [hb.ellipse(0.0042, 0.0042, 12, sx * 0.036 + 0.004, cy + 0.0145) for sx in (-1, 1)]
+    me = shirt.data
+    mats = [lib.mat('Print', PRINT[0], 0.85), lib.mat('PrintInk', PRINT[1], 0.8)]
+    for m in mats:
+        me.materials.append(m)
+    ip, ii = len(me.materials) - 2, len(me.materials) - 1
+    mw = shirt.matrix_world
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    near = lambda f: (lambda c: c.z < 0 and abs(c.x) < 0.13 and cy - 0.09 < c.y < cy + 0.13)(G(mw @ f.calc_center_median()))
+    for _ in range(2):                                                   # two halvings: ~2.7 mm faces under the print
+        edges = list({e for f in bm.faces if near(f) for e in f.edges})
+        bmesh.ops.subdivide_edges(bm, edges=edges, cuts=1, use_grid_fill=True)
+    for f in bm.faces:
+        if not near(f):
+            continue
+        c = G(mw @ f.calc_center_median())
+        q = (c.x, c.y)
+        if any(_inside(q, g) for g in glints):
+            f.material_index = ip
+        elif any(_inside(q, g) for g in ink):
+            f.material_index = ii
+        elif _inside(q, head):
+            f.material_index = ip
+    # snap the print's edge vertices onto the outlines (smooth edges instead of 2.7 mm stair-steps); xy only, tiny
+    def seg_near(q, poly):
+        best, bd = None, 1e9
+        for (x0, y0), (x1, y1) in zip(poly, poly[1:] + poly[:1]):
+            dx, dy = x1 - x0, y1 - y0
+            t = max(0.0, min(1.0, ((q[0] - x0) * dx + (q[1] - y0) * dy) / max(dx * dx + dy * dy, 1e-12)))
+            c = (x0 + t * dx, y0 + t * dy)
+            d = (c[0] - q[0]) ** 2 + (c[1] - q[1]) ** 2
+            if d < bd:
+                best, bd = c, d
+        return best, bd
+    inv = mw.inverted()
+    for v in bm.verts:
+        ms = {f.material_index for f in v.link_faces}
+        if len(ms) < 2:
+            continue
+        g = G(mw @ v.co)
+        polys = (glints + ink) if ii in ms or (ms - {0, ip}) else [head]
+        if ms == {0, ip}:
+            polys = [head]
+        c, d = min((seg_near((g.x, g.y), poly) for poly in polys), key=lambda r: r[1])
+        if d < 0.003 ** 2:
+            v.co = inv @ B(Vector((c[0], c[1], g.z)))
+    bmesh.ops.triangulate(bm, faces=bm.faces[:])
+    bm.to_mesh(me)
+    bm.free()
 
 
 def body_weights(p):
@@ -607,7 +659,7 @@ def main():
     t.balance()
     trees['Shirt'] = t
     for o in meshes:
-        if o.name.startswith(('ShirtCollar', 'ShirtSleeve', 'ShirtPrint')):
+        if o.name.startswith(('ShirtCollar', 'ShirtSleeve')):
             wts[o.name] = [top4(w) for w in transfer(o, canon['Shirt'], wts['Shirt'], trees['Shirt'])]
     # blend shapes: fields on the body and the layers; attachments copy their layer's offsets (they stay on it)
     fields = {'Build_Slim': lambda c: build_offset(c, False), 'Build_Heavy': lambda c: build_offset(c, True)}
@@ -635,7 +687,7 @@ def main():
         own['Shirt']['Chest_Size'] = relax(bpy.data.objects['Shirt'], own['Shirt']['Chest_Size'])
 
     def host_of(name):
-        if name.startswith(('ShirtCollar', 'ShirtSleeve', 'ShirtPrint')):
+        if name.startswith(('ShirtCollar', 'ShirtSleeve')):
             return 'Shirt'
         return 'Pants' if name.startswith('PantCuff') else 'Top' if name.startswith(LAYERS) else None
 
@@ -646,22 +698,9 @@ def main():
         if host is None:
             return {}
         out = {}
-        face = None
-        if name.startswith('ShirtPrint'):                     # a print rides the exact tee face under it
-            hp = bpy.data.objects[host].data.polygons
-            bvh = BVHTree.FromPolygons(canon[host], [list(f.vertices) for f in hp])
-            face = []
-            for c in canon[name]:
-                loc, _, fi, _ = bvh.find_nearest(c)
-                vs = list(hp[fi].vertices)
-                ws = [1.0 / max((canon[host][i] - loc).length, 1e-5) ** 2 for i in vs]
-                face.append([(i, w / sum(ws)) for i, w in zip(vs, ws)])
         for k, offs in keys_for(host).items():
             col = []
-            for n_, c in enumerate(canon[name]):
-                if face:
-                    col.append(sum((offs[i] * w for i, w in face[n_]), Vector()))
-                    continue
+            for c in canon[name]:
                 acc, tw = Vector(), 0.0
                 for _, i, d in trees[host].find_n(c, 4):
                     acc += offs[i] / max(d, 1e-4)
@@ -735,7 +774,7 @@ def main():
 
 
 
-BANDS = {'Shirt': ('ShirtCollar', 'ShirtSleeveL', 'ShirtSleeveR', 'ShirtPrint'), 'Top': ('Hem', 'Pocket', 'Collar', 'CuffL', 'CuffR', 'StringL', 'StringR'), 'Pants': ('PantCuffL', 'PantCuffR')}
+BANDS = {'Shirt': ('ShirtCollar', 'ShirtSleeveL', 'ShirtSleeveR'), 'Top': ('Hem', 'Pocket', 'Collar', 'CuffL', 'CuffR', 'StringL', 'StringR'), 'Pants': ('PantCuffL', 'PantCuffR')}
 
 
 def clearance(rig):
@@ -885,7 +924,7 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
     if hb.SPEC['chest']:
         cj['shapes']['Chest_Size'] = 0.8
         cj['chest'] = {'chains': [['LeftBreast', 'LeftBreast'], ['RightBreast', 'RightBreast']], 'radius': 0.05,
-                       'tip_dir': [0, 0, -1], 'tip': 0.1}
+                       'tip_dir': [0, 0, -1], 'tip': 0.16}
     _json(os.path.join(out, 'character.json'), cj)
     # head: skinned neck (HeadSkin) + rigid face parts in character space at rest
     _export(os.path.join(pdir(HEAD_ID), HEAD_ID + '.glb'), [rig, head] + face, False)
