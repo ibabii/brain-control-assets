@@ -264,10 +264,10 @@ def _wall_depth(px, py, gap):
 
 # --- notebook with the TODAY list --------------------------------------------------------------------
 
-NB_PAGE = (6, 560, 392, 960)    # taller for the pivot (2026-10-16): rows grow so the far end keeps NB_CAP
+NB_PAGE = (6, 560, 334, 960)    # 15% narrower 2026-10-16 (mechanics: A/S sleeve meets the right end)    # taller for the pivot (2026-10-16): rows grow so the far end keeps NB_CAP
 _NB_PAGE_OLD = (6, 590, 356, 960)    # TODAY page on screen, 1920x1080 px from the seat: left of the TaskNote, above the sleeve
 NB_CAP = 22.5                    # cap height in px at 1080p (15 px on the Steam Deck, game-ux)
-NB_SQUEEZE = 0.78                # glyph width factor (Patrick Hand is wide): ~22 chars fit one row
+NB_SQUEEZE = 0.78                # max glyph width factor (Patrick Hand is wide); narrowed further to fit a full row
 NB_GAP = -0.3                    # row gap in em: rows at 1.07 em instead of the font's 1.37
 ROWS = 7                         # title + 6 items
 TRAY_TOP = 0.89
@@ -301,8 +301,11 @@ def notebook(parent):
     def turn(p):
         return pivot + turn_m @ (Vector(p) - pivot)
 
+    def squeeze(e):                                               # a full row (box + gap + 8.0 em) fits the page
+        return min(NB_SQUEEZE, (w - 0.012) * 496 / 512 / (9.0 * e))
+
     def far_cap(e):
-        x, caps = -w / 2 + 0.008 + 9.0 * e * NB_SQUEEZE, []        # row end: box + gap + 8.0 em of text
+        x, caps = -w / 2 + 0.008 + 9.0 * e * squeeze(e), []        # row end: box + gap + 8.0 em of text
         for i in range(ROWS):
             y = h / 2 - 0.006 - (i + 0.5) * (1.37 + NB_GAP) * e
             a, b = (lib.project(turn(f.at((x, y + sy * 0.25 * e, 0)))) for sy in (1, -1))
@@ -310,12 +313,14 @@ def notebook(parent):
         return min(caps)
     for _ in range(3):
         em *= NB_CAP / far_cap(em)
-    print('NOTEBOOK yaw %.0f: far-end cap %.1f px at 1080p (%.1f on the Deck)' % (NB_YAW, far_cap(em), far_cap(em) * 2 / 3))
+    sq = squeeze(em)
+    print('NOTEBOOK yaw %.0f: far-end cap %.1f px at 1080p (%.1f on the Deck), glyph squeeze %.2f' % (
+        NB_YAW, far_cap(em), far_cap(em) * 2 / 3, sq))
     pitch = (1.37 + NB_GAP) * em
     mt, ml, mr = 0.006, 0.008, 0.004
     lh, lw = ROWS * pitch, w - ml - mr
     print('NOTEBOOK page %.3f x %.3f m, em %.4f, rows %.3f of %.3f; full row %.3f of %.3f' % (
-        w, h, em, lh, h - 2 * mt, 9.0 * em * NB_SQUEEZE, lw * 496 / 512))   # box + gap + 8.0 em of text
+        w, h, em, lh, h - 2 * mt, 9.0 * em * sq, lw * 496 / 512))   # box + gap + 8.0 em of text
     c = ink.paper(*tex_size(w, h, 1.6), '#F3E5CB', 12, grain=0.025)   # warmer page (was #F6EEDD)
     top = 1 - (mt + 1.1 * em) / h                                 # first rule under the title baseline
     ink.ruled(c, pitch / h, top=top, bottom=0.02, margin=None)
@@ -344,7 +349,7 @@ def notebook(parent):
              lib.mat('StandWire', '#3B3A36', 0.4, 0.7), g, res=3)
     SLOTS['Today'] = {'kind': 'list', 'position': list(f.at((-w / 2 + ml + lw / 2, h / 2 - mt - lh / 2, 0.0008))),
                       'basis': [list(f.m.col[i]) for i in range(3)], 'size': [lw, lh],
-                      'line_height': pitch, 'row_gap': NB_GAP, 'squeeze': NB_SQUEEZE, 'ink': '#26405E', 'align': 'left',
+                      'line_height': pitch, 'row_gap': NB_GAP, 'squeeze': sq, 'ink': '#26405E', 'align': 'left',
                       'default': {'title': 'TODAY:', 'items': [
                           {'text': 'Mop kitchen floor', 'done': True},
                           {'text': 'Be a functional human', 'done': False},
