@@ -77,8 +77,8 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
 
 ## Handoff hygiene
 
-- Commit before you start the next pass: mechanics rsyncs the working tree, and uncommitted edits broke a sync once.
-  Tell them to take `git archive` at the SYNC hash.
+- Gameplay's sync_art.sh extracts the SYNC commit with `git archive` (2026-10-16), so only committed work ships:
+  everything a SYNC claims must be in its commit.
 - Check `ListAgents` before messaging a session; if it's offline, give the orchestrator the paths instead.
 - Unchanged GLBs must stay byte-identical: if a rebuild with no source change shows a modified GLB, find the
   jittering mesh (normals jittered ~3e-5; the signature now rounds normals to 3 decimals).
