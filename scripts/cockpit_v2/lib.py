@@ -644,17 +644,18 @@ def glb_signature(path, decimals=5):
             arr = np.round(arr.astype(np.float64), decimals)
         return hashlib.sha1(arr.tobytes()).hexdigest()
 
-    def rows(i):
+    def rows(i, dec=decimals):
         a = js['accessors'][i]
         if 'bufferView' not in a:                    # glTF: an accessor without data is all zeros
             return np.zeros((a['count'], comps[a['type']]))
         v = views[a['bufferView']]
         arr = np.frombuffer(binary, dtype[a['componentType']], a['count'] * comps[a['type']],
                             v.get('byteOffset', 0) + a.get('byteOffset', 0)).reshape(a['count'], comps[a['type']])
-        return np.round(arr.astype(np.float64), decimals)
+        return np.round(arr.astype(np.float64), dec)
 
     def prim_sig(p):                     # vertex order, index width and triangle order don't matter
-        cols = [rows(v) for _, v in sorted(p['attributes'].items())]
+        # Smooth normals jitter ~3e-5 between identical builds (weld order): compare them at 3 decimals.
+        cols = [rows(v, 3 if k == 'NORMAL' else decimals) for k, v in sorted(p['attributes'].items())]
         cols += [rows(v) for t in p.get('targets', []) for _, v in sorted(t.items())]
         vert = np.concatenate(cols, axis=1)
         _, ids = np.unique(vert, axis=0, return_inverse=True)        # canonical id per distinct vertex

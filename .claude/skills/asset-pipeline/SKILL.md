@@ -51,6 +51,37 @@ headless runs are faster and deterministic. Never touch bridge 9080 (gameplay ed
    - SendMessage to game-mechanics: a short summary, then the SYNC line as the last line.
    - Ship `.import` files too: hand and fly GLBs import at `animation/fps=100`, and the import scripts live in the art folder.
 
+## Shortcuts (2026-10-16 self-eval)
+
+- `scripts/tools/cockpit_cycle.sh`: build, audit with each CLIP pair, reimport and verify in one call (env knobs pass
+  through, e.g. `NB_YAW=12`). Use it instead of chaining four commands per iteration.
+- `scripts/tools/aspects.sh NAME [preview args]`: seat view at 16:9, 4:3, 21:9 and Deck plus a 2×2 sheet. Anything at
+  a frame edge, or with a px rule (caps, gaps), is checked at all four aspects. Preview result lines print per aspect.
+- `Blender -b source/cockpit/cockpit_v2.blend --python scripts/tools/probe.py -- NAME...` prints world bounds and
+  the 1080p seat rect; `-- --near x,y,z R` lists what is within R of a point.
+- `Godot --headless -s scripts/tools/sheet.gd -- OUT.png 800 2 a.png b.png ...` makes a contact sheet from any PNGs.
+
+## Before building a proposal or spec (checklist)
+
+1. **Probe the spot first:** `probe.py --near` the anchor point with the prop's reach (hang length, swing radius,
+   arm path). If a neighbour is inside it, reply with the conflict and 2–3 placements before building anything.
+   (The octopus hang point sat 2.3 cm above the answering machine; the notebook pivot swung into the A-key hand.)
+2. **Mock as a preview script,** not a rebuild: move or scale the existing nodes in a `previews/.../*_mock.gd` and fit
+   them by their on-screen rect from a fixed seat camera, so oblique shots stay consistent. Render every option at
+   every aspect in one sheet.
+3. **Hands vs props:** the hand preview's arm is not the game's arm. State that, and ask mechanics for
+   `tests/clearance_check` numbers (CPU-skinned) before calling a placement clear.
+4. **Px rules move with geometry:** a turn or resize changes cap height, row width and occlusion. Rebuild the check
+   into the build log (as `paper.notebook` prints its far-end cap and full-row fit) instead of eyeballing.
+
+## Handoff hygiene
+
+- Commit before you start the next pass: mechanics rsyncs the working tree, and uncommitted edits broke a sync once.
+  Tell them to take `git archive` at the SYNC hash.
+- Check `ListAgents` before messaging a session; if it's offline, give the orchestrator the paths instead.
+- Unchanged GLBs must stay byte-identical: if a rebuild with no source change shows a modified GLB, find the
+  jittering mesh (normals jittered ~3e-5; the signature now rounds normals to 3 decimals).
+
 ## Gotchas (each cost real time once)
 
 - **Slab bevels:** `lib.slab` insets the outline by the bevel. A bevel of half the ring width or more eats the face. Cap the bevel below half the ring.
