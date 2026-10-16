@@ -770,6 +770,7 @@
   "BlushHotR",
   "LidHalfL",
   "LidHalfR",
+  "Furrow",
   "Flat",
   "Grimace",
   "GrimaceLine",
@@ -871,11 +872,13 @@
   },
   "panic": {
    "show": [
-    "Yell"
+    "Yell",
+    "Furrow"
    ],
    "brow": [
-    0.004,
-    34.0
+    -0.002,
+    30.0,
+    0.005
    ],
    "pupil": 0.42,
    "look": null
@@ -910,12 +913,12 @@
    "pupil": 1.0,
    "look": [
     [
-     -4.0,
-     -7.0
+     -3.0,
+     -5.0
     ],
     [
-     -4.0,
-     -7.0
+     -3.0,
+     -5.0
     ]
    ]
   },
@@ -940,8 +943,8 @@
     "OSmall"
    ],
    "brow": [
-    0.01,
-    -14.0
+    0.018,
+    -16.0
    ],
    "pupil": 1.0,
    "look": null
@@ -1303,8 +1306,8 @@
    "LookL",
    "LookR"
   ],
-  "eye_yaw": 25,
-  "eye_pitch": 15
+  "eye_yaw": 10,
+  "eye_pitch": 6
  },
  "render_layer": 2,
  "ragdoll_layer": 2,

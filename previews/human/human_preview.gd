@@ -79,6 +79,7 @@ func _expression(h: Node3D, name: String) -> void:
 			_find(h, 'Lid' + side).rotation_degrees.x = e.lid[0 if side == 'L' else 1] if e.lid is Array else e.lid
 		var brow := _find(h, 'Brow' + side)
 		brow.position.y += e.brow[0]
+		brow.position.x -= s * (e.brow[2] if e.brow.size() > 2 else 0.0)
 		brow.rotation_degrees.z = -s * e.brow[1]
 		if e.look:
 			var g: Array = e.look[0 if side == 'L' else 1]

@@ -350,6 +350,7 @@ func _face(h: Node3D, base: String, name: String) -> void:
 		var s := -1.0 if side == 'L' else 1.0
 		var b: Node3D = f.call('Brow' + side)
 		b.position.y += brow[0]
+		b.position.x -= s * (brow[2] if brow.size() > 2 else 0.0)   # optional inward shift
 		b.rotation_degrees.z += -s * brow[1]
 		if lid != null:
 			f.call('Lid' + side).rotation_degrees.x = lid[0 if side == 'L' else 1] if lid is Array else lid
