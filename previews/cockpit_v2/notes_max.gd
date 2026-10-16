@@ -3,11 +3,11 @@ extends Node
 ## prints each label's size against its paper box from layout.json.
 
 const MAX := {
-	"SameBrain": "TUB =\nSLIPPERY\nINTERVIEW?\nDON'T PANIC",
+	"SameBrain": "TUB =\nSLIPPERY!",
 	"YouGotThis": "YOU MADE\nIT OUT.\nBARELY.",
 	"MopFloor": "PARCEL =\nSOMEBODY\nELSE'S\nPROBLEM.",
 	"Chaos": "NEVER\nAGAIN:\nBATHROOM\nDOORKNOBS",
-	"SmallSteps": "9:40 AM\n5H LEFT",
+	"Clock": "9:40 AM\n5H LEFT",
 }
 
 func _ready() -> void:

@@ -44,11 +44,13 @@ def write(slots):
                       'transform = %s' % _xform(s),
                       'cast_shadow = 0',
                       'pixel_size = %.6g' % px,
-                      'shaded = true',
+                      'shaded = %s' % ('false' if s.get('style') == 'glow' else 'true'),
                       'double_sided = false',
                       'modulate = %s' % _color(s['ink']),
-                      'text = %s' % _str(s['default']),
-                      'font = ExtResource("font")',
+                      'text = %s' % _str(s['default'])]
+            if s.get('style') != 'glow':
+                nodes += ['font = ExtResource("font")']
+            nodes += [
                       'font_size = %d' % FONT_SIZE,
                       'outline_size = 0',
                       'horizontal_alignment = %d' % (0 if s['align'] == 'left' else 1),
@@ -61,6 +63,12 @@ def write(slots):
             vw, vh = 512, int(round(512 * h / w * squeeze))       # squeeze < 1: glyphs drawn narrower on the paper
             line = s['line_height'] / h * vh
             fs = int(line / (FONT_H + gap)) if gap is not None else int(line / EM)
+            # Packed rows overrun the row box by a descender: the page grows downward (text scale unchanged).
+            pad = round(0.35 * fs) if gap is not None else 0
+            h2 = h * (vh + pad) / vh
+            vh += pad
+            s = dict(s, position=[s['position'][i] - s['basis'][1][i] * (h2 - h) / 2 for i in range(3)])
+            h = h2
             subs += ['[sub_resource type="Theme" id="theme_%s"]' % id,
                      'default_font = ExtResource("font")',
                      'default_font_size = %d' % fs,
@@ -110,6 +118,7 @@ def write(slots):
                           'texture = ExtResource("tick")', 'expand_mode = 1', 'stretch_mode = 5', '',
                           '[node name="Text" type="RichTextLabel" parent="%s"]' % p,
                           'size_flags_horizontal = 3', 'bbcode_enabled = true', 'fit_content = true',
+                          'clip_contents = false',          # Patrick Hand descenders (y, g) overhang the line box
                           'scroll_active = false', 'autowrap_mode = %d' % (0 if gap is not None else 3),   # packed list: one row each
                           'text = %s' % _str(item['text']), '']
             nodes += ['[node name="Ink" type="MeshInstance3D" parent="%s"]' % id,

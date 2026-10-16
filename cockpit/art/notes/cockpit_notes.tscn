@@ -22,14 +22,14 @@ roughness = 0.8
 texture_filter = 1
 
 [sub_resource type="QuadMesh" id="quad_Today"]
-size = Vector2(0.24412, 0.24664)
+size = Vector2(0.24412, 0.25827)
 
 [node name="CockpitNotes" type="Node3D"]
 
 [node name="YouGotThis" type="Label3D" parent="."]
-transform = Transform3D(0.837845, -0.131156, 0.529919, 0.154656, 0.987968, 0, -0.523543, 0.0819552, 0.848048, -1.02651, 1.39278, -0.202139)
+transform = Transform3D(0.839417, -0.120683, 0.529919, 0.142306, 0.989823, 0, -0.524526, 0.0754108, 0.848048, -1.03181, 1.39275, -0.198833)
 cast_shadow = 0
-pixel_size = 0.000485739
+pixel_size = 0.000484136
 shaded = true
 double_sided = false
 modulate = Color(0.478, 0.141, 0.188, 1)
@@ -40,12 +40,12 @@ outline_size = 0
 horizontal_alignment = 1
 line_spacing = -6.0
 autowrap_mode = 3
-width = 244.8
+width = 267.2
 
 [node name="Chaos" type="Label3D" parent="."]
-transform = Transform3D(0.881878, -0.197012, -0.428343, 0.277808, 0.951179, 0.134469, 0.380939, -0.237583, 0.893555, 1.1227, 1.54652, -0.315035)
+transform = Transform3D(0.892352, -0.139389, -0.429276, 0.215788, 0.967128, 0.134533, 0.396412, -0.212684, 0.893097, 1.12319, 1.46373, -0.308811)
 cast_shadow = 0
-pixel_size = 0.000320908
+pixel_size = 0.000295454
 shaded = true
 double_sided = false
 modulate = Color(0.478, 0.141, 0.188, 1)
@@ -56,12 +56,12 @@ outline_size = 0
 horizontal_alignment = 1
 line_spacing = -6.0
 autowrap_mode = 3
-width = 291.3
+width = 448.5
 
 [node name="MopFloor" type="Label3D" parent="."]
-transform = Transform3D(0.848035, -0.00469859, -0.529919, 0.00554048, 0.999985, 0, 0.529911, -0.002936, 0.848048, 1.03486, 1.20944, -0.196927)
+transform = Transform3D(0.847978, -0.010893, -0.529919, 0.0128448, 0.999918, 0, 0.529876, -0.00680668, 0.848048, 1.04001, 1.20996, -0.193707)
 cast_shadow = 0
-pixel_size = 0.000375904
+pixel_size = 0.00037465
 shaded = true
 double_sided = false
 modulate = Color(0.290, 0.180, 0.133, 1)
@@ -72,12 +72,12 @@ outline_size = 0
 horizontal_alignment = 1
 line_spacing = -6.0
 autowrap_mode = 3
-width = 312.3
+width = 341.7
 
 [node name="SameBrain" type="Label3D" parent="."]
-transform = Transform3D(0.998734, -0.0502994, 0, 0.0502994, 0.998734, 0, 0, 0, 1, -0.476431, 1.74939, -0.4692)
+transform = Transform3D(0.999076, -0.0429792, 0, 0.0429792, 0.999076, 0, 0, 0, 1, -0.500489, 1.7632, -0.5192)
 cast_shadow = 0
-pixel_size = 0.000369823
+pixel_size = 0.000384671
 shaded = true
 double_sided = false
 modulate = Color(0.290, 0.180, 0.133, 1)
@@ -88,7 +88,7 @@ outline_size = 0
 horizontal_alignment = 1
 line_spacing = -6.0
 autowrap_mode = 3
-width = 539.2
+width = 788.8
 
 [node name="HeartSticky" type="Label3D" parent="."]
 transform = Transform3D(0.997564, -0.0697566, 0, 0.0697566, 0.997564, 0, 0, 0, 1, 0.600253, 1.37188, -0.5557)
@@ -139,13 +139,13 @@ autowrap_mode = 3
 width = 314.7
 
 [node name="Today" type="Node3D" parent="."]
-transform = Transform3D(1, 1.40753e-08, -0, -1.36572e-08, 0.970296, 0.241922, 3.40512e-09, -0.241922, 0.970296, -0.56767, 1.05749, 0.272478)
+transform = Transform3D(1, 1.40753e-08, -0, -1.36572e-08, 0.970296, 0.241922, 3.40512e-09, -0.241922, 0.970296, -0.56767, 1.05185, 0.273885)
 
 [node name="Page" type="SubViewport" parent="Today"]
 disable_3d = true
 transparent_bg = true
 gui_disable_input = true
-size = Vector2i(512, 403)
+size = Vector2i(512, 422)
 render_target_update_mode = 4
 
 [node name="List" type="VBoxContainer" parent="Today/Page"]
@@ -189,6 +189,7 @@ stretch_mode = 5
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
+clip_contents = false
 scroll_active = false
 autowrap_mode = 0
 text = "Mop kitchen floor"
@@ -221,6 +222,7 @@ stretch_mode = 5
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
+clip_contents = false
 scroll_active = false
 autowrap_mode = 0
 text = "Be a functional human"
@@ -253,6 +255,7 @@ stretch_mode = 5
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
+clip_contents = false
 scroll_active = false
 autowrap_mode = 0
 text = "Pet the cat/kind of"
@@ -285,6 +288,7 @@ stretch_mode = 5
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
+clip_contents = false
 scroll_active = false
 autowrap_mode = 0
 text = "It's okay. :)"
@@ -318,6 +322,7 @@ stretch_mode = 5
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
+clip_contents = false
 scroll_active = false
 autowrap_mode = 0
 text = ""
@@ -351,6 +356,7 @@ stretch_mode = 5
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
+clip_contents = false
 scroll_active = false
 autowrap_mode = 0
 text = ""
@@ -359,3 +365,18 @@ text = ""
 cast_shadow = 0
 mesh = SubResource("quad_Today")
 material_override = SubResource("ink_Today")
+
+[node name="Clock" type="Label3D" parent="."]
+transform = Transform3D(0.848048, 0, -0.529919, 0, 1, 0, 0.529919, 0, 0.848048, 0.759702, 1.68194, -0.363236)
+cast_shadow = 0
+pixel_size = 0.000622423
+shaded = false
+double_sided = false
+modulate = Color(1.000, 0.647, 0.239, 1)
+text = "7:30 AM\nMONDAY"
+font_size = 64
+outline_size = 0
+horizontal_alignment = 1
+line_spacing = -6.0
+autowrap_mode = 3
+width = 249.4

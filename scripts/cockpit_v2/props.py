@@ -507,7 +507,7 @@ def meter_box(name, base, w, parent, yaw=0.0):
 
 @prop
 def cat_tv(name, base, w, parent, yaw=0.0):
-    """Little CRT: FEED THE CAT ??? in chalky white on a glowing screen."""
+    """Little CRT on the right monitor: the live `Clock` readout (2 amber lines, NoteText) and a cat doodle."""
     f = Frame(base, (0, yaw, 0))
     h, d = w * 0.78, w * 0.7
     shell = M('Gadget', '#E6DCC6', 0.55)
@@ -518,10 +518,11 @@ def cat_tv(name, base, w, parent, yaw=0.0):
         [M('Bezel', '#3B3F3E', 0.5)], f, parent)
     c = ink.Canvas(int(sw * PX * 1.5), int(sh * PX * 1.5), '#1A2F33')
     c.ellipse((0.5, 0.5), 0.75, 0.6, '#2C5257', soft=30, opacity=0.8)
-    ink.text(c, 'FEED\nTHE\nCAT\n???', (0.3, 0.5), 0.17, '#F2F2EA', weight=1)
-    ink.cat(c, (0.72, 0.3), 0.3, '#F2F2EA', w=3)
-    face_card(name + 'Screen', sw, sh, c, f.child((-w * 0.08, h * 0.54, d * 0.5 + 0.006)), parent, rough=0.45,
-              r=0.016)
+    ink.cat(c, (0.88, 0.17), 0.14, '#F2F2EA', w=2)          # small: the screen is the clock now (user 2026-10-15)
+    sf = f.child((-w * 0.08, h * 0.54, d * 0.5 + 0.006))
+    face_card(name + 'Screen', sw, sh, c, sf, parent, rough=0.45, r=0.016)
+    from paper import slot
+    slot('Clock', sf, sw, sh, (0.05, 0.14, 0.95, 0.9), '7:30 AM\nMONDAY', '#FFA53D', 0.36, style='glow')
     for k in range(2):
         kb = lathe([(0, 0, 0), (0.011, 0, 0), (0.011, 0.01, 0), (0, 0.01, 0)], 14)
         for v in kb.verts:

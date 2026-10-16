@@ -126,7 +126,7 @@ def pin(name, f, pos, color, parent, depth):
              parent, res=1, bevel_res=0)
 
 
-def slot(id, f, w, h, box, text, ink_col, size, align='center', kind='label'):
+def slot(id, f, w, h, box, text, ink_col, size, align='center', kind='label', style=None):
     """Register a text slot: `box` = (u0, v0, u1, v1) of the paper, `size` = line height as a fraction of h."""
     u0, v0, u1, v1 = box
     cx = (u0 - 0.5) * w if align == 'left' and kind == 'label' else (u0 + u1 - 1) / 2 * w   # Label3D left = origin
@@ -134,6 +134,8 @@ def slot(id, f, w, h, box, text, ink_col, size, align='center', kind='label'):
     SLOTS[id] = {'kind': kind, 'position': list(c), 'basis': [list(f.m.col[i]) for i in range(3)],
                  'size': [(u1 - u0) * w, (v1 - v0) * h], 'line_height': size * h, 'ink': ink_col,
                  'align': align, 'default': text}
+    if style:
+        SLOTS[id]['style'] = style                     # 'glow': unshaded, default (digital-ish) font
 
 
 # --- notes -----------------------------------------------------------------------------------------
@@ -177,17 +179,17 @@ def notes(parent):
 
     # Pinned to the brain wall (in front of the cables, like the concept).
     # The 16:9 side monitors cover the concept spots, so these are taped across the bezels.
-    f, w, h = on_monitor([(18, 222), (158, 206), (176, 346), (36, 362)], 'LeftPanel')
+    f, w, h = on_monitor([(4, 222), (158, 206), (176, 346), (22, 362)], 'LeftPanel')     # 10% wider: >=14 px caps (game-ux)
     sticky('YouGotThis', f, w, h, PINK, g, 1, [(ink.smiley, (0.58, 0.13), 0.12, red)], curl=0.006)
     tape('YouGotThisTape', f, (w * 0.42, h * 0.38, 0.0003), (0.05, 0.02), -50, g, 7)
     slot('YouGotThis', f, w, h, (0.08, 0.24, 0.92, 0.95), 'YOU\nGOT THIS\n(probably)', red, 0.2)
 
-    f, w, h, gap = wall_note('Chaos', [(1542, 112), (1642, 80), (1652, 275), (1552, 295)], g)
+    f, w, h, gap = wall_note('Chaos', [(1512, 175), (1652, 148), (1660, 320), (1520, 345)], g)   # wider + lower: clear of the alien, >=14 px caps
     sticky('Chaos', f, w, h, PINK, g, 3, [(ink.bulb, (0.55, 0.17), 0.17, red)], curl=0.005)
     pin('ChaosPin', f, (0, h * 0.44, 0.0006), '#EAC04A', g, gap)
     slot('Chaos', f, w, h, (0.06, 0.33, 0.94, 0.94), 'CHAOS\n=\nCREATIVITY\n?', red, 0.09)
 
-    f, w, h = on_monitor([(1500, 345), (1630, 352), (1610, 487), (1478, 478)], 'RightPanel')
+    f, w, h = on_monitor([(1500, 345), (1643, 352), (1623, 487), (1478, 478)], 'RightPanel')   # 10% wider
     sticky('MopFloor', f, w, h, YELLOW, g, 4, [(ink.smiley, (0.55, 0.12), 0.12, brown)], curl=0.005)
     tape('MopFloorTape', f, (-w * 0.44, h * 0.36, 0.0003), (0.05, 0.02), 40, g, 8)
     slot('MopFloor', f, w, h, (0.06, 0.24, 0.94, 0.95), 'MOP\nFLOOR\n=\nADULTING', brown, 0.15)
@@ -197,7 +199,7 @@ def notes(parent):
     sw, sh = spec['size']
     _, scy, _ = spec['pos']
     d_r = Vector(((sw - 1.12) / 2, scy - 1.33, 0))
-    f, w, h = on_monitor([(470, 12), (614, 4), (618, 102), (478, 110)], 'FrontScreen', 0.11)
+    f, w, h = on_monitor([(434, 14), (644, 4), (648, 102), (442, 112)], 'FrontScreen', 0.06)   # hint slot: 45% wider to the left (18 px caps, 2 lines)
     sticky('SameBrain', f, w, h, ORANGE, g, 5, [(ink.smiley, (0.8, 0.14), 0.13, brown)], curl=0.003)
     tape('SameBrainTape', f, (w * 0.32, h * 0.47, 0.0003), (0.045, 0.018), -30, g, 1)
     slot('SameBrain', f, w, h, (0.06, 0.2, 0.94, 0.95), 'SAME\nBRAIN\nDIFFERENT\nDAY...', brown, 0.2)
