@@ -44,7 +44,8 @@ CONSOLE = Frame((0, 0.95, 0.1), (18, 0, 0))     # game Console node
 # Control module anchors in Console space (game src/cockpit/cockpit.tscn).
 # Spread out 2026-10-14 (user: controls too close); proposed to gameplay, was LeftKeys -0.27, Panic (0.02, 0, -0.06), RightSlot 0.3.
 # LeftKeys -0.38 -> -0.29 (2026-10-15, user): the A-press forearm cleared the TODAY notebook stand.
-ANCHORS = {'LeftKeys': (-0.29, 0, 0), 'PanicButton': (0.0, 0, -0.05), 'RightSlot': (0.33, 0, 0)}
+# RightSlot 0.33 -> 0.39 (2026-10-15, user): the full-left knob covered EMBAR's R; the button plate narrowed to make room.
+ANCHORS = {'LeftKeys': (-0.29, 0, 0), 'PanicButton': (0.0, 0, -0.05), 'RightSlot': (0.39, 0, 0)}
 SLOT_X = ANCHORS['RightSlot'][0]
 DIALS = Frame((0, 0.93, -0.59))                   # game GaugeDials node (was 0.955 before the intercom, 2026-10-15)
 DIAL_X = [-0.48, -0.24, 0.0, 0.24, 0.48]
@@ -228,25 +229,25 @@ def console(root):
     # Front skirt down to the tray.
     lib.box('ConsoleSkirt', (1.30, 0.12, 0.05), M('beige', 0.62), CONSOLE.child((0, -0.09, 0.111)), group, bevel=0.012)   # 4 mm behind the slab front (was flush: z-fight)
     # Key and SPACE housings ship with the control art (cockpit/art/controls/).
-    # Right inset where the swappable slot lives (game slot at x 0.30).
+    # Right inset where the swappable slot lives (game RightSlot anchor).
     lib.slab('SlotInset', rrect(0.27, 0.22, 0.025, 4), 0.012, 0.004, M('inset', 0.6), top.child((SLOT_X, 0.01, -0.0125)), group)   # fills the hole, 0.5 mm below the console top
     rim = [(x, y) for x, y in rrect(0.30, 0.25, 0.03, 4)]
     lib.slab('SlotRim', rim, 0.016, 0.005, M('housing_dark', 0.6), top.child((SLOT_X, 0.01, 0.0)), group,
              holes=[list(reversed(rrect(0.26, 0.21, 0.02, 4)))])
     # Right plate for UNDO / DISTRACT (positions read from the concept on the console plane).
-    lib.slab('ButtonPlate', _round_poly([(0.515, 0.13), (0.655, 0.13), (0.675, -0.11), (0.515, -0.11)], 0.025), 0.014,
+    lib.slab('ButtonPlate', _round_poly([(0.58, 0.13), (0.655, 0.13), (0.675, -0.11), (0.58, -0.11)], 0.025), 0.014,
              0.004, M('inset', 0.6), top.child((0, 0, -0.004)), group)
     # Decorative only (user call 2026-10-14): small matte caps, taped over, with an OUT OF ORDER note.
     # The note text is a Label3D in cockpit_art.tscn (ConsoleDecals/OutOfOrder).
-    for name, x, z, col in (('UndoButton', 0.592, -0.075, 'undo'), ('DistractButton', 0.596, 0.03, 'distract')):
+    for name, x, z, col in (('UndoButton', 0.624, -0.075, 'undo'), ('DistractButton', 0.624, 0.03, 'distract')):
         f = top.child((x, -z, 0.006))
         lib.slab(name + 'Rim', circle(0.034, 28), 0.01, 0.004, M('rubber', 0.85), f, group)
         lib.slab(name, circle(0.027, 28), 0.014, 0.005, M(col, 0.9), f.child((0, 0, 0.005)), group)
         for a in (40, -40):
             lib.tape_strip(name + 'Tape', f.child((0, 0, 0.0198), (0, 0, a + (5 if name[0] == 'U' else -7))),
                            (0.068, 0.014), group, seed=a + len(name))       # long enough to wrap onto the rim
-    note = top.child((0.594, -0.09, 0.0115), (0, 0, -6))   # plate top is at 0.010; front edge, below the caps
-    lib.box('OutOfOrderNote', (0.085, 0.042, 0.002), lib.mat('LabelPaper', '#F4ECDC', 0.85), note, group)
+    note = top.child((0.625, -0.09, 0.0115), (0, 0, -6))   # plate top is at 0.010; front edge, below the caps
+    lib.box('OutOfOrderNote', (0.078, 0.042, 0.002), lib.mat('LabelPaper', '#F4ECDC', 0.85), note, group)
     tape(group, note, (-0.04, 0.0, 0.001), (0.016, 0.03), 4)
     # Screws in a row along the back and front of the flat top, clear of the controls, plate and the console note.
     for x, y in ((-0.6, 0.152), (-0.3, 0.152), (0.33, 0.152), (0.6, 0.152), (-0.6, -0.112), (-0.38, -0.112),

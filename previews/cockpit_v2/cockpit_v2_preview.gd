@@ -46,6 +46,9 @@ func _ready() -> void:
 		var a: Array = anchors[CONTROLS[path]]
 		module.position = Vector3(a[0], a[1], a[2])
 		console.add_child(module)
+	var st := OS.get_cmdline_user_args().find('--stick')     # --stick DEG: joystick tilt about Z (+24 = full left)
+	if st >= 0:
+		(find_child('Pivot', true, false) as Node3D).rotation_degrees.z = float(OS.get_cmdline_user_args()[st + 1])
 	screens = SCREENS.instantiate()
 	add_child(screens)
 	camera = Camera3D.new()
@@ -124,6 +127,34 @@ func _shot(path: String) -> void:
 		await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(path)
 	print('COCKPIT_V2_CAPTURE ', path)
+	if '--stick' in OS.get_cmdline_user_args():
+		_knob_vs_label()
+
+## Screen rects (px) of the joystick knob and the EMBAR label text: gap > 0 = knob clear right of the label.
+func _knob_vs_label() -> void:
+	var cam := get_viewport().get_camera_3d()
+	var knob := find_child('Pivot', true, false).find_child('Knob', true, false) as MeshInstance3D
+	var c := knob.global_position
+	var r := 0.034
+	var kx := []
+	var ky := []
+	for d in [cam.global_basis.x, -cam.global_basis.x, cam.global_basis.y, -cam.global_basis.y]:
+		var p := cam.unproject_position(c + d * r)
+		kx.append(p.x)
+		ky.append(p.y)
+	var label: Label3D
+	for l in find_children('*', 'Label3D', true, false):
+		if (l as Label3D).text == 'EMBAR':
+			label = l
+	var box := label.get_aabb()
+	var lx := []
+	var ly := []
+	for i in 8:
+		var p := cam.unproject_position(label.global_transform * box.get_endpoint(i))
+		lx.append(p.x)
+		ly.append(p.y)
+	print('KNOB_VS_LABEL knob x %d..%d y %d..%d  label x %d..%d y %d..%d  gap_x %d' % [kx.min(), kx.max(), ky.min(),
+		ky.max(), lx.min(), lx.max(), ly.min(), ly.max(), kx.min() - lx.max()])
 
 func _capture(name: String) -> void:
 	var args := OS.get_cmdline_user_args()

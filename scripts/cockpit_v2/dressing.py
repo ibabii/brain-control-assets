@@ -299,7 +299,7 @@ def desk_props(parent):
     base, w, h = on_ground((22, 766, 246, 900), y, 0.86)
     props.donut('Donut', seat(Vector((-1.0, 0, 0.3))), w, g)
     base, w, h = on_ground((1472, 702, 1615, 905), y, 0.95)
-    props.mug('Mug', seat(Vector((0.6, 0, 0.3))), h * 0.8, g)
+    props.mug('Mug', seat(Vector((0.625, 0, 0.3))), h * 0.8, g)
     base, w, h = on_ground((1352, 600, 1662, 735), 0.93)
     props.lever_box('LeverBox', seat(base + Vector((0.205, 0, -0.08))), w * 0.85, h, g)
     # Octopus and voxel pal sit on a crate behind the console's right end.

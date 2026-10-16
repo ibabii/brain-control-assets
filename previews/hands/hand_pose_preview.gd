@@ -4,7 +4,7 @@ extends Node3D
 ##   [--left press_finger] [--right grip] [--t 1.0 (fraction of the clip)] [--lx -0.078 (left target x shift; A key)]
 
 const CAP_S := Vector3(-0.329, 0.988, 0.112)      # S key cap top (left_keys at the LeftKeys anchor)
-const KNOB := Vector3(0.33, 1.102, 0.149)         # joystick ball centre
+const KNOB := Vector3(0.39, 1.102, 0.149)         # joystick ball centre
 const N := Vector3(0, 0.951057, 0.309017)         # console normal (tilt 18)
 const F := Vector3(0, 0.309017, -0.951057)        # along the console, away from the player
 const SHOULDER := {"l": Vector3(-0.42, 1.0, 0.7), "r": Vector3(0.42, 1.0, 0.7)}   # game LeftHand/RightHand origins

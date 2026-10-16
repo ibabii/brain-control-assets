@@ -82,7 +82,7 @@ position = Vector3(0, 0.95, 0.1)
 rotation_degrees = Vector3(18, 0, 0)
 
 [node name="OutOfOrder" type="Label3D" parent="ConsoleDecals"]
-position = Vector3(0.594, 0.0137, 0.09)
+position = Vector3(0.625, 0.0137, 0.09)
 rotation_degrees = Vector3(-90, 0, -6)
 pixel_size = 0.00026
 modulate = Color(0.72, 0.16, 0.13, 1)
@@ -95,4 +95,4 @@ ORDER"
 transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, -0.34, 0.945, 0.4)
 
 [node name="HandRest_R" type="Marker3D" parent="."]
-transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, 0.4, 0.945, 0.4)
+transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, 0.43, 0.945, 0.4)
