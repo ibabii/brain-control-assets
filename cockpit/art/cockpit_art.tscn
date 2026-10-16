@@ -111,7 +111,7 @@ horizontal_alignment = 0
 text = "OOPS"
 
 [node name="HandRest_L" type="Marker3D" parent="."]
-transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, -0.46, 0.945, 0.34)
+transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, -0.33, 0.945, 0.4)
 
 [node name="HandRest_R" type="Marker3D" parent="."]
 transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, 0.43, 0.945, 0.4)

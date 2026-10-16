@@ -341,8 +341,9 @@ def notebook(parent):
     wood = lib.mat('NotebookStand', '#B5835A', 0.6)
     bottom = f.at((-0.014, -h / 2 - ch / 2, -0.0145))
     ff = Frame((bottom.x, TRAY_TOP, bottom.z))
-    lib.box('StandFoot', (w + 0.07, 0.012, 0.06), wood, ff.child((0, 0.006, -0.01)), g, bevel=0.002)   # clear of the console front
-    lib.box('StandLip', (w + 0.07, 0.016, 0.012), wood, ff.child((0, 0.012 + 0.008, 0.026)), g, bevel=0.002)
+    # Foot and lip end under the cover's right edge (2026-10-16: the left arm's idles pass 0.7 cm from the old overhang).
+    lib.box('StandFoot', (w + 0.04, 0.012, 0.06), wood, ff.child((-0.015, 0.006, -0.01)), g, bevel=0.002)   # clear of the console front
+    lib.box('StandLip', (w + 0.04, 0.016, 0.012), wood, ff.child((-0.015, 0.012 + 0.008, 0.026)), g, bevel=0.002)
     lib.box('StandBoard', (w + 0.03, h * 0.75, 0.008), wood, f.child((-0.014, -h * 0.1, -0.0145 - 0.0045)), g, bevel=0.002)
     lib.tube('StandStrut', [f.at((-0.014, h * 0.02, -0.024)), ff.at((0, 0.012, -0.035))], 0.004,
              lib.mat('StandWire', '#3B3A36', 0.4, 0.7), g, res=3)
