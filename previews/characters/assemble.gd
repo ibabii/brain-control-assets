@@ -18,12 +18,14 @@ static func build(base: String, over: Dictionary = {}) -> Node3D:
 	var parts: Dictionary = cj.parts.duplicate()
 	parts.merge(over.get('parts', {}), true)
 	var hidden: Array = []
+	var pshapes: Dictionary = {}                     # part.json "shapes" (a hat's Hair_Hat), under the character's
 	for slot in parts:
 		if parts[slot] == '':
 			continue
 		var pdir: String = ROOT + 'parts/' + parts[slot] + '/art/'
 		var pj: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(pdir + 'part.json'))
 		hidden += pj.get('hides', [])
+		pshapes.merge(pj.get('shapes', {}), true)
 		var p: Node3D = load(pdir + parts[slot] + '.tscn').instantiate()
 		_add_bones(sk, p, pj.get('bones', []))
 		var att := BoneAttachment3D.new()
@@ -45,7 +47,8 @@ static func build(base: String, over: Dictionary = {}) -> Node3D:
 				n.visible = false
 	for m: MeshInstance3D in ch.find_children('Body_*', 'MeshInstance3D', true, false):
 		m.visible = not m.name in hidden
-	var shapes: Dictionary = cj.get('shapes', {}).duplicate()
+	var shapes: Dictionary = pshapes
+	shapes.merge(cj.get('shapes', {}), true)
 	shapes.merge(over.get('shapes', {}), true)
 	var colors: Dictionary = cj.get('colors', {}).duplicate()
 	colors.merge(over.get('colors', {}), true)

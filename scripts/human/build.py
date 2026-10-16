@@ -822,12 +822,17 @@ EXPRESSIONS = {
 
 # --- assembly -------------------------------------------------------------------------------------------------
 
+ACCESSORY_HOOK = None                          # set by scripts/characters/build_char.py
+
+
 def head_parts(root):
     """Head skin, hair and face under a 'Face' empty at the neck (look B: scaled about the eye)."""
     head = lib.empty('Face', NECK, root)          # head parts (not 'Head': that is the bone)
     skin = adopt(head_skin(), head, NECK)
     adopt(hair(skin), head, NECK)
     face(head, skin)
+    if ACCESSORY_HOOK:                            # glasses, beard, hats: canonical head space, before the scale
+        ACCESSORY_HOOK(head, skin)
     k = SPEC['head']
     if k > 1.22:                                  # the neck column under the jaw tapers to the body's neck girth (no
         for v in skin.data.vertices:              # poke through the back of a top on a big head)
