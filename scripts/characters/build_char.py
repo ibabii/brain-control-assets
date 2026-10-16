@@ -48,11 +48,12 @@ def mannequin(parent):
     m = lambda s, x: hb.mirror(x, s)
     torso = meta('BodyTorso', 0.008)
     c = v['chest']
-    ell(torso, (0, 1.22, 0.0), (c[0] - 0.03, c[1] - 0.01, c[2] - 0.03))
     bl = v['belly']
-    ell(torso, (0, 1.04, v['belly_z'] * 0.5), (bl[0] - 0.035, bl[1] - 0.01, bl[2] - 0.035))
     pe = v['pelvis']
-    ell(torso, (0, 0.88, 0.004), (pe[0] - 0.02, pe[1] - 0.01, pe[2] - 0.02))
+    if not FEMALE:                                     # female torso and legs: lofts (below)
+        ell(torso, (0, 1.22, 0.0), (c[0] - 0.03, c[1] - 0.01, c[2] - 0.03))
+        ell(torso, (0, 1.04, v['belly_z'] * 0.5), (bl[0] - 0.035, bl[1] - 0.01, bl[2] - 0.035))
+        ell(torso, (0, 0.88, 0.004), (pe[0] - 0.02, pe[1] - 0.01, pe[2] - 0.02))
     cap(torso, (-0.15, 1.33, 0.004), (0.15, 1.33, 0.004), v['shoulder'] - 0.018)
     cap(torso, (0, 1.30, 0.008), (0, 1.43, 0.008), 0.048)                       # neck stub (into the head's neck)
     fams = [torso]
@@ -61,14 +62,26 @@ def mannequin(parent):
         sh, el, wr = m(s, hb.SHOULDER), m(s, hb.ELBOW), m(s, hb.WRIST)
         cap(arm, sh, el, 0.046 * v['limb'])
         cap(arm, el, wr - m(s, hb.FORE) * 0.02, 0.038 * v['limb'])
-        leg = meta('BodyLeg' + side, 0.008)
         h, k, a = m(s, hb.HIP), m(s, hb.KNEE), m(s, hb.ANKLE_J)
-        cap(leg, h, k, 0.072 * v['leg'])
-        cap(leg, k, a + Vector((0, 0.03, 0)), 0.055 * v['leg'])
+        if not FEMALE:
+            leg = meta('BodyLeg' + side, 0.008)
+            cap(leg, h, k, 0.072 * v['leg'])
+            cap(leg, k, a + Vector((0, 0.03, 0)), 0.055 * v['leg'])
+            fams.append(leg)
         foot = meta('BodyFoot' + side, 0.006)
         cap(foot, a + Vector((0, -0.01, 0.03)), Vector((a.x, 0.035, -0.15)), 0.04)
-        fams += [arm, leg, foot]
-    return adopt(solid('BodySkin', fams, 0.006, 9000, lib.mat('Skin', hb.SKIN, 0.55)), parent, (0, 0.9, 0))
+        fams += [arm, foot]
+    skin = lib.mat('Skin', hb.SKIN, 0.55)
+    o = solid('BodySkin', fams, 0.006, 9000, skin)
+    if FEMALE:                                         # torso + legs lofted under the cloth (cloth minus CLOTH)
+        legs = [(y, cx, hw, zc, zf, zb) for y, cx, hw, zc, zf, zb in PANTS_LEG] + \
+               [(0.075, 0.13, 0.046, 0.0, 0.046, 0.046)]           # down into the sock
+        torso_r = [r for r in PANTS_PELVIS if r[0] < 0.97] + [r for r in SHIRT_TORSO if r[0] > 1.0] + \
+                  [(1.36, 0, 0.09, 0.008, 0.06, 0.07)]
+        objs = [o, tube('BodyLoftTorso', torso_r, shrink=CLOTH, crease=True)]
+        objs += [tube('BodyLoftLeg%d' % s, legs, s, shrink=CLOTH) for s in (-1, 1)]
+        o = union('BodySkin', objs, 0.006, skin, 2)
+    return adopt(o, parent, (0, 0.9, 0))
 
 
 SHIRT = '#E8765E', '#C95F4A'          # coral tee + its crew neck / sleeve bands (user: not yellow or purple)
@@ -81,12 +94,11 @@ def tshirt(parent, rib):
     m = lambda s, x: hb.mirror(x, s)
     t = meta('ShirtBody', 0.007)
     c, bl, pe = v['chest'], v['belly'], v['pelvis']
-    ell(t, (0, 1.22, 0.0), (c[0] - 0.018, c[1] - 0.006, c[2] - 0.018))
-    waist = 0.036 if FEMALE else 0.022                     # female: the waist reads narrower than the chest
-    ell(t, (0, 1.04, v['belly_z'] * 0.5), (bl[0] - waist, bl[1] - 0.006, bl[2] - 0.022))
-    wy = lambda r: r * math.sqrt(max(0.0, 1 - ((0.95 - 0.86) / pe[1]) ** 2))    # joggers' half-width at y 0.95
-    hx = (hip_slim(Vector((wy(pe[0]), 0.95, 0))).x if FEMALE else wy(pe[0])) + 0.012
-    ell(t, (0, 0.95, v['belly_z'] * 0.3), (hx, 0.055, wy(pe[2]) + 0.016))       # hem just over the waistband
+    if not FEMALE:                                         # female: the torso is a loft (SHIRT_TORSO, below)
+        ell(t, (0, 1.22, 0.0), (c[0] - 0.018, c[1] - 0.006, c[2] - 0.018))
+        ell(t, (0, 1.04, v['belly_z'] * 0.5), (bl[0] - 0.022, bl[1] - 0.006, bl[2] - 0.022))
+        wy = lambda r: r * math.sqrt(max(0.0, 1 - ((0.95 - 0.86) / pe[1]) ** 2))    # joggers' half-width at y 0.95
+        ell(t, (0, 0.95, v['belly_z'] * 0.3), (wy(pe[0]) + 0.012, 0.055, wy(pe[2]) + 0.016))   # hem over the waist
     cap(t, (-0.15, 1.335, 0.004), (0.15, 1.335, 0.004), v['shoulder'] - 0.008)
     fams = [t]
     for s in (-1, 1):
@@ -99,8 +111,11 @@ def tshirt(parent, rib):
         fams.append(sl)
         r = 0.058 * v['limb'] * 1.04                  # a hair over the sleeve end: caps its edge cleanly
         hb.band('ShirtSleeve' + ('L' if s < 0 else 'R'), hb.frame_along(end, el - sh), r, r, 0.026, 0.06, rib, parent)
-    shirt = adopt(solid('Shirt', fams, 0.008, 10 ** 6, lib.mat('Shirt' + SHIRT[0][1:], SHIRT[0], 0.9)), parent,
-                  (0, 1.1, 0))
+    mat = lib.mat('Shirt' + SHIRT[0][1:], SHIRT[0], 0.9)
+    o = solid('Shirt', fams, 0.008, 10 ** 6, mat)
+    if FEMALE:
+        o = union('Shirt', [o, tube('ShirtLoft', SHIRT_TORSO)], 0.008, mat, 2)
+    shirt = adopt(o, parent, (0, 1.1, 0))
     hb.band('ShirtCollar', hb.Frame((0, 1.405, 0.0)), 0.066, 0.062, 0.022, 0.12, rib, parent)
     return shirt
 
@@ -121,6 +136,20 @@ def body_weights(p):
         if f > 0:
             w = R.mix(w, {R.side_name(s) + 'Foot': 1.0}, f)
     return w
+
+
+def pants_weights(p):
+    """Female loft joggers: hips above, thighs below the hip line; the crotch seam splits between both legs."""
+    L = hb.LANDMARKS
+    w = R.torso(p)
+    f = hb._ss((L['HIP'].y + 0.03 - p.y) / 0.08)
+    if f <= 0:
+        return w
+    k = hb._ss(0.5 + p.x / 0.06)
+    legs = R.mix(R.leg_w(p, -1, L), R.leg_w(p, 1, L), k)
+    w = R.mix(w, legs, f)
+    a = hb._ss((L['ANKLE_J'].y + 0.02 - p.y) / 0.04)
+    return R.mix(w, {R.side_name(p.x) + 'Foot': 1.0}, a) if a > 0 else w
 
 
 # --- hair spring chains (pilot: hair_bun's face-framing curls) ------------------------------------------------
@@ -169,36 +198,146 @@ def springs():
              'gravity': 0.4} for b, c in zip(curl_bones()[0::2], curl_bones()[1::2])]
 
 
-# --- female front-view hips -----------------------------------------------------------------------------------
+# --- female lofts (art direction 2026-10-16: references/characters/anatomy_notes_female_lower.md) ----------------
+# Rings in FINAL (warped) space: (y, cx, half-width, zc, front depth, back depth); legs per side (cx > 0 = right).
+# Waist (narrowest, y 1.015) half-width 0.125; hip max 1.3x below the hem; thigh >= 1.3x calf; flat waistband;
+# the side profile (butt) is today's joggers', front flattened. Body = cloth minus its offset.
 
-HIP_SLIM = 0.13, 0.22     # pelvis, thighs (user 2026-10-16: hips chunky from the front; keep the butt in profile)
-
-
-def hip_slim(p):
-    """Narrow hips and thighs in X only (the profile is untouched): about the centre at the pelvis, about each leg's
-    axis on the thighs, blended through the crotch."""
-    L = hb.LANDMARKS
-    leg = hb._ss((0.8 - p.y) / 0.08)
-    k = (HIP_SLIM[0] + (HIP_SLIM[1] - HIP_SLIM[0]) * leg) * hb._ss((p.y - 0.5) / 0.12) * hb._ss((1.04 - p.y) / 0.1)
-    if k <= 0:
-        return p
-    t = max(0.0, min(1.0, (L['HIP'].y - p.y) / (L['HIP'].y - L['KNEE'].y)))
-    axis = L['HIP'].x + (L['KNEE'].x - L['HIP'].x) * t
-    cx = axis * math.copysign(hb._ss(abs(p.x) / 0.09), p.x) * leg  # 0 at the pelvis and crotch; a wide ramp (no folds)
-    return Vector((cx + (p.x - cx) * (1 - k), p.y, p.z))
-
-
-def slim_hips():
-    for o in bpy.data.objects:
-        if o.type != 'MESH' or o.name.startswith(('Hand', 'Nails', 'Sole', 'Upper', 'Lace', 'Stripe', 'Shirt')) \
-                or o.name == 'HeadSkin' or o.parent is None or o.parent.name != 'Body':
-            continue
-        mw, inv = o.matrix_world, o.matrix_world.inverted()
-        for v in o.data.vertices:
-            v.co = inv @ B(hip_slim(G(mw @ v.co)))
+PANTS_PELVIS = [(0.585, 0, 0.02, 0.0, 0.012, 0.014), (0.60, 0, 0.07, 0.0, 0.04, 0.046),   # rounded bottom
+                (0.625, 0, 0.115, 0.0, 0.062, 0.074), (0.66, 0, 0.152, 0.0, 0.072, 0.092),
+                (0.72, 0, 0.170, 0.0, 0.090, 0.126), (0.79, 0, 0.180, 0.0, 0.106, 0.150),
+                (0.84, 0, 0.176, 0.0, 0.114, 0.150), (0.89, 0, 0.162, 0.0, 0.118, 0.137),
+                (0.94, 0, 0.138, 0.0, 0.119, 0.116), (0.965, 0, 0.125, 0.0, 0.117, 0.106),
+                (0.985, 0, 0.121, 0.0, 0.116, 0.103)]
+PANTS_LEG = [(0.80, 0.075, 0.085, 0.0, 0.088, 0.09), (0.66, 0.078, 0.082, -0.002, 0.082, 0.086),
+             (0.525, 0.085, 0.080, -0.006, 0.080, 0.077), (0.437, 0.092, 0.062, -0.015, 0.068, 0.056),
+             (0.30, 0.106, 0.062, -0.012, 0.058, 0.070), (0.20, 0.118, 0.061, -0.006, 0.058, 0.062),
+             (0.135, 0.125, 0.060, 0.0, 0.058, 0.058)]
+SHIRT_TORSO = [(0.955, 0, 0.136, -0.002, 0.123, 0.120), (0.985, 0, 0.128, -0.002, 0.121, 0.112),
+               (1.015, 0, 0.124, -0.002, 0.118, 0.105), (1.08, 0, 0.134, -0.002, 0.114, 0.104),
+               (1.15, 0, 0.150, 0.0, 0.108, 0.106), (1.22, 0, 0.158, 0.0, 0.104, 0.104),
+               (1.27, 0, 0.152, 0.0, 0.098, 0.100), (1.31, 0, 0.130, 0.0, 0.090, 0.095)]
+CLOTH = 0.008                                             # body = cloth minus this
 
 
-# --- build keys -----------------------------------------------------------------------------------------------
+def inv_warp(pf):
+    """Final (warped) point -> canonical (hb.warp inverse: y by bisection, the shoulder narrowing analytically)."""
+    lo, hi = -0.5, 2.5
+    for _ in range(40):
+        mid = (lo + hi) / 2
+        if hb.warp(Vector((0, mid, 0))).y < pf.y:
+            lo = mid
+        else:
+            hi = mid
+    y = (lo + hi) / 2
+    x, nar = pf.x, hb.SPEC['narrow']
+    if nar:
+        t = hb._ss((y - 1.12) / 0.16)
+        ax = abs(x)
+        ax = ax + nar * t if ax > 0.2 - nar * t else ax / (1 - nar * t / 0.2)
+        x = math.copysign(ax, x)
+    return Vector((x, y, pf.z))
+
+
+def _catmull(rings, step=0.008):
+    """Smooth rings along the control rings (Catmull-Rom per parameter), about `step` apart in y."""
+    out = []
+    pts = [rings[0]] + rings + [rings[-1]]
+    for i in range(1, len(pts) - 2):
+        p0, p1, p2, p3 = pts[i - 1:i + 3]
+        n = max(2, int(abs(p2[0] - p1[0]) / step))
+        for k in range(n):
+            t = k / n
+            out.append(tuple(0.5 * ((2 * b) + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t +
+                                    (-a + 3 * b - 3 * c + d) * t ** 3) for a, b, c, d in zip(p0, p1, p2, p3)))
+    out.append(rings[-1])
+    return out
+
+
+def tube(name, rings, side=1, shrink=0.0, crease=False, n=48, e=2.4):
+    """Closed loft through superellipse rings (final space -> canonical), as a Blender-space object at the origin."""
+    import bmesh
+    bm = bmesh.new()
+    rows = []
+    for y, cx, hw, zc, zf, zb in _catmull(rings):
+        hw, zf, zb = hw - shrink, zf - shrink, zb - shrink
+        row = []
+        for k in range(n):
+            a = 2 * math.pi * k / n
+            sa, ca = math.sin(a), math.cos(a)
+            x = cx * side + hw * math.copysign(abs(sa) ** (2 / e), sa)
+            d = zf if ca > 0 else zb
+            if crease and ca < 0:                                     # two soft lobes: a shallow crease, lower butt
+                d *= 1 - 0.035 * math.exp(-(x / 0.02) ** 2) * hb._ss((0.80 - y) / 0.05) * hb._ss((y - 0.66) / 0.03)
+            z = zc - math.copysign(abs(ca) ** (2 / e), ca) * d
+            row.append(bm.verts.new(B(inv_warp(Vector((x, y, z))))))
+        rows.append(row)
+    for r0, r1 in zip(rows, rows[1:]):
+        for k in range(n):
+            bm.faces.new((r0[k], r0[(k + 1) % n], r1[(k + 1) % n], r1[k]))
+    for row in (rows[0], rows[-1]):
+        bm.faces.new(row)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    o = bpy.data.objects.new(name, me)
+    bpy.context.scene.collection.objects.link(o)
+    return o
+
+
+def tree_of(o):
+    from mathutils.bvhtree import BVHTree
+    me = o.data
+    me.calc_loop_triangles()
+    return BVHTree.FromPolygons([G(o.matrix_world @ v.co) for v in me.vertices], [t.vertices for t in me.loop_triangles])
+
+
+def union(name, objs, voxel, material, smooth_iter=3):
+    """Mesh objects (Blender space) -> one voxel-union mesh, smoothed (like sculpt.solid, no decimation)."""
+    import bmesh
+    for x in bpy.data.objects:
+        x.select_set(x in objs)
+    bpy.context.view_layer.objects.active = objs[0]
+    if len(objs) > 1:
+        bpy.ops.object.join()
+    o = bpy.context.view_layer.objects.active
+    o.data.remesh_voxel_size = voxel
+    bpy.ops.object.voxel_remesh()
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    for _ in range(smooth_iter):
+        bmesh.ops.smooth_vert(bm, verts=bm.verts, factor=0.5, use_axis_x=True, use_axis_y=True, use_axis_z=True)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(o.data)
+    bm.free()
+    for f in o.data.polygons:
+        f.use_smooth = True
+    o.data.materials.clear()
+    o.data.materials.append(material)
+    o.name = o.data.name = name
+    return o
+
+
+def female_lower(body):
+    """Replace the joggers and their cuffs with the lofted ones (art direction widths)."""
+    old = bpy.data.objects['Pants']
+    mat = old.data.materials[0]
+    bpy.data.objects.remove(old, do_unlink=True)
+    parts = {'body': tube('PantsPelvis', PANTS_PELVIS, crease=True)}
+    for s, side in ((-1, 'L'), (1, 'R')):
+        parts[side] = tube('PantsLeg' + side, PANTS_LEG, s)
+    R.PARTS['pants'] = {k: tree_of(o) for k, o in parts.items()}
+    adopt(union('Pants', list(parts.values()), 0.005, mat), body, (0, 0.5, 0))
+    for s, side in ((-1, 'L'), (1, 'R')):
+        o = bpy.data.objects['PantCuff' + side]
+        cmat = o.data.materials[0]
+        bpy.data.objects.remove(o, do_unlink=True)
+        c = inv_warp(Vector((s * 0.125, 0.135, 0.0)))
+        hb.band('PantCuff' + side, hb.Frame(c + Vector((0, -0.002, 0))), 0.064, 0.064, 0.05, 0.05, cmat, body)
+
+
+# --- build keys# --- build keys -----------------------------------------------------------------------------------------------
 
 def _gauss(x):
     return math.exp(-x * x)
@@ -357,7 +496,7 @@ def main():
     mannequin(body)
     tshirt(body, rib)
     if FEMALE:
-        slim_hips()
+        female_lower(body)
     hb.matte()
     table = hb.rig_table()
     rig = R.armature(table, root)
@@ -373,6 +512,8 @@ def main():
             continue
         if o.name == 'BodySkin':
             wts[o.name] = R.smooth(o, [body_weights(p) for p in canon[o.name]], 4)
+        elif o.name == 'Pants' and FEMALE:   # loft: lower butt follows the thighs (no hanging skirt in a squat)
+            wts[o.name] = R.smooth(o, [pants_weights(p) for p in canon[o.name]], 6)
         elif o.name in ('Top', 'Pants'):
             kind = hb.SKIN_KIND[0 if o.name == 'Top' else 1]
             wts[o.name] = R.smooth(o, R.weights_for(o, kind[1], hb.LANDMARKS), kind[2])

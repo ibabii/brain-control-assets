@@ -5,7 +5,7 @@ extends Node3D
 ##   [--clip NAME --times "0,0.5"] [--from ID]  clip from ID's library on every model (shared clips, motion-normalised)
 ##   [--tones "#hex,.."]   skin tone per model (one model + several tones = that model repeated)
 ##   [--chest "0,0.5,1"]   Chest_Size per model (one model + several values = repeated)
-##   [--stage grey|kitchen|bathroom] [--spacing M] [--ragdoll --t S [--follow]] [--size WxH] [--cols N]
+##   [--stage grey|flat|kitchen|bathroom] [--spacing M] [--ragdoll --t S [--follow]] [--size WxH] [--cols N]
 ##   [--shots "name@eye@look[@fov];..."]   (contact sheet in screenshots/NAME.png)
 ##   [--bend "Bone:deg,.."]   swing bones about their X (spring chain test)
 ## T-pose = the bind pose (no clip). Everything here is preview-only.
@@ -25,6 +25,8 @@ func _ready() -> void:
 			_kitchen()
 		'bathroom':
 			_bathroom()
+		'flat':
+			_flat()
 		_:
 			_grey()
 	var ids := _arg('--models', 'bernard_b').split(',')
@@ -179,6 +181,16 @@ func _box(size: Vector3, pos: Vector3, c: Color) -> void:
 	m.mesh = b
 	m.position = pos
 	add_child(m)
+
+
+## Flat light for shape reviews: strong ambient, a weak frontal fill, no shadows.
+func _flat() -> void:
+	_env(Color('#D9D9D9'), Color(1, 1, 1), 0.85)
+	var fill := DirectionalLight3D.new()
+	fill.light_energy = 0.45
+	fill.rotation_degrees = Vector3(-15, 180, 0)
+	add_child(fill)
+	_box(Vector3(20, 0.1, 20), Vector3(0, -0.05, 0), Color('#E6E6E6'))
 
 
 func _grey() -> void:
