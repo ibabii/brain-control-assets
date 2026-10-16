@@ -609,8 +609,8 @@ def face(head_node, skin_obj):
         # the pupil stays whole on the flattened white (solved numerically; rotating about the centre tore it).
         look = lib.empty('Look' + side, e + Vector((0, 0, 0.01)), eye)
         wsurf = Surface(w)
-        pr = (0.0195, 0.0235) if LOOK_B else (0.0145, 0.018)          # look B: big dark eyes, bright highlight
-        p = decal('Pupil' + side, wsurf, ellipse(pr[0], pr[1], 20, -s * 0.003, -0.002), Frame((e.x, e.y, 0)),
+        pr = ((0.0185, 0.0205) if FEMALE else (0.0168, 0.0198)) if LOOK_B else (0.0145, 0.018)   # look B: fits the visible white          # look B: big dark eyes, bright highlight
+        p = decal('Pupil' + side, wsurf, ellipse(pr[0], pr[1], 32, -s * 0.003, 0.001 if LOOK_B else -0.002), Frame((e.x, e.y, 0)),
                   pupil, look, offset=0.0025)
         gr = 0.0062 if LOOK_B else 0.0045
         go = (0.007, 0.009) if LOOK_B else (0.006, 0.008)
@@ -622,7 +622,7 @@ def face(head_node, skin_obj):
         # Upper lid: closed half-ellipsoid shell around the eye; rotation about X opens (+) / closes (-).
         # LidHalf: the same lid baked half-closed (dazed), hidden.
         for lname, ang in (('Lid', 45), ('LidHalf', -8)):
-            bm = lib.sphere_bm(1.0, Frame(), tuple(c * 1.13 for c in semi), seg=24, rings=14)
+            bm = lib.sphere_bm(1.0, Frame(), tuple(c * 1.22 for c in semi), seg=24, rings=14)
             bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, 0),
                                    plane_no=(0, 1, 0), clear_inner=True)
             edge = [ed for ed in bm.edges if ed.is_boundary]
@@ -684,8 +684,8 @@ def face(head_node, skin_obj):
             sh_ = lib.tube('Shut' + side, pts, 0.0042, ink, head_node, res=8, bevel_res=2)
         sh_['hidden'] = True
         # BlushHot: a second, bigger blush layer over the warm cheeks (embarrassed)
-        bx, by, ba, bb = (s * 0.082, 1.553, 0.062, 0.042) if LOOK_B else (s * 0.076, 1.556, 0.05, 0.034)                 # 1.5x the first pass, denser
-        bh = decal('BlushHot' + side, surf, ellipse(ba, bb, 20, bx, by), front, soft_blush('BlushHot', 1.0, 0.6),
+        bx, by, ba, bb = ((s * 0.066, 1.552, 0.044, 0.036) if FEMALE else (s * 0.074, 1.552, 0.05, 0.04)) if LOOK_B else (s * 0.076, 1.556, 0.05, 0.034)                 # 1.5x the first pass, denser
+        bh = decal('BlushHot' + side, surf, ellipse(ba, bb, 20, bx, by), front, soft_blush('BlushHot', 1.0, 0.8),
                    head_node, offset=0.0021)
         uv = bh.data.uv_layers.new(name='UVMap')
         for loop in bh.data.loops:
@@ -1064,7 +1064,7 @@ def rig_json(path, hidden):
             'clips': R.CLIPS,
             'first_person': ['HandL', 'HandR', 'NailsL', 'NailsR', 'CuffL', 'CuffR'],   # meshes the player's own camera sees
             'look': {'neck': 'Neck', 'head': 'Head', 'share': [0.35, 0.65], 'yaw': 70, 'pitch': [-40, 30],
-                     'eyes': ['LookL', 'LookR'], 'eye_yaw': 10 if LOOK_B else 14, 'eye_pitch': 6 if LOOK_B else 8},   # eye limits: pupils stay whole
+                     'eyes': ['LookL', 'LookR'], 'eye_yaw': 6 if LOOK_B else 10, 'eye_pitch': 4 if LOOK_B else 6},   # eye limits: pupils stay whole
             'render_layer': 2, 'ragdoll_layer': 2, 'ragdoll_mask': 1,
             'ik': {side: {'arm': [side + 'UpperArm', side + 'LowerArm', side + 'Hand'],
                           'leg': [side + 'UpperLeg', side + 'LowerLeg', side + 'Foot'],

@@ -8,6 +8,7 @@ extends Node3D
 ##   [--stage grey|flat|kitchen|bathroom] [--spacing M] [--ragdoll --t S [--follow]] [--size WxH] [--cols N]
 ##   [--shots "name@eye@look[@fov];..."]   (contact sheet in screenshots/NAME.png)
 ##   [--bend "Bone:deg,.."]   swing bones about their X (spring chain test)
+##   [--labels]   shot name on each tile
 ##   [--faces "rest,wink,.."]  expression per model (head part.json `expressions`, applied like the game)
 ## T-pose = the bind pose (no clip). Everything here is preview-only.
 
@@ -275,6 +276,15 @@ func _capture(name: String) -> void:
 		times = Array(_arg('--times', '0').split(',')).map(func(x): return float(x))
 	var tiles: Array[Image] = []
 	var multi := times.size() * items.size() > 1
+	var label: Label = null                            # --labels: the shot name on each tile
+	if '--labels' in args:
+		var cl := CanvasLayer.new()
+		add_child(cl)
+		label = Label.new()
+		label.position = Vector2(16, 10)
+		label.add_theme_font_size_override('font_size', maxi(18, size.y / 18))
+		label.add_theme_color_override('font_color', Color('#2E2624'))
+		cl.add_child(label)
 	var c := Vector3.ZERO                               # --follow: shots are offsets from the bodies' Hips
 	if '--follow' in args:                             # (the simulated body: the Physical Bone, not the bone pose)
 		for h in humans:
@@ -300,6 +310,8 @@ func _capture(name: String) -> void:
 			camera.position = c + Vector3(float(e[0]), float(e[1]), float(e[2]))
 			camera.look_at(c + Vector3(float(l[0]), float(l[1]), float(l[2])))
 			camera.fov = float(part[3]) if part.size() > 3 else 30.0
+			if label:
+				label.text = part[0]
 			for n in 4:
 				await RenderingServer.frame_post_draw
 			var img := get_viewport().get_texture().get_image()
