@@ -145,7 +145,7 @@ def cat_print(shirt, parent):
     print materials by a front projection, so the print is the tee surface and can never tear when the chest moves.
     A cream head with pointy ears, ink eyes with glints, nose and a 'w' mouth."""
     import bmesh
-    cy, hw, hh = 1.205, 0.094, 0.066
+    cy, hw, hh = 1.195, 0.086, 0.055                              # on the bust plateau: moves as one
     head = []
     for i in range(192):
         t = 2 * math.pi * i / 192
@@ -154,12 +154,12 @@ def cat_print(shirt, parent):
             d = abs((t - ta + math.pi) % (2 * math.pi) - math.pi)
             r += 0.6 * max(0.0, 1 - d / 0.3) ** 1.6
         head.append((hw * r * math.cos(t), cy + hh * r * math.sin(t)))
-    ink = [hb.ellipse(0.012, 0.0155, 24, sx * 0.036, cy + 0.008) for sx in (-1, 1)]
-    ink.append([(0.0, cy - 0.022), (-0.011, cy - 0.011), (0.011, cy - 0.011)])                   # nose
-    xs = [-0.024 + 0.048 * i / 24 for i in range(25)]
-    top = [(x, cy - 0.028 - 0.009 * abs(math.sin(math.pi * (x + 0.024) / 0.024))) for x in xs]
+    ink = [hb.ellipse(0.011, 0.014, 24, sx * 0.033, cy + 0.007) for sx in (-1, 1)]
+    ink.append([(0.0, cy - 0.019), (-0.01, cy - 0.009), (0.01, cy - 0.009)])                   # nose
+    xs = [-0.022 + 0.044 * i / 24 for i in range(25)]
+    top = [(x, cy - 0.025 - 0.008 * abs(math.sin(math.pi * (x + 0.022) / 0.022))) for x in xs]
     ink.append(top + [(x, y - 0.006) for x, y in reversed(top)])       # 'w' mouth
-    glints = [hb.ellipse(0.0042, 0.0042, 12, sx * 0.036 + 0.004, cy + 0.0145) for sx in (-1, 1)]
+    glints = [hb.ellipse(0.0038, 0.0038, 12, sx * 0.033 + 0.0036, cy + 0.0128) for sx in (-1, 1)]
     me = shirt.data
     mats = [lib.mat('Print', PRINT[0], 0.85), lib.mat('PrintInk', PRINT[1], 0.8)]
     for m in mats:
@@ -168,7 +168,7 @@ def cat_print(shirt, parent):
     mw = shirt.matrix_world
     bm = bmesh.new()
     bm.from_mesh(me)
-    near = lambda f: (lambda c: c.z < 0 and abs(c.x) < 0.13 and cy - 0.09 < c.y < cy + 0.13)(G(mw @ f.calc_center_median()))
+    near = lambda f: (lambda c: c.z < 0 and abs(c.x) < 0.13 and cy - 0.08 < c.y < cy + 0.11)(G(mw @ f.calc_center_median()))
     for _ in range(2):                                                   # two halvings: ~2.7 mm faces under the print
         edges = list({e for f in bm.faces if near(f) for e in f.edges})
         bmesh.ops.subdivide_edges(bm, edges=edges, cuts=1, use_grid_fill=True)
@@ -924,7 +924,7 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
     if hb.SPEC['chest']:
         cj['shapes']['Chest_Size'] = 0.8
         cj['chest'] = {'chains': [['LeftBreast', 'LeftBreast'], ['RightBreast', 'RightBreast']], 'radius': 0.05,
-                       'tip_dir': [0, 0, -1], 'tip': 0.16}
+                       'tip_dir': [0, 1, 0], 'tip': 0.25}
     _json(os.path.join(out, 'character.json'), cj)
     # head: skinned neck (HeadSkin) + rigid face parts in character space at rest
     _export(os.path.join(pdir(HEAD_ID), HEAD_ID + '.glb'), [rig, head] + face, False)

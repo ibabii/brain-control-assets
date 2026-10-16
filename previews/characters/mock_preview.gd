@@ -196,6 +196,11 @@ func _flat() -> void:
 	fill.rotation_degrees = Vector3(-15, 180, 0)
 	add_child(fill)
 	_box(Vector3(20, 0.1, 20), Vector3(0, -0.05, 0), Color('#E6E6E6'))
+	if '--back-light' in args:                         # --back-light E: a key from behind/above (back detail reads)
+		var back := DirectionalLight3D.new()
+		back.light_energy = float(_arg('--back-light', '0.6'))
+		back.rotation_degrees = Vector3(-40, 20, 0)
+		add_child(back)
 
 
 func _grey() -> void:

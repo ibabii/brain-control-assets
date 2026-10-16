@@ -266,21 +266,38 @@ def union_shell(hair_obj, shell, voxel, tris):
     return hair_obj
 
 
+def hair_rim(surf, edge, r=0.0065, lift=0.004, n=144, skip=0.0):
+    """A rounded clay bead along the hairline (sideburns, behind the ears, nape): a smooth edge; skip leaves the front
+    |phi| < skip to the fringe."""
+    mb = meta('Rim', 0.0035)
+    pts = []
+    for i in range(n + 1):
+        phi = skip + (2 * math.pi - 2 * skip) * i / n
+        phi = (phi + math.pi) % (2 * math.pi) - math.pi                  # edge() takes -pi..pi
+        pts.append(scalp(surf, scalp_dir(phi, edge(phi) + 0.004), lift))
+    chain(mb, pts, r, r, step=0.003)
+    return mb
+
+
 def hair_chunky(head):
     """Look B (art director, crops/hair_locks_male.png): a few big separate clay locks with deep gaps (each lock its
     own metaball family, so the union keeps a crease), fringe and crown tips lifting off the scalp, over a thin cap."""
     surf = Surface(head)
-    shell = scalp_shell(head, lambda phi: hairline(phi) + 0.02 * (abs(phi) > 1.2) + 0.03 * _ss(1 - abs(phi) / 0.9))
-    fams = []
+    edge = lambda phi: hairline(phi) + 0.02 * _ss((abs(phi) - 1.1) / 0.2) + 0.03 * _ss(1 - abs(phi) / 0.5)
+    shell = scalp_shell(head, edge)
+    fams = [hair_rim(surf, edge, skip=0.75)]
     locks = [  # (azimuth, height, lift) ..., r0, r1: volume on top, fringe sweeps right and curls up off the forehead
         ([(-0.3, 1.83, 0.03), (-0.05, 1.80, 0.032), (0.18, 1.778, 0.04)], 0.046, 0.016),
         ([(0.35, 1.825, 0.03), (0.6, 1.795, 0.032), (0.82, 1.762, 0.04)], 0.042, 0.015),
-        ([(-0.8, 1.82, 0.03), (-0.62, 1.80, 0.032), (-0.45, 1.79, 0.04)], 0.04, 0.015),
+        ([(-0.8, 1.82, 0.03), (-0.62, 1.80, 0.03), (-0.48, 1.788, 0.024)], 0.04, 0.024),
         ([(-1.15, 1.795, 0.024), (-1.4, 1.755, 0.026), (-1.52, 1.715, 0.03)], 0.04, 0.02),
         ([(1.2, 1.795, 0.024), (1.42, 1.755, 0.026), (1.52, 1.718, 0.03)], 0.04, 0.02),
-        ([(-2.2, 1.81, 0.026), (-2.45, 1.74, 0.026), (-2.55, 1.665, 0.03)], 0.042, 0.022),
-        ([(2.2, 1.81, 0.026), (2.45, 1.74, 0.026), (2.55, 1.665, 0.03)], 0.042, 0.022),
-        ([(3.14, 1.83, 0.026), (3.14, 1.74, 0.026), (3.14, 1.645, 0.028)], 0.042, 0.022),
+        # back: five broad locks from the crown down to the nape, each its own family (creases between)
+        ([(-1.95, 1.82, 0.026), (-2.0, 1.72, 0.022), (-2.05, 1.62, 0.016)], 0.04, 0.024),
+        ([(1.95, 1.82, 0.026), (2.0, 1.72, 0.022), (2.05, 1.62, 0.016)], 0.04, 0.024),
+        ([(-2.55, 1.83, 0.028), (-2.6, 1.71, 0.024), (-2.62, 1.59, 0.014)], 0.042, 0.024),
+        ([(2.55, 1.83, 0.028), (2.6, 1.71, 0.024), (2.62, 1.59, 0.014)], 0.042, 0.024),
+        ([(3.14, 1.84, 0.03), (3.14, 1.71, 0.026), (3.14, 1.585, 0.016)], 0.044, 0.026),
         # fringe (crops/hair_locks_male.png): rounded locks from the crown dropping over the upper forehead
         ([(-0.2, 1.84, 0.03), (-0.32, 1.79, 0.034), (-0.42, 1.735, 0.036)], 0.036, 0.022),
         ([(0.05, 1.845, 0.03), (0.02, 1.79, 0.034), (-0.04, 1.738, 0.037)], 0.036, 0.022),
@@ -302,17 +319,18 @@ def hair_bun(head):
     side-swept fringe and loose face-framing curls; each lock and curl its own family (creases between them)."""
     surf = Surface(head)
     nape = lambda phi: hairline(phi) + 0.02 * _ss((abs(phi) - 1.6) / 0.8)     # pulled up: a clean nape line
-    shell = scalp_shell(head, lambda phi: nape(phi) + 0.012 * _ss(1 - abs(phi) / 0.9), lift=0.002, thick=0.014)
-    fams = []
+    edge = lambda phi: nape(phi) + 0.012 * _ss(1 - abs(phi) / 0.9)
+    shell = scalp_shell(head, edge, lift=0.002, thick=0.014)
+    fams = [hair_rim(surf, edge, 0.006)]
     for i in range(13):                                              # combed-up locks from the hairline to the bun,
         phi = 0.95 + i * (2 * math.pi - 1.9) / 12                    # hugging the head (no hanging mass)
         phi = phi if phi <= math.pi else phi - 2 * math.pi
         y0 = nape(phi)
         k_ = (abs(phi) - 0.95) / (math.pi - 0.95)
         pts = [(phi * (1 - 0.55 * (k / 4) ** 1.5) + 0.04 * math.sin(k * 1.9), y0 + (1.84 - y0) * k / 4,
-                0.006 + 0.003 * (k % 2)) for k in range(5)]
-        mb = meta('Lock%d' % i, 0.0055)
-        lock(mb, surf, pts, 0.017, 0.013 + 0.004 * k_)
+                0.01 + 0.004 * ((k + i) % 2)) for k in range(5)]
+        mb = meta('Lock%d' % i, 0.0045)
+        lock(mb, surf, pts, 0.0135, 0.0105 + 0.003 * k_)
         fams.append(mb)
     bun = Vector((0, 1.86, 0.045))
     for i in range(7):                                               # messy bun: curl loops round a core
@@ -1013,17 +1031,22 @@ def bust(p, bridge=True):
 
 
 def chest_weights(p, w):
-    """Blend the bust region onto the Left/RightBreast spring bones."""
-    out = dict(w)
-    for s in (-1, 1):
-        if p.z > -0.02:
-            break
-        dy = p.y - BUST.y                                         # wider above: a pitched bust doesn't fold the top
-        g = _ss(1 - abs(abs(p.x) - BUST.x) / 0.09) * _ss(1 - abs(dy) / (0.17 if dy > 0 else 0.12)) if p.x * s > 0 else 0.0
-        g *= _ss((-0.02 - p.z) / 0.06) * 0.85
-        if g > 0:
-            out = {k: v * (1 - g) for k, v in out.items()}
-            out[R.side_name(s) + 'Breast'] = g
+    """Blend the bust region onto the Left/RightBreast spring bones: one flat plateau over both busts and the
+    cleavage (the print on it moves rigidly, no squash), soft falloff outside; left/right split smoothly at the middle."""
+    if p.z > -0.02:
+        return dict(w)
+    dy = p.y - BUST.y
+    fy = _ss(1 - max(0.0, dy - 0.05) / 0.13) if dy > 0 else _ss(1 - max(0.0, -dy - 0.11) / 0.06)
+    fx = _ss(1 - max(0.0, abs(p.x) - BUST.x - 0.03) / 0.09)
+    t = fy * fx * _ss((-0.02 - p.z) / 0.06) * 0.85
+    if t < 1e-4:
+        return dict(w)
+    r = _ss(0.5 + p.x / 0.08)                                        # share of the Human's right (+x) bone
+    gs = {k: v for k, v in ((1, t * r), (-1, t * (1 - r))) if v > 1e-4}
+    keep = 1 - t
+    out = {k: v * keep for k, v in w.items()}
+    for k, v in gs.items():
+        out[R.side_name(k) + 'Breast'] = v
     return out
 
 
@@ -1038,8 +1061,8 @@ def rig_table():
         t.append((name, warp(h), f(tl), up, par))
     if SPEC['chest']:
         for s in (-1, 1):
-            c = Vector((BUST.x * s, BUST.y, 0.03))                # pivot deep in the chest: a pitch reads as a bounce
-            t.append((R.side_name(s) + 'Breast', warp(c), warp(c + Vector((0, 0, -0.16))), Vector((0, 1, 0)), 'Chest'))
+            c = Vector((BUST.x * s, BUST.y, 0.12))                # pivot at the back: a long lever, so a bounce
+            t.append((R.side_name(s) + 'Breast', warp(c), warp(c + Vector((0, 0, -0.25))), Vector((0, 1, 0)), 'Chest'))   # tilts the print little
     return t
 
 
