@@ -829,6 +829,12 @@ def head_parts(root):
     adopt(hair(skin), head, NECK)
     face(head, skin)
     k = SPEC['head']
+    if k > 1.22:                                  # the neck column under the jaw tapers to the body's neck girth (no
+        for v in skin.data.vertices:              # poke through the back of a top on a big head)
+            p = G(v.co) + NECK
+            g = (1.0 + 0.22 * _ss((p.y - 1.43) / 0.07)) / k
+            f = g + (1 - g) * _ss((p.y - 1.50) / 0.07)
+            v.co = B(Vector((p.x * f, p.y, p.z * f)) - NECK)
     if k != 1.0:                                  # bigger head, scaled about the eye so the eye camera stays put
         new = HEAD_PIVOT + (NECK - HEAD_PIVOT) * k
         head.matrix_world = Matrix.Translation(B(new)) @ Matrix.Scale(k, 4)

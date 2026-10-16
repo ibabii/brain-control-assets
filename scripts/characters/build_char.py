@@ -315,6 +315,37 @@ def springs():
           'stiffness': 1.4, 'drag': 0.45, 'gravity': 0.15}]
 
 
+def drape_field(pts):
+    """Chest_Size offsets for a loose top: the bust key, and below the bust the front falls straight to the hem from
+    the bust tip (no under-bust pinch), tucking a little into the rib. Needs the top's own front profile: the cloth
+    already standing forward (pocket, belly) only moves as far as the tip line."""
+    bins = {}
+    for c in pts:                                              # the top's front z at bust height, per 1 cm of x
+        if abs(c.y - hb.BUST.y) < 0.012 and c.z < 0:
+            k = round(c.x * 100)
+            bins[k] = min(bins.get(k, 0.0), c.z)
+
+    def apex_z(x):
+        ks = [k for k in bins if abs(k - x * 100) <= 1]
+        return min(bins[k] for k in ks) if ks else None
+
+    def tip_h(x):                                              # the bust height at the tip row for this column
+        return hb.bust(Vector((x, hb.BUST.y, -0.2)))[1].length
+
+    def f(c):
+        off = hb.bust(c)[1]
+        if c.z > -0.02 or c.y >= hb.BUST.y:
+            return off
+        az = apex_z(c.x)
+        if az is None:
+            return off
+        need = c.z - (az - tip_h(c.x))                         # how far behind the tip line this point sits
+        fall = hb._ss((c.y - 0.90) / 0.07) * (1 - 0.25 * hb._ss((0.99 - c.y) / 0.06))   # rib tucks in a little
+        h = hb._smax(-off.z, max(0.0, need) * fall * hb._ss((-0.02 - c.z) / 0.06))
+        return Vector((off.x, 0.0, -h))
+    return f
+
+
 # --- female lofts (art direction 2026-10-16: references/characters/anatomy_notes_female_lower.md) ----------------
 # Rings in FINAL (warped) space: (y, cx, half-width, zc, front depth, back depth); legs per side (cx > 0 = right).
 # Waist (narrowest, y 1.015) half-width 0.125; hip max 1.3x below the hem; thigh >= 1.3x calf; flat waistband;
@@ -648,6 +679,21 @@ def main():
     if hb.SPEC['chest']:
         for n in ('Top', 'BodySkin'):
             wts[n] = [hb.chest_weights(p, w) for p, w in zip(canon[n], wts[n])]
+    if FEMALE:                                     # hoodie torso rides the body's own weights (no skin through the back
+        t = KDTree(len(canon['BodySkin']))         # when the arms come down); the sleeves keep the rig weights
+        for i, p in enumerate(canon['BodySkin']):
+            t.insert(p, i)
+        t.balance()
+        top = bpy.data.objects['Top']
+        body_w = transfer(top, canon['BodySkin'], wts['BodySkin'], t)
+        mixed = []
+        for p, w0, w1 in zip(canon['Top'], wts['Top'], body_w):
+            k = hb._ss((0.17 - abs(p.x)) / 0.05)
+            m_ = {b: v * (1 - k) for b, v in w0.items()}
+            for b, v in w1.items():
+                m_[b] = m_.get(b, 0.0) + v * k
+            mixed.append(top4(m_))
+        wts['Top'] = R.smooth(top, mixed, 2)
     trees = {}
     for n in ('Top', 'Pants'):
         t = KDTree(len(canon[n]))
@@ -694,6 +740,8 @@ def main():
         if n == 'BodySkin' and 'Chest_Size' in fields:                 # bare body: round underside (no bridge)
             fs = dict(fields, Chest_Size=lambda c: hb.bust(c, False)[1],
                       **{k: (lambda c, k=k: hb.chest_motion(c, k, False)) for k in hb.CHEST_MOTION})
+        if n == 'Top' and 'Chest_Size' in fields:                      # loose top: falls straight from the bust
+            fs = dict(fs, Chest_Size=drape_field(canon[n]))
         chesty = any(hb.bust(c)[0] > 0 for c in canon[n])
         own[n] = {k: [f(c) for c in canon[n]] for k, f in fs.items()
                   if (k != 'Chest_Size' and k not in hb.CHEST_MOTION) or chesty}
@@ -712,6 +760,8 @@ def main():
     for k in ('Chest_Size',) + hb.CHEST_MOTION:               # dense voxel cloth: relax the chest keys (no ripples)
         if k in own['Shirt']:
             own['Shirt'][k] = relax(bpy.data.objects['Shirt'], own['Shirt'][k])
+    if 'Chest_Size' in own['Top']:                            # soft round top on the hoodie
+        own['Top']['Chest_Size'] = relax(bpy.data.objects['Top'], own['Top']['Chest_Size'], 3)
 
     def host_of(name):
         if name.startswith(('ShirtCollar', 'ShirtSleeve')):
