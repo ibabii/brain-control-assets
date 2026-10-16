@@ -63,8 +63,9 @@ def write(slots):
             vw, vh = 512, int(round(512 * h / w * squeeze))       # squeeze < 1: glyphs drawn narrower on the paper
             line = s['line_height'] / h * vh
             fs = int(line / (FONT_H + gap)) if gap is not None else int(line / EM)
-            # Packed rows overrun the row box by a descender: the page grows downward (text scale unchanged).
-            pad = round(0.35 * fs) if gap is not None else 0
+            # Packed rows overrun the row box: the last row is a full font height (-gap em more than its pitch) and the
+            # List has 4 px margins top and bottom. The page grows downward by that (text scale unchanged).
+            pad = round(-gap * fs) + 14 if gap is not None else 0
             h2 = h * (vh + pad) / vh
             vh += pad
             s = dict(s, position=[s['position'][i] - s['basis'][1][i] * (h2 - h) / 2 for i in range(3)])
