@@ -496,26 +496,27 @@ def ragdoll(table):
     bt = {b[0]: b for b in table}
     spec = []
 
-    def body(bone, mass, radius, joint, across=None, length=None, centre=None, **lim):
+    def body(bone, mass, radius, joint, across=None, length=None, centre=None, shape='capsule', **lim):
         _, h, t, up, par = bt[bone]
         axis = (t - h).normalized()
         ln = length or (t - h).length
         c = centre or (h + t) / 2
         cap_axis = Vector(across) if across else axis
         bend = Vector((1, 0, 0))                                 # hinge axis: lateral (elbows, knees)
-        spec.append({'name': 'Physical Bone ' + bone, 'bone': bone, 'mass': mass, 'radius': radius,
+        spec.append({'name': 'Physical Bone ' + bone, 'bone': bone, 'mass': mass, 'shape': shape, 'radius': radius,
                      'height': max(ln if across else ln + 1.2 * radius, 2 * radius + 0.01),   # across: total width
                      'centre': list(c), 'axis': list(cap_axis.normalized()),
                      'joint': dict(type=joint, pos=list(h), along=list(axis), bend=list(bend), **lim)})
     body('Hips', 11.0, 0.13, 'none', across=(1, 0, 0), length=0.36, centre=Vector((0, 0.88, 0)))
     body('Spine', 9.0, 0.13, 'cone', across=(1, 0, 0), length=0.38, centre=Vector((0, 1.04, -0.012)), swing=25, twist=25)   # active ragdoll: torso twist (2026-10-16)
     body('Chest', 14.0, 0.135, 'cone', across=(1, 0, 0), length=0.42, centre=Vector((0, 1.25, 0)), swing=25, twist=25)
-    body('Head', 6.0, 0.135, 'cone', length=0.06, centre=Vector((0, 1.62, 0.0)), swing=35, twist=40)
+    body('Head', 6.0, 0.135, 'cone', length=0.06, centre=Vector((0, 1.62, 0.0)), swing=35, twist=40,
+         shape='sphere')   # near-round capsules sink into boxes under Jolt
     for s in (-1, 1):
         n = side_name(s)
         body(n + 'UpperArm', 2.5, 0.062, 'cone', swing=100, twist=40)   # arms over the head when flailing
         body(n + 'LowerArm', 1.6, 0.055, 'hinge', lower=-135, upper=0)
-        body(n + 'Hand', 0.6, 0.042, 'cone', swing=40, twist=25)
+        body(n + 'Hand', 0.6, 0.042, 'cone', swing=40, twist=25, shape='sphere')
         body(n + 'UpperLeg', 8.0, 0.083, 'cone', swing=45, twist=20)
         body(n + 'LowerLeg', 4.0, 0.074, 'hinge', lower=0, upper=125)
         _, h, t, _, _ = bt[n + 'Foot']

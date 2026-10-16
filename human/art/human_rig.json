@@ -162,6 +162,7 @@
    "name": "Physical Bone Hips",
    "bone": "Hips",
    "mass": 11.0,
+   "shape": "capsule",
    "radius": 0.13,
    "height": 0.36,
    "centre": [
@@ -197,6 +198,7 @@
    "name": "Physical Bone Spine",
    "bone": "Spine",
    "mass": 9.0,
+   "shape": "capsule",
    "radius": 0.13,
    "height": 0.38,
    "centre": [
@@ -234,6 +236,7 @@
    "name": "Physical Bone Chest",
    "bone": "Chest",
    "mass": 14.0,
+   "shape": "capsule",
    "radius": 0.135,
    "height": 0.42,
    "centre": [
@@ -271,6 +274,7 @@
    "name": "Physical Bone Head",
    "bone": "Head",
    "mass": 6.0,
+   "shape": "sphere",
    "radius": 0.135,
    "height": 0.28,
    "centre": [
@@ -308,6 +312,7 @@
    "name": "Physical Bone LeftUpperArm",
    "bone": "LeftUpperArm",
    "mass": 2.5,
+   "shape": "capsule",
    "radius": 0.062,
    "height": 0.34439999487841566,
    "centre": [
@@ -345,6 +350,7 @@
    "name": "Physical Bone LeftLowerArm",
    "bone": "LeftLowerArm",
    "mass": 1.6,
+   "shape": "capsule",
    "radius": 0.055,
    "height": 0.30600000472956645,
    "centre": [
@@ -382,6 +388,7 @@
    "name": "Physical Bone LeftHand",
    "bone": "LeftHand",
    "mass": 0.6,
+   "shape": "sphere",
    "radius": 0.042,
    "height": 0.094,
    "centre": [
@@ -419,6 +426,7 @@
    "name": "Physical Bone LeftUpperLeg",
    "bone": "LeftUpperLeg",
    "mass": 8.0,
+   "shape": "capsule",
    "radius": 0.083,
    "height": 0.4606041390546684,
    "centre": [
@@ -456,6 +464,7 @@
    "name": "Physical Bone LeftLowerLeg",
    "bone": "LeftLowerLeg",
    "mass": 4.0,
+   "shape": "capsule",
    "radius": 0.074,
    "height": 0.4547426307476964,
    "centre": [
@@ -493,6 +502,7 @@
    "name": "Physical Bone LeftFoot",
    "bone": "LeftFoot",
    "mass": 1.2,
+   "shape": "capsule",
    "radius": 0.05,
    "height": 0.26,
    "centre": [
@@ -530,6 +540,7 @@
    "name": "Physical Bone RightUpperArm",
    "bone": "RightUpperArm",
    "mass": 2.5,
+   "shape": "capsule",
    "radius": 0.062,
    "height": 0.34439999487841566,
    "centre": [
@@ -567,6 +578,7 @@
    "name": "Physical Bone RightLowerArm",
    "bone": "RightLowerArm",
    "mass": 1.6,
+   "shape": "capsule",
    "radius": 0.055,
    "height": 0.30600000472956645,
    "centre": [
@@ -604,6 +616,7 @@
    "name": "Physical Bone RightHand",
    "bone": "RightHand",
    "mass": 0.6,
+   "shape": "sphere",
    "radius": 0.042,
    "height": 0.094,
    "centre": [
@@ -641,6 +654,7 @@
    "name": "Physical Bone RightUpperLeg",
    "bone": "RightUpperLeg",
    "mass": 8.0,
+   "shape": "capsule",
    "radius": 0.083,
    "height": 0.4606041390546684,
    "centre": [
@@ -678,6 +692,7 @@
    "name": "Physical Bone RightLowerLeg",
    "bone": "RightLowerLeg",
    "mass": 4.0,
+   "shape": "capsule",
    "radius": 0.074,
    "height": 0.4547426307476964,
    "centre": [
@@ -715,6 +730,7 @@
    "name": "Physical Bone RightFoot",
    "bone": "RightFoot",
    "mass": 1.2,
+   "shape": "capsule",
    "radius": 0.05,
    "height": 0.26,
    "centre": [

@@ -109,9 +109,14 @@ func _ragdoll(scene: Node, skel: Skeleton3D, to_skel: Transform3D, data: Diction
 		pb.transform = rest * pb.body_offset
 		sim.add_child(pb)
 		pb.owner = scene
-		var shape := CapsuleShape3D.new()
-		shape.radius = b.radius
-		shape.height = b.height
+		var shape: Shape3D
+		if b.get("shape", "capsule") == "sphere":
+			shape = SphereShape3D.new()
+			shape.radius = b.radius
+		else:
+			shape = CapsuleShape3D.new()
+			shape.radius = b.radius
+			shape.height = b.height
 		var col := CollisionShape3D.new()
 		col.name = "Shape"
 		col.shape = shape
