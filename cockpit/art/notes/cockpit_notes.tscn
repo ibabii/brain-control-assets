@@ -22,7 +22,7 @@ roughness = 0.8
 texture_filter = 1
 
 [sub_resource type="QuadMesh" id="quad_Today"]
-size = Vector2(0.24412, 0.25827)
+size = Vector2(0.27046, 0.28611)
 
 [node name="CockpitNotes" type="Node3D"]
 
@@ -139,7 +139,7 @@ autowrap_mode = 3
 width = 314.7
 
 [node name="Today" type="Node3D" parent="."]
-transform = Transform3D(1, 1.40753e-08, -0, -1.36572e-08, 0.970296, 0.241922, 3.40512e-09, -0.241922, 0.970296, -0.56767, 1.05185, 0.273885)
+transform = Transform3D(0.978148, -0.0502981, 0.201736, -2.85621e-07, 0.970296, 0.241922, -0.207912, -0.236635, 0.949092, -0.555149, 1.05964, 0.234754)
 
 [node name="Page" type="SubViewport" parent="Today"]
 disable_3d = true

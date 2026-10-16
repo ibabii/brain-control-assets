@@ -134,3 +134,38 @@ def write(slots):
 if __name__ == '__main__':
     with open(ROOT + '/cockpit/art/layout.json') as f:
         write(json.load(f)['notes'])
+
+
+STATIC = """shader_type spatial;
+render_mode unshaded;
+uniform float strength : hint_range(0.0, 1.0) = 1.0;   // gameplay may fade the static in/out
+uniform vec2 grain = vec2(96.0, 72.0);
+float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void fragment() {
+\tfloat n = hash(floor(UV * grain) + floor(TIME * 30.0));
+\tfloat roll = 0.8 + 0.2 * sin(UV.y * 180.0 + TIME * 25.0);
+\tALBEDO = vec3(n * roll) * vec3(0.92, 0.96, 1.0);
+\tALPHA = strength;
+}
+"""
+
+
+def write_cat_tv(frame, size, doodle_px):
+    """cockpit/art/cat_tv/cat_tv_overlays.tscn: hidden overlays on the mini-TV screen (gameplay toggles them)."""
+    w, h = size
+    s = {'position': list(frame.o), 'basis': [list(frame.m.col[i]) for i in range(3)]}
+    lines = ['[gd_scene format=3]', '',
+             '[ext_resource type="Texture2D" path="res://cockpit/art/cat_tv/doodle.png" id="doodle"]', '',
+             '[sub_resource type="Shader" id="static"]', 'code = %s' % json.dumps(STATIC), '',
+             '[sub_resource type="ShaderMaterial" id="static_mat"]', 'render_priority = 1', 'shader = SubResource("static")', '',
+             '[sub_resource type="QuadMesh" id="quad"]', 'size = Vector2(%.5g, %.5g)' % (w, h), '',
+             '[node name="CatTVOverlays" type="Node3D"]', 'transform = %s' % _xform(s), '',
+             '[node name="Doodle" type="Sprite3D" parent="."]', 'visible = false',
+             'position = Vector3(0, 0, 0.0012)', 'cast_shadow = 0', 'pixel_size = %.6g' % (w / doodle_px),
+             'shaded = false', 'double_sided = false', 'texture_filter = 4', 'texture = ExtResource("doodle")', '',
+             '[node name="Static" type="MeshInstance3D" parent="."]', 'visible = false',
+             'position = Vector3(0, 0, 0.0016)', 'cast_shadow = 0', 'mesh = SubResource("quad")',
+             'material_override = SubResource("static_mat")', '']
+    os.makedirs(ROOT + '/cockpit/art/cat_tv', exist_ok=True)
+    with open(ROOT + '/cockpit/art/cat_tv/cat_tv_overlays.tscn', 'w') as f:
+        f.write('\n'.join(lines))

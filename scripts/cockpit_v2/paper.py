@@ -264,12 +264,14 @@ def _wall_depth(px, py, gap):
 
 # --- notebook with the TODAY list --------------------------------------------------------------------
 
-NB_PAGE = (6, 590, 356, 960)    # TODAY page on screen, 1920x1080 px from the seat: left of the TaskNote, above the sleeve
+NB_PAGE = (6, 560, 392, 960)    # taller for the pivot (2026-10-16): rows grow so the far end keeps NB_CAP
+_NB_PAGE_OLD = (6, 590, 356, 960)    # TODAY page on screen, 1920x1080 px from the seat: left of the TaskNote, above the sleeve
 NB_CAP = 22.5                    # cap height in px at 1080p (15 px on the Steam Deck, game-ux)
 NB_SQUEEZE = 0.78                # glyph width factor (Patrick Hand is wide): ~22 chars fit one row
 NB_GAP = -0.3                    # row gap in em: rows at 1.07 em instead of the font's 1.37
 ROWS = 7                         # title + 6 items
 TRAY_TOP = 0.89
+NB_YAW = float(os.environ.get('NB_YAW', 12))   # deg: notebook pivots about its left edge, right edge back (user 2026-10-16)
 
 
 def notebook(parent):
@@ -291,10 +293,29 @@ def notebook(parent):
              f.child((0, 0, -0.0045)), g)
     # Text block: rows at NB_CAP from the seat (cap = 0.5 em in Patrick Hand).
     em = 2 * NB_CAP * k * 2 * lib.TY * (f.o - lib.CAM).dot(lib.FWD) / lib.CH     # uniform px/m on this plane
+    # Pivot about the cover's left edge (world vertical) so the right edge swings back, away from the left arm.
+    # em grows until the far end of a full row (8.0 em) still shows NB_CAP after the turn (game-ux: 15 px on the Deck).
+    turn_m = lib.rot((0, NB_YAW, 0))
+    pivot = f.at((-0.014 - (w + cw) / 2, 0, -0.0145))
+
+    def turn(p):
+        return pivot + turn_m @ (Vector(p) - pivot)
+
+    def far_cap(e):
+        x, caps = -w / 2 + 0.008 + 9.0 * e * NB_SQUEEZE, []        # row end: box + gap + 8.0 em of text
+        for i in range(ROWS):
+            y = h / 2 - 0.006 - (i + 0.5) * (1.37 + NB_GAP) * e
+            a, b = (lib.project(turn(f.at((x, y + sy * 0.25 * e, 0)))) for sy in (1, -1))
+            caps.append(abs(a[1] - b[1]) * 1080 / lib.CH)
+        return min(caps)
+    for _ in range(3):
+        em *= NB_CAP / far_cap(em)
+    print('NOTEBOOK yaw %.0f: far-end cap %.1f px at 1080p (%.1f on the Deck)' % (NB_YAW, far_cap(em), far_cap(em) * 2 / 3))
     pitch = (1.37 + NB_GAP) * em
     mt, ml, mr = 0.006, 0.008, 0.004
     lh, lw = ROWS * pitch, w - ml - mr
-    print('NOTEBOOK page %.3f x %.3f m, em %.4f, rows %.3f of %.3f' % (w, h, em, lh, h - 2 * mt))
+    print('NOTEBOOK page %.3f x %.3f m, em %.4f, rows %.3f of %.3f; full row %.3f of %.3f' % (
+        w, h, em, lh, h - 2 * mt, 9.0 * em * NB_SQUEEZE, lw * 496 / 512))   # box + gap + 8.0 em of text
     c = ink.paper(*tex_size(w, h, 1.6), '#F3E5CB', 12, grain=0.025)   # warmer page (was #F6EEDD)
     top = 1 - (mt + 1.1 * em) / h                                 # first rule under the title baseline
     ink.ruled(c, pitch / h, top=top, bottom=0.02, margin=None)
@@ -315,10 +336,11 @@ def notebook(parent):
     wood = lib.mat('NotebookStand', '#B5835A', 0.6)
     bottom = f.at((-0.014, -h / 2 - ch / 2, -0.0145))
     ff = Frame((bottom.x, TRAY_TOP, bottom.z))
-    lib.box('StandFoot', (w + 0.07, 0.012, 0.06), wood, ff.child((0, 0.006, -0.01)), g, bevel=0.002)   # clear of the console front
-    lib.box('StandLip', (w + 0.07, 0.016, 0.012), wood, ff.child((0, 0.012 + 0.008, 0.026)), g, bevel=0.002)
+    # Foot shifted left: the pivot swings its right end toward the console's left end.
+    lib.box('StandFoot', (w - 0.02, 0.012, 0.06), wood, ff.child((-0.045, 0.006, 0.018)), g, bevel=0.002)
+    lib.box('StandLip', (w - 0.02, 0.016, 0.012), wood, ff.child((-0.045, 0.012 + 0.008, 0.054)), g, bevel=0.002)
     lib.box('StandBoard', (w + 0.03, h * 0.75, 0.008), wood, f.child((-0.014, -h * 0.1, -0.0145 - 0.0045)), g, bevel=0.002)
-    lib.tube('StandStrut', [f.at((-0.014, h * 0.02, -0.024)), ff.at((0, 0.012, -0.035))], 0.004,
+    lib.tube('StandStrut', [f.at((-0.014, h * 0.02, -0.024)), ff.at((0, 0.012, -0.012))], 0.004,
              lib.mat('StandWire', '#3B3A36', 0.4, 0.7), g, res=3)
     SLOTS['Today'] = {'kind': 'list', 'position': list(f.at((-w / 2 + ml + lw / 2, h / 2 - mt - lh / 2, 0.0008))),
                       'basis': [list(f.m.col[i]) for i in range(3)], 'size': [lw, lh],
@@ -328,6 +350,12 @@ def notebook(parent):
                           {'text': 'Be a functional human', 'done': False},
                           {'text': 'Pet the cat/kind of', 'done': False},
                           {'text': "It's okay. :)", 'done': False}]}}
+    c3 = Matrix(((1, 0, 0), (0, 0, -1), (0, 1, 0)))                 # Godot -> Blender axes
+    g.matrix_world = (Matrix.Translation(lib.B(pivot)) @ (c3 @ turn_m @ c3.inverted()).to_4x4()
+                      @ Matrix.Translation(-lib.B(pivot)) @ g.matrix_world)
+    sl = SLOTS['Today']
+    sl['position'] = list(turn(sl['position']))
+    sl['basis'] = [list(turn_m @ Vector(b)) for b in sl['basis']]
     # Checkbox art for the list (ink on transparent).
     os.makedirs(OUT, exist_ok=True)
     for name, fn in (('check_box', ink.box), ('check_tick', ink.tick)):

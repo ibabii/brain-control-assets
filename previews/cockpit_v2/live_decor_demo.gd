@@ -1,7 +1,7 @@
 extends Node
 ## Preview only: drives the live decor like gameplay will. Pilot lights from layout.json (lit colour, emission energy)
 ## and the MENTAL BANDWIDTH fill (BandwidthFill scale.x).
-## Args: --pilots PWR,OOPS (lit ones) --bandwidth 0.6
+## Args: --pilots PWR,OOPS (lit ones) --bandwidth 0.6 --tv doodle|static (mini-TV overlay; doodle hides the Clock)
 
 func _ready() -> void:
 	await get_tree().process_frame
@@ -20,4 +20,15 @@ func _ready() -> void:
 		bulb.material_override = m
 	var fill := root.find_child("BandwidthFill", true, false) as Node3D
 	fill.scale.x = float(args[args.find("--bandwidth") + 1]) if args.has("--bandwidth") else 0.6
+	var tv := _arg(args, "--tv")
+	if tv != "":
+		var screen := root.find_child("CatTVOverlays", true, false)
+		(screen.get_node("Doodle" if tv == "doodle" else "Static") as Node3D).visible = true
+		if tv == "doodle":
+			(root.find_children("Clock", "Label3D", true, false)[0] as Node3D).visible = false
 	print("LIVE_DECOR pilots ", on, " bandwidth ", fill.scale.x)
+
+
+func _arg(args: PackedStringArray, key: String) -> String:
+	var i := args.find(key)
+	return args[i + 1] if i >= 0 and i + 1 < args.size() else ""

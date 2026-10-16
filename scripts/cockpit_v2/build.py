@@ -83,6 +83,14 @@ layout = {
 with open(lib.ROOT + '/cockpit/art/layout.json', 'w') as f:
     json.dump(layout, f, indent=2, default=float)
 notes_scene.write(paper.SLOTS)
+import props  # noqa: E402
+tv = props.CAT_TV
+img = lib.image_from_array('CatTVDoodle', tv['doodle'].image())
+img.filepath_raw = lib.ROOT + '/cockpit/art/cat_tv/doodle.png'
+img.file_format = 'PNG'
+os.makedirs(lib.ROOT + '/cockpit/art/cat_tv', exist_ok=True)
+img.save()
+notes_scene.write_cat_tv(tv['frame'], tv['size'], tv['doodle'].w)
 import hashlib  # noqa: E402
 manifest_path = lib.ROOT + '/cockpit/art/manifest.json'
 if os.path.exists(manifest_path):

@@ -5,6 +5,7 @@
 [ext_resource type="FontFile" path="res://cockpit/art/notes/fonts/PatrickHand-Regular.ttf" id="hand"]
 [ext_resource type="PackedScene" path="res://cockpit/art/intercom/intercom.tscn" id="intercom"]
 [ext_resource type="PackedScene" path="res://cockpit/art/answering_machine/answering_machine.tscn" id="machine"]
+[ext_resource type="PackedScene" path="res://cockpit/art/cat_tv/cat_tv_overlays.tscn" id="cat_tv"]
 
 [node name="CockpitArtScene" type="Node3D"]
 
@@ -76,6 +77,8 @@ outline_size = 0
 font = ExtResource("hand")
 font_size = 150
 text = "EMBAR"
+
+[node name="CatTVOverlays" parent="." instance=ExtResource("cat_tv")]
 
 [node name="PilotLabels" type="Node3D" parent="."]
 position = Vector3(0, 0.93, -0.59)

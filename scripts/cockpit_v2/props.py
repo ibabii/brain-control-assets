@@ -505,6 +505,9 @@ def meter_box(name, base, w, parent, yaw=0.0):
     return f
 
 
+CAT_TV = {}
+
+
 @prop
 def cat_tv(name, base, w, parent, yaw=0.0):
     """Little CRT on the right monitor: the live `Clock` readout (2 amber lines, NoteText) and a cat doodle."""
@@ -523,6 +526,16 @@ def cat_tv(name, base, w, parent, yaw=0.0):
     face_card(name + 'Screen', sw, sh, c, sf, parent, rough=0.45, r=0.016)
     from paper import slot
     slot('Clock', sf, sw, sh, (0.05, 0.14, 0.95, 0.9), '7:30 AM\nMONDAY', '#FFA53D', 0.36, style='glow')
+    # Overlays gameplay toggles (cat_tv_overlays.tscn): the old FEED THE CAT doodle and TV static.
+    dd = ink.Canvas(c.w, c.h, '#1A2F33', alpha=0.0)
+    r = 0.016 / sw * c.w                                     # the screen card's corner radius, in px
+    qx = np.maximum(np.abs(dd.x - c.w / 2) - (c.w / 2 - r), 0)
+    qy = np.maximum(np.abs(dd.y - c.h / 2) - (c.h / 2 - r), 0)
+    dd.paint(np.clip(r - np.hypot(qx, qy) + 0.5, 0, 1), '#1A2F33')   # opaque screen: hides the Clock's small cat
+    dd.ellipse((0.5, 0.5), 0.75, 0.6, '#2C5257', soft=30, opacity=0.8)
+    ink.text(dd, 'FEED\nTHE\nCAT\n???', (0.3, 0.5), 0.17, '#F2F2EA', weight=1)
+    ink.cat(dd, (0.72, 0.3), 0.3, '#F2F2EA', w=3)
+    CAT_TV.update(frame=sf, size=(sw, sh), doodle=dd)
     for k in range(2):
         kb = lathe([(0, 0, 0), (0.011, 0, 0), (0.011, 0.01, 0), (0, 0.01, 0)], 14)
         for v in kb.verts:
