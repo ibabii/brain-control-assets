@@ -268,7 +268,8 @@ def trinkets(parent, shelf_top, books_top):
     base, w, h = on_ground((657, 110, 732, 146), s)
     props.radio('Radio', base + up, w * 0.9, g)
     base, w, h = on_ground((768, 66, 830, 146), s, 0.9)
-    props.alien('Alien', base + up, h, g)
+    # Shelf items show only a sliver above the 16:9 frame (composition #7): the alien stands on the right monitor, beside the cat TV.
+    props.alien('Alien', monitor_top('RightPanel', 0.155), h * 0.8, g)
     base, w, h = on_ground((1080, 86, 1116, 146), s)
     props.valve('Valve', base + up, h, g)
     _, w, h = on_ground((854, 47, 1082, 142), s)
@@ -281,7 +282,7 @@ def trinkets(parent, shelf_top, books_top):
     c, w, h = _fit((618, -10, 702, 62), wall_depth(660, 26, 0.12))
     props.speaker('Speaker', c, w / 2, g)
     dd = min(1.6, wall_depth(746, 76, 0.25))
-    c = at_depth(746, 76, dd) + up
+    c = at_depth(746, 76, dd) + up + Vector((0, 0.3, 0.2))    # hangs above the seat view at every aspect (seen in the reveal)
     r = 40 * m_per_px(dd) * 0.97
     props.disco_ball('DiscoBall', c, r, g)
     lib.tube('DiscoString', [c + Vector((0, r * 1.1, 0)), c + Vector((0, r + 0.25, -0.05))], 0.002,

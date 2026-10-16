@@ -344,25 +344,29 @@ def badge(name, base, d, parent):
 
 
 @prop
-def lever_box(name, base, w, h, parent):
-    """Chunky beige box with two pull levers and taped paper labels."""
+def lever_box(name, base, w, h, parent, push=0.05):
+    """Chunky beige box with two pull levers and taped paper labels. `push`: front face moved back (box shallower,
+    back face fixed) so it reads as background, not a usable control (art_direction.md composition #3)."""
     f = face_cam(base, -6)
-    d = 0.2
+    d = 0.2 - push
+    f.o = f.at((0, 0, -push / 2))
+    lz = d / 2 - 0.12                                  # levers keep their distance from the front
     body = M('LeverBox', '#C9BC9F', 0.62)
     obj(name, rounded_box((w, h, d), 0.018, (0, h / 2, 0)), [body], f, parent)
     obj(name + 'Front', rounded_box((w * 0.92, h * 0.78, 0.012), 0.01, (0, h * 0.5, d / 2)),
         [M('LeverPanel', '#B9AC8E', 0.65)], f, parent)
-    for k, (x, knob, label) in enumerate([(-0.22, '#D4473A', 'ANXIETY\nBRAKE\n(PULL)'),
-                                          (0.24, '#EAC04A', 'HYPE\nLEVER\n(PULL)')]):
+    # Matte palette knobs, 30% smaller (clay, honey): no action red on a decoy.
+    for k, (x, knob, label) in enumerate([(-0.22, '#C98778', 'ANXIETY\nBRAKE\n(PULL)'),
+                                          (0.24, '#D9A04C', 'HYPE\nLEVER\n(PULL)')]):
         cx = x * w
-        obj(name + 'Slot%d' % k, rounded_box((0.026, 0.02, 0.06), 0.008, (cx, h * 0.97, -0.02)),
+        obj(name + 'Slot%d' % k, rounded_box((0.026, 0.02, 0.06), 0.008, (cx, h * 0.97, lz)),
             [M('Rubber', '#2F3434', 0.8)], f, parent)
         shaft = lathe([(0, 0, 0), (0.008, 0, 0), (0.008, 0.11, 0), (0, 0.11, 0)], 14)
-        obj(name + 'Shaft%d' % k, shaft, [M('Shaft', '#3B4040', 0.4, 0.4)], f.child((cx, h * 0.95, -0.02), (-12, 0, 0)),
+        obj(name + 'Shaft%d' % k, shaft, [M('Shaft', '#3B4040', 0.4, 0.4)], f.child((cx, h * 0.95, lz), (-12, 0, 0)),
             parent)
-        kb = lathe([(0, 0, 0), (0.017, 0, 0), (0.022, 0.03, 0), (0.02, 0.06, 0), (0.012, 0.072, 0), (0, 0.074, 0)], 20)
-        obj(name + 'Knob%d' % k, kb, [M('Knob' + knob[1:], knob, 0.35)],
-            f.child((cx, h * 0.95, -0.02), (-12, 0, 0)).child((0, 0.1, 0)), parent)
+        kb = lathe([(0, 0, 0), (0.012, 0, 0), (0.0154, 0.021, 0), (0.014, 0.042, 0), (0.0084, 0.0504, 0), (0, 0.0518, 0)], 20)
+        obj(name + 'Knob%d' % k, kb, [M('MatteKnob' + knob[1:], knob, 0.8)],
+            f.child((cx, h * 0.95, lz), (-12, 0, 0)).child((0, 0.1, 0)), parent)
         lw, lh = w * 0.36, h * 0.52
         c = ink.paper(int(lw * PX), int(lh * PX), '#F1E3C6', 40 + k, grain=0.04)
         ink.text(c, label, (0.5, 0.52), 0.2, '#2B2220')

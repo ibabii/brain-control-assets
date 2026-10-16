@@ -208,6 +208,10 @@ def notes(parent):
     slot('SameBrain', f, w, h, (0.06, 0.2, 0.94, 0.95), 'SAME\nBRAIN\nDIFFERENT\nDAY...', brown, 0.2)
 
     f, w, h = frame_from([(1127, 280), (1182, 279), (1183, 357), (1128, 358)], lib.zplane(-0.47), d_r)
+    # Fully on the right bezel, off the glass (art_direction.md composition #2): 0.85 size, centred on the bezel face.
+    fs = Frame(spec['pos'], spec['deg'])
+    w, h = w * 0.85, h * 0.85
+    f = fs.child((sw / 2 + 0.0375, (fs.m.inverted() @ (f.o - fs.o)).y, 0.0235), (0, 0, 4))
     sticky('HeartSticky', f, w, h, YELLOW, g, 6, [(ink.heart, (0.5, 0.45), 0.42, red, None, '#E8615A')])
     tape('HeartStickyTape', f, (0, h * 0.48, 0.0003), (0.035, 0.014), 4, g, 2)
     slot('HeartSticky', f, w, h, (0.08, 0.06, 0.92, 0.24), '', red, 0.16)
@@ -301,7 +305,7 @@ def notebook(parent):
         f, w, h = frame_from([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], (base, n), shrink=1.0)
         lift += TRAY_TOP + 0.012 - f.at((0, -h / 2 - ch / 2, -0.0145)).y
     g = lib.empty('Notebook', tuple(f.o), parent)
-    cover = lib.mat('NotebookCover', '#C9786A', 0.7)
+    cover = lib.mat('NotebookCover', '#E2BFA3', 0.85)          # peach/cream matte (was #C9786A; composition #5)
     lib.slab('Cover', lib.rrect(w + cw, h + ch, 0.01, 3), 0.014, 0.003, cover, f.child((-0.014, 0, -0.0145)), g)
     lib.slab('PageBlock', lib.rrect(w, h, 0.004, 2), 0.0035, 0.001, lib.mat('PageBlock', '#E9DCC6', 0.85),
              f.child((0, 0, -0.0045)), g)
@@ -311,7 +315,7 @@ def notebook(parent):
     mt, ml, mr = 0.006, 0.008, 0.004
     lh, lw = ROWS * pitch, w - ml - mr
     print('NOTEBOOK page %.3f x %.3f m, em %.4f, rows %.3f of %.3f' % (w, h, em, lh, h - 2 * mt))
-    c = ink.paper(*tex_size(w, h, 1.6), '#F6EEDD', 12, grain=0.025)
+    c = ink.paper(*tex_size(w, h, 1.6), '#F3E5CB', 12, grain=0.025)   # warmer page (was #F6EEDD)
     top = 1 - (mt + 1.1 * em) / h                                 # first rule under the title baseline
     ink.ruled(c, pitch / h, top=top, bottom=0.02, margin=None)
     blue, pink = '#3F5FA8', '#D45C8A'

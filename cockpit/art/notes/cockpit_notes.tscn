@@ -107,9 +107,9 @@ autowrap_mode = 3
 width = 539.2
 
 [node name="HeartSticky" type="Label3D" parent="."]
-transform = Transform3D(0.999841, -0.017811, 0, 0.017811, 0.999841, 0, 0, 0, 1, 0.568659, 1.36483, -0.4692)
+transform = Transform3D(0.997564, -0.0697566, 0, 0.0697566, 0.997564, 0, 0, 0, 1, 0.600253, 1.37188, -0.5557)
 cast_shadow = 0
-pixel_size = 0.000281054
+pixel_size = 0.000238896
 shaded = true
 double_sided = false
 modulate = Color(0.478, 0.141, 0.188, 1)
