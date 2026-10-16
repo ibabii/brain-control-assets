@@ -5,6 +5,7 @@ extends Node3D
 ##   [--clip NAME --times "0,0.5"] [--from ID]  clip from ID's library on every model (shared clips, motion-normalised)
 ##   [--tones "#hex,.."]   skin tone per model (one model + several tones = that model repeated)
 ##   [--chest "0,0.5,1"]   Chest_Size per model (one model + several values = repeated)
+##   [--shapes "Key:v,Key:v|Key:v"]   blend shapes per model ('|' between models; one model + several = repeated)
 ##   [--stage grey|flat|kitchen|bathroom] [--spacing M] [--ragdoll --t S [--follow]] [--size WxH] [--cols N]
 ##   [--shots "name@eye@look[@fov];..."]   (contact sheet in screenshots/NAME.png)
 ##   [--bend "Bone:deg,.."]   swing bones about their X (spring chain test)
@@ -35,7 +36,8 @@ func _ready() -> void:
 	var tones := _arg('--tones', '').split(',', false)
 	var chest := _arg('--chest', '').split(',', false)
 	var faces := _arg('--faces', '').split(',', false)
-	var n := maxi(maxi(ids.size(), faces.size()), maxi(tones.size(), chest.size()))
+	var shapes := _arg('--shapes', '').split('|', false)
+	var n := maxi(maxi(maxi(ids.size(), faces.size()), maxi(tones.size(), chest.size())), shapes.size())
 	var spacing := float(_arg('--spacing', '0.9'))
 	var x0 := float(_arg('--x', '0'))
 	for i in n:
@@ -51,6 +53,9 @@ func _ready() -> void:
 			_tone(h, Color(tones[mini(i, tones.size() - 1)]))
 		if chest.size():
 			_chest(h, float(chest[mini(i, chest.size() - 1)]))
+		if shapes.size():
+			for kv in shapes[mini(i, shapes.size() - 1)].split(',', false):
+				_shape(h, kv.split(':')[0], float(kv.split(':')[1]))
 		if faces.size():
 			_face(h, id.split(':')[0], faces[mini(i, faces.size() - 1)])
 	if '--clip' in args:
@@ -140,8 +145,12 @@ func _tone(h: Node3D, c: Color) -> void:
 
 
 func _chest(h: Node3D, v: float) -> void:
+	_shape(h, 'Chest_Size', v)
+
+
+func _shape(h: Node3D, key: String, v: float) -> void:
 	for m in h.find_children('*', 'MeshInstance3D', true, false):
-		var i: int = m.find_blend_shape_by_name('Chest_Size')
+		var i: int = m.find_blend_shape_by_name(key)
 		if i >= 0:
 			m.set_blend_shape_value(i, v)
 

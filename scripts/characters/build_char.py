@@ -678,12 +678,17 @@ def main():
     fields = {'Build_Slim': lambda c: build_offset(c, False), 'Build_Heavy': lambda c: build_offset(c, True)}
     if hb.SPEC['chest']:
         fields['Chest_Size'] = lambda c: hb.bust(c)[1]
+        for _k in hb.CHEST_MOTION:
+            fields[_k] = lambda c, _k=_k: hb.chest_motion(c, _k)
     own = {}
     for n in ('BodySkin', 'Top', 'Pants', 'Shirt'):            # smooth fields (a copy by nearest points ripples)
-        fs = dict(fields, Chest_Size=lambda c: hb.bust(c, False)[1]) if n == 'BodySkin' and 'Chest_Size' in fields \
-            else fields
+        fs = fields
+        if n == 'BodySkin' and 'Chest_Size' in fields:                 # bare body: round underside (no bridge)
+            fs = dict(fields, Chest_Size=lambda c: hb.bust(c, False)[1],
+                      **{k: (lambda c, k=k: hb.chest_motion(c, k, False)) for k in hb.CHEST_MOTION})
+        chesty = any(hb.bust(c)[0] > 0 for c in canon[n])
         own[n] = {k: [f(c) for c in canon[n]] for k, f in fs.items()
-                  if k != 'Chest_Size' or any(hb.bust(c)[0] > 0 for c in canon[n])}
+                  if (k != 'Chest_Size' and k not in hb.CHEST_MOTION) or chesty}
 
     def relax(o, offs, passes=6):
         nb = [[] for _ in o.data.vertices]
@@ -696,8 +701,9 @@ def main():
                     for i, n in enumerate(nb)]
         return offs
 
-    if 'Chest_Size' in own['Shirt']:                         # dense voxel cloth: relax the key (no ripples)
-        own['Shirt']['Chest_Size'] = relax(bpy.data.objects['Shirt'], own['Shirt']['Chest_Size'])
+    for k in ('Chest_Size',) + hb.CHEST_MOTION:               # dense voxel cloth: relax the chest keys (no ripples)
+        if k in own['Shirt']:
+            own['Shirt'][k] = relax(bpy.data.objects['Shirt'], own['Shirt'][k])
 
     def host_of(name):
         if name.startswith(('ShirtCollar', 'ShirtSleeve')):
@@ -798,7 +804,10 @@ def clearance(rig):
     keyed = [o for o in bpy.data.objects if o.type == 'MESH' and o.data.shape_keys]
     cases = [('base', {}), ('slim', {'Build_Slim': 1}), ('heavy', {'Build_Heavy': 1})]
     if hb.SPEC['chest']:
-        cases += [('chest1', {'Chest_Size': 1}), ('heavy_chest1', {'Build_Heavy': 1, 'Chest_Size': 1})]
+        cases += [('chest1', {'Chest_Size': 1}), ('heavy_chest1', {'Build_Heavy': 1, 'Chest_Size': 1}),
+                  ('squash', {'Chest_Size': 1, 'Chest_Squash_L': 1, 'Chest_Squash_R': 1}),
+                  ('stretch_heavy', {'Chest_Size': 1, 'Build_Heavy': 1, 'Chest_Stretch_L': 1, 'Chest_Stretch_R': 1}),
+                  ('side_slim', {'Chest_Size': 0.8, 'Build_Slim': 1, 'Chest_Side_L': 1, 'Chest_Side_R': 1})]
     poses = [(None, 0)] + [(n, f) for n in ('squat', 'walk_loop', 'sit_tub', 'sit_floor', 'get_up_back', 'faceplant')
                            if n in bpy.data.actions for f in range(0, int(bpy.data.actions[n].frame_range[1]) + 1, 6)]
     ref, pairs = {}, {}

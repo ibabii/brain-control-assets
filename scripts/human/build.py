@@ -1065,6 +1065,27 @@ def bust(p, bridge=True):
     return h / BUST_H, Vector((lat, 0.0, -h))
 
 
+CHEST_MOTION = ('Chest_Squash_L', 'Chest_Squash_R', 'Chest_Stretch_L', 'Chest_Stretch_R', 'Chest_Side_L', 'Chest_Side_R')
+
+
+def chest_motion(p, key, bridge=True):
+    """Soft-flesh keys (authored at Chest_Size 1; the game scales them by Chest_Size): offset of canonical point p
+    for one side's squash (flatter, wider, bottom curve compressed), stretch (taller, narrower, top lifts) or side
+    lean (toward the Human's right, +X; negative values lean left). Volume roughly kept; zero where no bust."""
+    f, off = bust(p, bridge)
+    if f <= 0:
+        return Vector()
+    s = -1 if key.endswith('_L') else 1                               # the Human's left is -X
+    share = _ss(0.5 + s * p.x / 0.08)                                 # the cleavage is shared by both sides
+    q = p + off                                                       # the bust surface at size 1
+    dx, dy = q.x - s * BUST.x, q.y - BUST.y
+    w = share * min(1.0, f) ** 0.4                                    # broad plateau, fading at the rim
+    if 'Squash' in key:
+        return Vector((0.10 * dx, -0.12 * dy - 0.012, -0.03 * min(1.0, f) * BUST_H)) * w
+    if 'Stretch' in key:
+        return Vector((-0.07 * dx, 0.10 * dy + 0.012 + 0.006 * max(0.0, dy) / 0.05, 0.02 * min(1.0, f) * BUST_H)) * w
+    return Vector((0.016, -0.002, 0.0)) * w * min(1.0, f) ** 0.6
+
 def chest_weights(p, w):
     """Blend the bust region onto the Left/RightBreast spring bones: one flat plateau over both busts and the
     cleavage (the print on it moves rigidly, no squash), soft falloff outside; left/right split smoothly at the middle."""
