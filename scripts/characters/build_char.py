@@ -853,13 +853,14 @@ def main():
             o.parent = None
             o.matrix_world = mw
     bpy.context.view_layer.update()
-    hat_key(hair)
+    hat_keys(hair)
     export_all(rig, head, hair, regions, hair_skinned)
 
 
-def hat_key(hair):
-    """Hair_Hat shape key: hair above a hat's band (accessories.HAT_BAND) lies down near the scalp, so a hat part
-    (part.json shapes {Hair_Hat: 1}) sits on it. Final space: the head scale and neck shift undone for the test."""
+def hat_keys(hair):
+    """One hair key per hat (accessories.HATS): hair above that hat's band lies down to `press` off the scalp, so
+    the hat (part.json shapes {key: 1}) sits on it; the cap's brim also tucks the fringe. Final space: the head
+    scale and neck shift undone for the band test. Then a 3D check per hat: band-to-hair gap and hair poking out."""
     from sculpt import Surface
     skin = Surface(bpy.data.objects['HeadSkin'])
     k, shift = hb.SPEC['head'], hb.warp(hb.NECK) - hb.NECK
@@ -868,24 +869,71 @@ def hat_key(hair):
     inv = mw.inverted()
     if not hair.data.shape_keys:
         hair.shape_key_add(name='Basis')
-    sk = hair.shape_key_add(name='Hair_Hat')
-    for i, v in enumerate(hair.data.vertices):
-        p = G(mw @ v.co)
-        c = hb.HEAD_PIVOT + (p - shift - hb.HEAD_PIVOT) / k
-        phi = math.atan2(c.x, -c.z)
-        yb = acc.HAT_BAND - 0.02 * (1 - math.cos(phi)) / 2
-        low = 0.055 * hb._ss(1 - abs(phi) / 0.9)                 # the fringe tucks under the brim too
-        w = hb._ss((c.y - (yb - 0.012 - low)) / 0.03)
-        if w <= 0:
+    base = [G(mw @ v.co) for v in hair.data.vertices]
+    for key, hat in acc.HATS.items():
+        sk = hair.shape_key_add(name=key)
+        moved = []
+        for i, p in enumerate(base):
+            c = hb.HEAD_PIVOT + (p - shift - hb.HEAD_PIVOT) / k
+            phi = math.atan2(c.x, -c.z)
+            low = 0.055 * hb._ss(1 - abs(phi) / 0.9) if key == 'Hair_Hat' else 0.0   # the fringe tucks under the brim
+            w = hb._ss((c.y - (acc.band_y(hat, phi) - 0.012 - low)) / 0.03)
+            q = p
+            if w > 0:
+                d = (p - cran).normalized()
+                try:
+                    loc, nrm = skin.hit(cran + d * 0.5, -d)
+                    target = loc + nrm * hat['press'] * k
+                    if (p - cran).length > (target - cran).length:
+                        q = p.lerp(target, w)
+                        sk.data[i].co = inv @ B(q)
+                except ValueError:
+                    pass
+            moved.append((q, w))
+        hat_check(key, moved, cran)
+
+
+def hat_check(key, moved, cran):
+    """3D proof for a hat (art review rule): hair (keyed) poking out through the hat, and the gap between the band and
+    the hair just under it, per azimuth. Prints CLEAR HAT <key> poke N (max mm) gap max mm."""
+    from mathutils.bvhtree import BVHTree
+    stem = 'cap_driver' if key == 'Hair_Hat' else 'beret'
+    objs = acc.ACC[stem][1]
+    trees = []
+    for o in objs:
+        dg = bpy.context.evaluated_depsgraph_get()
+        trees.append(BVHTree.FromObject(o, dg))
+    pokes = []
+    for q, w in moved:
+        if w < 0.5:
             continue
-        d = (p - cran).normalized()
-        try:
-            loc, nrm = skin.hit(cran + d * 0.5, -d)
-        except ValueError:
-            continue
-        target = loc + nrm * 0.01 * k
-        if (p - cran).length > (target - cran).length:
-            sk.data[i].co = inv @ B(p.lerp(target, w))
+        d = q - cran
+        hit = None
+        for t in trees:
+            loc = t.ray_cast(B(cran), B(d).normalized(), 1.0)[0]
+            if loc is not None:
+                dist = (G(loc) - cran).length
+                hit = dist if hit is None else min(hit, dist)
+        if hit is not None and d.length > hit + 0.001:
+            pokes.append(d.length - hit)
+    band = [o for o in objs if o.name.endswith(('Band', 'CapBand', 'BeretBand'))]
+    gaps = []
+    if band:
+        bv = [G(band[0].matrix_world @ v.co) for v in band[0].data.vertices]
+        hv = [q for q, w in moved]
+        from mathutils.kdtree import KDTree
+        t = KDTree(len(hv))
+        for i, q in enumerate(hv):
+            t.insert(q, i)
+        t.balance()
+        bins = {}
+        for v in bv:                                                 # per 5 deg of azimuth: the band's closest point
+            a = int((math.degrees(math.atan2(v.x - cran.x, -(v.z - cran.z))) + 180) // 5)
+            bins[a] = min(bins.get(a, 1.0), t.find(v)[2])
+        gaps = list(bins.values())
+    print('CLEAR HAT %s poke %d (max %.0f mm)  band-to-hair gap max %.0f mm (median %.0f)' % (
+        key, len(pokes), 1000 * max(pokes, default=0), 1000 * max(gaps, default=0),
+        1000 * sorted(gaps)[len(gaps) // 2] if gaps else 0))
 
 
 # --- clearance check (CHAR_CHECK=1) ---------------------------------------------------------------------------
@@ -1035,7 +1083,7 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
         _tscn(pdir(pid), pid)
         pj = {'slot': slot, 'attach': 'Head'}
         if slot == 'hat':
-            pj['shapes'] = {'Hair_Hat': 1.0}
+            pj['shapes'] = {'Hair_Hat' if stem == 'cap_driver' else 'Hair_Beret': 1.0}
         _json(os.path.join(pdir(pid), 'part.json'), pj)
     face = [o for o in head.children_recursive if o != hair and o not in hair.children_recursive and o not in accs]
     face.append(bpy.data.objects['HeadSkin'])

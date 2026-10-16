@@ -1,7 +1,8 @@
 """Head accessories for the S1 cast (character_system_plan.md phase 3): round glasses, a short full beard, the Lady's
 beret and the bus driver's peaked cap. Built in canonical head space from the base's own head (scripts/human/build.py
 calls `build` through ACCESSORY_HOOK before the head scale), so they ride the head like the hair: rigid parts on
-the Head bone. Hats also leave `HAT_BAND` for the hair's Hair_Hat key (hair flattens under a hat)."""
+the Head bone. Each hat names its hair key in HATS (build_char.hat_keys presses the hair under it).
+"""
 import math
 
 import bpy
@@ -13,7 +14,14 @@ from lib import B, G
 from sculpt import meta, ball, chain, ell, solid, adopt, Surface
 
 ACC = {}                 # part stem -> (slot, [objects])
-HAT_BAND = 1.765         # canonical height of a hat's band at the front (it tilts down 0.02 toward the back)
+# hair key -> band (front y, drop to the back, tilt down toward the Human's right +X, canonical) and the hair kept
+# under the hat (m off the skin): the cap presses it flat, the beret leaves the curls their volume
+HATS = {'Hair_Hat': dict(front=1.722, drop=0.034, tilt=0.0, press=0.011),
+        'Hair_Beret': dict(front=1.752, drop=0.02, tilt=0.032, press=0.026)}
+
+
+def band_y(hat, phi):
+    return hat['front'] - hat['drop'] * (1 - math.cos(phi)) / 2 - hat['tilt'] * math.sin(phi)
 
 
 def _pos(name):
@@ -85,58 +93,110 @@ def beard(head, surf):
     return [solid('Beard', fams, 0.0025, 7000, lib.mat('Hair', hb.HAIR, 0.9))]
 
 
-def _band(surf, y_front, drop, lift, k=72):
-    """Points round the head at the hat line (front y_front, back y_front - drop), lift off the skin."""
+def _band(surf, hat, lift, k=72):
+    """Points round the head along a hat's band line, lift off the skin (the pressed hair under it)."""
     pts = []
-    for i in range(k + 1):
+    for i in range(k):
         phi = 2 * math.pi * i / k
-        y = y_front - drop * (1 - math.cos(phi)) / 2
         d = Vector((math.sin(phi), 0, -math.cos(phi)))
-        loc, nrm = surf.hit(Vector((0, y, 0)) + d * 0.4, -d)
+        loc, nrm = surf.hit(Vector((0, band_y(hat, phi), 0)) + d * 0.4, -d)
         pts.append(loc + Vector((nrm.x, 0, nrm.z)).normalized() * lift)
     return pts
 
 
-def beret(surf):
-    """The Lady's purple beret: a wide soft disc slouched down to her right over a snug band, a tiny stalk on top."""
-    band = _band(surf, HAT_BAND, 0.02, 0.02)
+def _loft(name, band, profile, mat, frame=None):
+    """Closed crown mesh: rings from the band (scale s about its centre, height h above it, the band's own slope
+    fading out by `level`), capped at the top. frame(p, t) can bend the rings (tilt, droop)."""
     c = sum(band, Vector()) / len(band)
-    mb = meta('BeretBand', 0.003)
-    chain(mb, band, 0.009, 0.009, step=0.003)
-    top = meta('BeretTop', 0.004)
-    ctr = c + Vector((0.012, 0.042, 0.006))
-    ell(top, ctr, (0.098, 0.026, 0.098))
-    for i in range(16):                                               # the rim: a soft roll, lower on the slouch side
-        a = 2 * math.pi * i / 16
-        h = -0.012 * math.cos(a) + 0.004
-        ball(top, ctr + Vector((0.098 * math.cos(a), h, 0.1 * math.sin(a))), 0.026)
-    stalk = meta('BeretStalk', 0.002)
-    chain(stalk, [ctr + Vector((-0.004, 0.024, 0)), ctr + Vector((0.0, 0.042, 0.004))], 0.0055, 0.004, step=0.002)
-    return [solid('Beret', [mb, top, stalk], 0.0025, 6000, lib.mat('Beret', '#7A4FA0', 0.9))]
+    rings = []
+    for sc, h, level in profile:
+        ring = []
+        for p in band:
+            q = c + Vector(((p.x - c.x) * sc, (p.y - c.y) * (1 - level) + h, (p.z - c.z) * sc))
+            ring.append(frame(q, h) if frame else q)
+        rings.append(ring)
+    top = c + Vector((0, profile[-1][1] + 0.004, 0))
+    top = frame(top, profile[-1][1]) if frame else top
+    n = len(band)
+    verts = [B(p) for r in rings for p in r] + [B(top)]
+    faces = []
+    for j in range(len(rings) - 1):
+        for i in range(n):
+            a, b = j * n + i, j * n + (i + 1) % n
+            faces.append((a, b, b + n, a + n))
+    t = len(verts) - 1
+    faces += [((len(rings) - 1) * n + i, (len(rings) - 1) * n + (i + 1) % n, t) for i in range(n)]
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(verts, [], faces)
+    me.update()
+    o = bpy.data.objects.new(name, me)
+    bpy.context.scene.collection.objects.link(o)
+    m = o.modifiers.new('Sub', 'SUBSURF')
+    m.levels = 2
+    for x in bpy.data.objects:
+        x.select_set(x == o)
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.object.modifier_apply(modifier='Sub')
+    for f in o.data.polygons:
+        f.use_smooth = True
+    o.data.materials.append(mat)
+    return o
+
+
+def beret(surf):
+    """The Lady's purple beret (classic French): a soft disc ~1.3x the head's width tilted ~18 deg to her right, the
+    rim down on the crown just above the hairline, the overhang drooping over her right temple, a stalk on top."""
+    hat = HATS['Hair_Beret']
+    band = _band(surf, hat, hat['press'] - 0.004)
+    c = sum(band, Vector()) / len(band)
+    tilt = math.radians(18)
+
+    def frame(q, h):                                                  # tilt about the band centre, droop on +X
+        d = q - c
+        x = d.x * math.cos(tilt) + d.y * math.sin(tilt) * (h > 0.0)
+        y = d.y * math.cos(tilt) - d.x * math.sin(tilt) * (h > 0.0)
+        droop = -0.022 * max(0.0, x / 0.15) ** 1.5 * min(1.0, h / 0.04)
+        return c + Vector((x, y + droop, d.z))
+    prof = [(1.0, 0.0, 0.0), (1.06, 0.012, 0.3), (1.3, 0.04, 0.7), (1.46, 0.07, 1.0), (1.44, 0.092, 1.0),
+            (1.2, 0.112, 1.0), (0.7, 0.124, 1.0), (0.25, 0.128, 1.0)]
+    mat = lib.mat('Beret', '#7A4FA0', 0.95)
+    out = [_loft('Beret', band, prof, mat, frame)]
+    rim = meta('BeretBand', 0.003)                                   # a soft rolled band where it meets the hair
+    chain(rim, band + band[:1], 0.007, 0.007, step=0.003)
+    out.append(solid('BeretBand', [rim], 0.0025, 3000, mat))
+    st = meta('BeretStalk', 0.002)
+    tip = frame(c + Vector((0, 0.13, 0)), 0.13)
+    chain(st, [tip, tip + Vector((0.004, 0.016, 0.002))], 0.0055, 0.004, step=0.002)
+    out.append(solid('BeretStalk', [st], 0.0018, 600, mat))
+    return out
 
 
 def cap(surf):
-    """The bus driver's peaked cap: a crown flaring to a flat round top, a band, a black visor and a gold badge."""
-    band = _band(surf, HAT_BAND, 0.02, 0.022)
-    c = sum(band, Vector()) / len(band)
-    mb = meta('CapBand', 0.003)
-    chain(mb, band, 0.013, 0.013, step=0.003)
-    crown = meta('CapCrown', 0.004)
-    ell(crown, c + Vector((0, 0.03, 0.006)), (0.1, 0.035, 0.108))          # the body over the band
-    ell(crown, c + Vector((0, 0.062, -0.004)), (0.118, 0.018, 0.122))      # the wide flat top, a little forward
-    caps = [solid('Cap', [mb, crown], 0.0025, 6000, lib.mat('Cap', '#2C3A5A', 0.85))]
-    vis = meta('CapVisor', 0.002)                                     # visor: a half-disc jutting forward, tilted down
+    """The bus driver's peaked cap: the band round mid-forehead and just above the ears, a crown flaring a little
+    wider than the band to a flat top, a big visor angled down ~15 deg, a gold badge at the front."""
+    hat = HATS['Hair_Hat']
+    band = _band(surf, hat, hat['press'] + 0.002)
+    mat = lib.mat('Cap', '#2C3A5A', 0.85)
+    prof = [(1.0, 0.0, 0.0), (1.05, 0.035, 0.35), (1.14, 0.08, 0.75), (1.25, 0.12, 1.0), (1.3, 0.14, 1.0),
+            (1.26, 0.152, 1.0), (1.0, 0.157, 1.0), (0.3, 0.16, 1.0)]
+    out = [_loft('Cap', band, prof, mat)]
+    bd = meta('CapBand', 0.003)
+    chain(bd, band + band[:1], 0.011, 0.011, step=0.003)
+    out.append(solid('CapBand', [bd], 0.0025, 4000, lib.mat('CapVisor', '#1E1E22', 0.5)))
+    vis = meta('CapVisor', 0.002)                                     # visor: a half-disc jutting forward, down 15 deg
     front = band[0]
-    for i in range(15):
-        a = math.pi * i / 14
-        for rr in (0.0, 0.015, 0.03, 0.045, 0.058):
-            ball(vis, front + Vector((0.07 * math.cos(a) * (1 - 0.3 * rr / 0.058), -0.006 - rr * 0.32,
-                                      -0.006 - rr * (0.4 + 0.6 * math.sin(a)))), 0.007)
-    caps.append(solid('CapVisor', [vis], 0.0018, 3000, lib.mat('CapVisor', '#1E1E22', 0.5)))
-    bd = meta('CapBadge', 0.0015)
-    ball(bd, front + Vector((0, 0.022, -0.012)), 0.011)
-    caps.append(solid('CapBadge', [bd], 0.0015, 600, lib.mat('Badge', '#C9A24A', 0.4, metal=0.6)))
-    return caps
+    for i in range(19):
+        a = math.pi * i / 18
+        for rr in (0.0, 0.016, 0.032, 0.048, 0.064, 0.078):
+            w = 0.1 * (1 - 0.35 * rr / 0.078)
+            ball(vis, front + Vector((w * math.cos(a), -0.004 - rr * math.sin(a) * 0.27,
+                                      -0.004 - rr * math.sin(a))), 0.0065)
+    out.append(solid('CapVisor', [vis], 0.0018, 3500, lib.mat('CapVisor', '#1E1E22', 0.5)))
+    bg = meta('CapBadge', 0.0015)
+    c = sum(band, Vector()) / len(band)
+    ball(bg, c + (front - c) * 1.1 + Vector((0, 0.055 - (front.y - c.y) * 0.4, -0.003)), 0.011)   # on the crown
+    out.append(solid('CapBadge', [bg], 0.0015, 600, lib.mat('Badge', '#C9A24A', 0.4, metal=0.6)))
+    return out
 
 
 def build(head, skin):
