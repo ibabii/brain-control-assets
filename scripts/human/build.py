@@ -324,14 +324,18 @@ def face(head_node, skin_obj):
         g = decal('Glint' + side, wsurf, ellipse(0.0045, 0.0045, 10, -s * 0.003 + 0.006, 0.008), Frame((e.x, e.y, 0)),
                   glint, look, offset=0.0018)
         # Upper lid: closed half-ellipsoid shell around the eye; rotation about X opens (+) / closes (-).
-        bm = lib.sphere_bm(1.0, Frame(), tuple(c * 1.13 for c in semi), seg=24, rings=14)
-        bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, 0),
-                               plane_no=(0, 1, 0), clear_inner=True)
-        edge = [ed for ed in bm.edges if ed.is_boundary]
-        bmesh.ops.contextual_create(bm, geom=edge)
-        lib.transform_bm(bm, Frame(e))
-        lid = lib.from_bmesh('Lid' + side, bm, skin, eye, e)
-        godot_rot(lid, (45, 0, 0))
+        # LidHalf: the same lid baked half-closed (dazed), hidden.
+        for lname, ang in (('Lid', 45), ('LidHalf', -8)):
+            bm = lib.sphere_bm(1.0, Frame(), tuple(c * 1.13 for c in semi), seg=24, rings=14)
+            bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, 0),
+                                   plane_no=(0, 1, 0), clear_inner=True)
+            edge = [ed for ed in bm.edges if ed.is_boundary]
+            bmesh.ops.contextual_create(bm, geom=edge)
+            lib.transform_bm(bm, Frame(e))
+            lid = lib.from_bmesh(lname + side, bm, skin, eye, e)
+            godot_rot(lid, (ang, 0, 0))
+            if lname == 'LidHalf':
+                lid['hidden'] = True
         # Brow: chunky clump on the forehead.
         pts = on_curve(surf, [(s * 0.022, 1.676), (s * 0.05, 1.688), (s * 0.08, 1.678)], front, 0.006)
         lib.tube('Brow' + side, pts, 0.0095, lib.mat('Brow', BROW, 0.75), head_node, res=6, bevel_res=2)
@@ -358,6 +362,33 @@ def face(head_node, skin_obj):
     line = on_curve(surf, [(-0.036, 1.524), (0, 1.5235), (0.036, 1.524)], front, 0.0026)
     gl = lib.tube('GrimaceLine', line, 0.0019, ink, mouth, res=4, bevel_res=1)
     gl['hidden'] = True
+    oo = decal('O', surf, ellipse(0.016, 0.021, 20, 0.0, 1.517), front, ink, mouth, offset=0.0016)   # alarm
+    oo['hidden'] = True
+    wob = on_curve(surf, [(-0.034 + 0.068 * i / 8, 1.522 + 0.0035 * math.sin(i * math.pi / 2) - 0.002 * (i in (0, 8)))
+                          for i in range(9)], front, 0.0024)
+    wb = lib.tube('Wobble', wob, 0.0034, ink, mouth, res=6, bevel_res=2)   # dazed
+    wb['hidden'] = True
+    flat = on_curve(surf, [(-0.024, 1.523), (0, 1.522), (0.024, 1.523)], front, 0.0024)
+    fl = lib.tube('Flat', flat, 0.0038, ink, mouth, res=6, bevel_res=2)     # neutral, no smile
+    fl['hidden'] = True
+
+
+# Expressions (game contract, json "expressions"): transforms and visibility only, applied over the rest face.
+# show/hide: parts to toggle (Smile hides when another mouth shows); brow: BrowL/R (raise m, tilt deg about Z,
+# + = inner end up; a raise past ~2 mm tucks them under the fringe); pupil: Pupil/Glint X/Y scale; look: per-eye LookL/R gaze [[yaw, pitch], [yaw, pitch]] or null
+# (game's gaze); lid: LidL/R X rotation (deg, rest 45, + = open) for the look-dev extras; mouth: Open/Tongue scale.
+EXPRESSIONS = {
+    'rest': {'show': [], 'brow': [0.0, 0.0], 'pupil': 1.0, 'look': None},
+    'alarm': {'show': ['O'], 'hide': ['LidL', 'LidR'], 'brow': [0.0, 18.0], 'pupil': 0.62, 'look': None},
+    'dazed': {'show': ['LidHalfL', 'LidHalfR', 'Wobble'], 'hide': ['LidL', 'LidR'], 'brow': [0.002, 8.0],
+              'pupil': 1.0, 'look': [[9.0, -4.0], [-9.0, 3.0]]},
+    'neutral': {'show': ['Flat'], 'brow': [0.0, 0.0], 'pupil': 1.0, 'look': None},
+    'happy': {'lid': 30.0, 'brow': [0.010, -8.0], 'look': [[0.0, 4.0]] * 2, 'pupil': 1.08, 'show': ['Open', 'Tongue']},
+    'panic': {'lid': 75.0, 'brow': [0.009, 18.0], 'look': None, 'pupil': 0.74, 'show': ['Open'], 'mouth': 1.35},
+    'sleepy': {'lid': -22.0, 'brow': [-0.006, -4.0], 'look': [[0.0, -6.0]] * 2, 'pupil': 1.0, 'show': []},
+    'embarrassed': {'lid': 20.0, 'brow': [0.008, 20.0], 'look': [[-16.0, -8.0]] * 2, 'pupil': 1.0,
+                    'show': ['Grimace', 'GrimaceLine', 'BlushL', 'BlushR']},
+}
 
 
 # --- assembly -------------------------------------------------------------------------------------------------
@@ -452,7 +483,7 @@ def rig_json(path, hidden):
     import json
     table = R.bone_table(LANDMARKS)
     s = lambda v: [round(x, 5) for x in v]
-    data = {'markers': R.markers(LANDMARKS), 'ragdoll': R.ragdoll(table), 'hidden': hidden, 'loops': R.LOOPS,
+    data = {'markers': R.markers(LANDMARKS), 'ragdoll': R.ragdoll(table), 'hidden': hidden, 'expressions': EXPRESSIONS, 'loops': R.LOOPS,
             'clips': R.CLIPS,
             'first_person': ['HandL', 'HandR', 'NailsL', 'NailsR', 'CuffL', 'CuffR'],   # meshes the player's own camera sees
             'look': {'neck': 'Neck', 'head': 'Head', 'share': [0.35, 0.65], 'yaw': 70, 'pitch': [-40, 30],

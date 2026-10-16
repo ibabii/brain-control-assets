@@ -1,22 +1,14 @@
 extends Node3D
 ## The Human look-dev: neutral warm studio, one model, the colourway line-up, or the expression line-up.
 ## godot --path . res://previews/human/human_preview.tscn -- --capture NAME [--size 1200x900]
-##   [--mode single|lineup|faces] [--shots "name@eye@look;..."]  (2-column contact sheet in screenshots/NAME.png)
+##   [--mode single|lineup|faces [--faces neutral,alarm,..]] [--shots "name@eye@look;..."]  (2-column contact sheet in screenshots/NAME.png)
 ## Expressions only move nodes and toggle visibility (the art contract): see EXPR.
 
 const MODELS := {'A': 'res://previews/human/human_A.glb', 'B': 'res://previews/human/human_B.glb',
 	'C': 'res://previews/human/human_C.glb'}
-const HIDDEN := ['Open', 'Tongue', 'Teeth', 'Grimace', 'GrimaceLine', 'BlushL', 'BlushR']
-## lid: upper-lid X rotation (deg, + = open); brow: (raise m, tilt deg, + = inner end up); look: gaze (yaw, pitch);
-## pupil: scale; show: mouth/blush parts made visible (Smile hides when another mouth shows).
-const EXPR := {
-	'neutral': {'lid': 45.0, 'brow': [0.0, 0.0], 'look': [0.0, 0.0], 'pupil': 1.0, 'show': []},
-	'happy': {'lid': 30.0, 'brow': [0.010, -8.0], 'look': [0.0, 4.0], 'pupil': 1.08, 'show': ['Open', 'Tongue'], 'mouth': 1.0},
-	'panic': {'lid': 75.0, 'brow': [0.009, 18.0], 'look': [0.0, 0.0], 'pupil': 0.74, 'show': ['Open'], 'mouth': 1.35},
-	'sleepy': {'lid': -22.0, 'brow': [-0.006, -4.0], 'look': [0.0, -6.0], 'pupil': 1.0, 'show': []},
-	'embarrassed': {'lid': 20.0, 'brow': [0.008, 20.0], 'look': [-16.0, -8.0], 'pupil': 1.0,
-		'show': ['Grimace', 'GrimaceLine', 'BlushL', 'BlushR']},
-}
+## Expressions come from human/art/human_rig.json "expressions" (the contract; schema in scripts/human/build.py).
+var EXPR: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://human/art/human_rig.json')).expressions
+var HIDDEN: Array = JSON.parse_string(FileAccess.get_file_as_string('res://human/art/human_rig.json')).hidden
 
 var camera: Camera3D
 var humans: Array[Node3D] = []
@@ -35,9 +27,12 @@ func _ready() -> void:
 			for i in 3:
 				_add(MODELS.values()[i], Vector3((1 - i) * 0.9, 0, 0), 'neutral')
 		'faces':
-			var names := EXPR.keys()
+			var names: Array = EXPR.keys()
+			var fi := args.find('--faces')
+			if fi >= 0:
+				names = Array(args[fi + 1].split(','))
 			for i in names.size():
-				_add(MODELS['A'], Vector3((2 - i) * 0.42, 0, 0), names[i])   # camera looks +Z: screen left = +X
+				_add(MODELS['A'], Vector3(((names.size() - 1) / 2.0 - i) * 0.42, 0, 0), names[i])   # camera looks +Z: screen left = +X
 		_:
 			_add(MODELS['A'], Vector3.ZERO, 'neutral')
 	camera = Camera3D.new()
@@ -68,20 +63,22 @@ func _expression(h: Node3D, name: String) -> void:
 	_find(h, 'Smile').visible = true
 	for n in e.show:
 		_find(h, n).visible = true
-		if n in ['Open', 'Grimace']:
+		if n in ['Open', 'Grimace', 'O', 'Wobble', 'Flat']:
 			_find(h, 'Smile').visible = false
+	for n in e.get('hide', []):
+		_find(h, n).visible = false
 	for side in ['L', 'R']:
 		var s := -1.0 if side == 'L' else 1.0
-		var lid := _find(h, 'Lid' + side)
-		lid.rotation_degrees.x = e.lid
+		if e.has('lid'):
+			_find(h, 'Lid' + side).rotation_degrees.x = e.lid
 		var brow := _find(h, 'Brow' + side)
 		brow.position.y += e.brow[0]
 		brow.rotation_degrees.z = -s * e.brow[1]
-		var look := _find(h, 'Look' + side)
-		look.rotation_degrees = Vector3(e.look[1], e.look[0], 0)
+		if e.look:
+			var g: Array = e.look[0 if side == 'L' else 1]
+			_find(h, 'Look' + side).rotation_degrees = Vector3(g[1], g[0], 0)
 		for p in ['Pupil', 'Glint']:
-			var n := _find(h, p + side)
-			n.scale = Vector3(e.pupil, e.pupil, 1.0)   # flat scale: the decal stays on the eye
+			_find(h, p + side).scale = Vector3(e.pupil, e.pupil, 1.0)   # flat scale: the decal stays on the eye
 	var m: float = e.get('mouth', 1.0)
 	for n in ['Open', 'Tongue']:
 		_find(h, n).scale = Vector3(m, m * 1.25, 1.0) if m != 1.0 else Vector3.ONE
