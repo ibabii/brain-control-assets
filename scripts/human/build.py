@@ -601,23 +601,23 @@ def face(head_node, skin_obj):
     for s, side in ((-1, 'L'), (1, 'R')):
         ex = 0.052 if LOOK_B else 0.05
         hit, _ = surf.front(s * ex, EYE_Y)
-        e = Vector((s * ex, EYE_Y, hit.z + 0.011))
+        e = Vector((s * ex, EYE_Y, hit.z + (0.014 if LOOK_B else 0.011)))   # look B: the white shows more
         eye = lib.empty('Eye' + side, e, head_node)
-        semi = ((0.035, 0.039, 0.025) if FEMALE else (0.032, 0.04, 0.025)) if LOOK_B else (0.029, 0.037, 0.024)
+        semi = ((0.038, 0.041, 0.026) if FEMALE else (0.036, 0.042, 0.026)) if LOOK_B else (0.029, 0.037, 0.024)
         w = lib.sphere('White' + side, 1.0, white, Frame(e), eye, scale=semi, seg=24, rings=14)
         # Gaze pivot 1 cm behind the white's centre and pupils lifted 2.5 mm: within the json eye limits (EYE_LIMITS)
         # the pupil stays whole on the flattened white (solved numerically; rotating about the centre tore it).
         look = lib.empty('Look' + side, e + Vector((0, 0, 0.01)), eye)
         wsurf = Surface(w)
-        pr = ((0.0185, 0.0205) if FEMALE else (0.0168, 0.0198)) if LOOK_B else (0.0145, 0.018)   # look B: fits the visible white          # look B: big dark eyes, bright highlight
+        pr = ((0.0158, 0.0172) if FEMALE else (0.0148, 0.0166)) if LOOK_B else (0.0145, 0.018)   # room to glance   # look B: fits the visible white          # look B: big dark eyes, bright highlight
         p = decal('Pupil' + side, wsurf, ellipse(pr[0], pr[1], 32, -s * 0.003, 0.001 if LOOK_B else -0.002), Frame((e.x, e.y, 0)),
                   pupil, look, offset=0.0025)
-        gr = 0.0062 if LOOK_B else 0.0045
-        go = (0.007, 0.009) if LOOK_B else (0.006, 0.008)
+        gr = 0.0048 if LOOK_B else 0.0045
+        go = (0.0052, 0.0062) if LOOK_B else (0.006, 0.008)
         g = decal('Glint' + side, wsurf, ellipse(gr, gr, 10, -s * 0.003 + go[0], go[1]), Frame((e.x, e.y, 0)),
                   glint, look, offset=0.0034)
         if LOOK_B:
-            decal('Glint2' + side, wsurf, ellipse(0.0026, 0.0026, 8, -s * 0.003 - 0.006, -0.009),
+            decal('Glint2' + side, wsurf, ellipse(0.002, 0.002, 8, -s * 0.003 - 0.0045, -0.0065),
                   Frame((e.x, e.y, 0)), glint, look, offset=0.0034)
         # Upper lid: closed half-ellipsoid shell around the eye; rotation about X opens (+) / closes (-).
         # LidHalf: the same lid baked half-closed (dazed), hidden.
@@ -1064,7 +1064,7 @@ def rig_json(path, hidden):
             'clips': R.CLIPS,
             'first_person': ['HandL', 'HandR', 'NailsL', 'NailsR', 'CuffL', 'CuffR'],   # meshes the player's own camera sees
             'look': {'neck': 'Neck', 'head': 'Head', 'share': [0.35, 0.65], 'yaw': 70, 'pitch': [-40, 30],
-                     'eyes': ['LookL', 'LookR'], 'eye_yaw': 6 if LOOK_B else 10, 'eye_pitch': 4 if LOOK_B else 6},   # eye limits: pupils stay whole
+                     'eyes': ['LookL', 'LookR'], 'eye_yaw': 11 if LOOK_B else 10, 'eye_pitch': 7 if LOOK_B else 6},   # eye limits: pupils stay whole
             'render_layer': 2, 'ragdoll_layer': 2, 'ragdoll_mask': 1,
             'ik': {side: {'arm': [side + 'UpperArm', side + 'LowerArm', side + 'Hand'],
                           'leg': [side + 'UpperLeg', side + 'LowerLeg', side + 'Foot'],
