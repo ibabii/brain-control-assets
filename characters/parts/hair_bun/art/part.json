@@ -1,3 +1,79 @@
 {
- "slot": "hair"
+ "slot": "hair",
+ "bones": [
+  {
+   "name": "hair_bun_CurlL0_1",
+   "parent": "Head"
+  },
+  {
+   "name": "hair_bun_CurlL0_2",
+   "parent": "hair_bun_CurlL0_1"
+  },
+  {
+   "name": "hair_bun_CurlL1_1",
+   "parent": "Head"
+  },
+  {
+   "name": "hair_bun_CurlL1_2",
+   "parent": "hair_bun_CurlL1_1"
+  },
+  {
+   "name": "hair_bun_CurlR0_1",
+   "parent": "Head"
+  },
+  {
+   "name": "hair_bun_CurlR0_2",
+   "parent": "hair_bun_CurlR0_1"
+  },
+  {
+   "name": "hair_bun_CurlR1_1",
+   "parent": "Head"
+  },
+  {
+   "name": "hair_bun_CurlR1_2",
+   "parent": "hair_bun_CurlR1_1"
+  }
+ ],
+ "springs": [
+  {
+   "kind": "hair",
+   "root": "hair_bun_CurlL0_1",
+   "end": "hair_bun_CurlL0_2",
+   "radius": 0.012,
+   "tip": 0.03,
+   "stiffness": 0.8,
+   "drag": 0.3,
+   "gravity": 0.4
+  },
+  {
+   "kind": "hair",
+   "root": "hair_bun_CurlL1_1",
+   "end": "hair_bun_CurlL1_2",
+   "radius": 0.012,
+   "tip": 0.03,
+   "stiffness": 0.8,
+   "drag": 0.3,
+   "gravity": 0.4
+  },
+  {
+   "kind": "hair",
+   "root": "hair_bun_CurlR0_1",
+   "end": "hair_bun_CurlR0_2",
+   "radius": 0.012,
+   "tip": 0.03,
+   "stiffness": 0.8,
+   "drag": 0.3,
+   "gravity": 0.4
+  },
+  {
+   "kind": "hair",
+   "root": "hair_bun_CurlR1_1",
+   "end": "hair_bun_CurlR1_2",
+   "radius": 0.012,
+   "tip": 0.03,
+   "stiffness": 0.8,
+   "drag": 0.3,
+   "gravity": 0.4
+  }
+ ]
 }

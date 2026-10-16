@@ -25,6 +25,7 @@ static func build(base: String, over: Dictionary = {}) -> Node3D:
 		var pj: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(pdir + 'part.json'))
 		hidden += pj.get('hides', [])
 		var p: Node3D = load(pdir + parts[slot] + '.tscn').instantiate()
+		_add_bones(sk, p, pj.get('bones', []))
 		var att := BoneAttachment3D.new()
 		att.name = 'Part_' + slot
 		sk.add_child(att)
@@ -100,3 +101,19 @@ static func auto_blush(skin: Color) -> Color:
 	var t := clampf((skin.get_luminance() - 0.3) / 0.45, 0.0, 1.0)
 	return skin.lerp(Color('#8E2E4A').lerp(Color('#F08A8A'), t), 0.6)
 
+
+
+## Part-declared bones (part.json `bones`: name, parent): added to the body skeleton with their rest from the
+## part scene's own skeleton (same names), so bases carry no hair/accessory bones.
+static func _add_bones(sk: Skeleton3D, part: Node3D, bones: Array) -> void:
+	if bones.is_empty():
+		return
+	var ps: Skeleton3D = part.find_children('*', 'Skeleton3D', true, false)[0]
+	for b in bones:
+		if sk.find_bone(b.name) >= 0:
+			continue
+		var i := sk.get_bone_count()
+		sk.add_bone(b.name)
+		sk.set_bone_parent(i, sk.find_bone(b.parent))
+		sk.set_bone_rest(i, ps.get_bone_rest(ps.find_bone(b.name)))
+		sk.reset_bone_pose(i)

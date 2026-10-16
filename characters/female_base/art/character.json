@@ -35,48 +35,6 @@
   "Build_Heavy": 0.0,
   "Chest_Size": 0.8
  },
- "springs": [
-  {
-   "kind": "hair",
-   "root": "HairCurlL0_1",
-   "end": "HairCurlL0_2",
-   "radius": 0.012,
-   "tip": 0.03,
-   "stiffness": 0.8,
-   "drag": 0.3,
-   "gravity": 0.4
-  },
-  {
-   "kind": "hair",
-   "root": "HairCurlL1_1",
-   "end": "HairCurlL1_2",
-   "radius": 0.012,
-   "tip": 0.03,
-   "stiffness": 0.8,
-   "drag": 0.3,
-   "gravity": 0.4
-  },
-  {
-   "kind": "hair",
-   "root": "HairCurlR0_1",
-   "end": "HairCurlR0_2",
-   "radius": 0.012,
-   "tip": 0.03,
-   "stiffness": 0.8,
-   "drag": 0.3,
-   "gravity": 0.4
-  },
-  {
-   "kind": "hair",
-   "root": "HairCurlR1_1",
-   "end": "HairCurlR1_2",
-   "radius": 0.012,
-   "tip": 0.03,
-   "stiffness": 0.8,
-   "drag": 0.3,
-   "gravity": 0.4
-  }
- ],
  "chest": {
   "chains": [
    [

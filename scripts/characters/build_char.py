@@ -167,11 +167,16 @@ if hb.SPEC['hair'] == 'bun':
             CURLS.append((_s, Vector((_s * _x, _y0 - 0.02, _z)), Vector((_s * _x, _y1, _z))))
 
 
+def curl_name(i, s):
+    return '%s_Curl%s%d' % (HAIR_ID, 'L' if s < 0 else 'R', i % 2)    # part bones carry the part id
+
+
 def curl_bones():
-    """Two bones per curl under Head: HairCurl<L|R><n>_1 (upper), _2 (lower)."""
+    """Two bones per curl under Head: <part>_Curl<L|R><n>_1 (upper), _2 (lower). Declared by the hair part
+    (part.json `bones`), not the base: the build rig has them for skinning, the base export drops them."""
     out = []
     for i, (s, top, bot) in enumerate(CURLS):
-        n = 'HairCurl%s%d' % ('L' if s < 0 else 'R', i % 2)
+        n = curl_name(i, s)
         mid = (top + bot) / 2
         out += [(n + '_1', hb.head_xf(top), hb.head_xf(mid), Vector((0, 0, -1)), 'Head'),
                 (n + '_2', hb.head_xf(mid), hb.head_xf(bot), Vector((0, 0, -1)), n + '_1')]
@@ -188,7 +193,7 @@ def curl_weights(q):
     for i, (s, top, bot) in enumerate(CURLS):
         if q.x * s <= 0 or math.hypot(q.x - top.x, q.z - top.z) > 0.03 or not bot.y - 0.025 < q.y < top.y + 0.02:
             continue
-        n = 'HairCurl%s%d' % ('L' if s < 0 else 'R', i % 2)
+        n = curl_name(i, s)
         t = (top.y - q.y) / (top.y - bot.y)
         g = hb._ss(t / 0.12)
         lo = hb._ss((t - 0.4) / 0.2)
@@ -777,9 +782,28 @@ def _json(path, data):
         json.dump(data, f, indent=1)
 
 
+def drop_bones(rig, names):
+    bpy.context.view_layer.objects.active = rig
+    bpy.ops.object.mode_set(mode='EDIT')
+    for n in names:
+        rig.data.edit_bones.remove(rig.data.edit_bones[n])
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+
 def export_all(rig, head, hair, regions, hair_skinned=False):
     base = BASE + '_base'
     out = os.path.join(ROOT, 'characters', base, 'art')
+    pdir = lambda pid: os.path.join(ROOT, 'characters', 'parts', pid, 'art')
+    # hair first: a skinned hair part exports with its own bones, then they leave the rig (bases carry none)
+    _export(os.path.join(pdir(HAIR_ID), HAIR_ID + '.glb'), ([rig] if hair_skinned else []) + [hair], False)
+    _tscn(pdir(HAIR_ID), HAIR_ID)
+    pj = {'slot': 'hair'} if hair_skinned else {'slot': 'hair', 'attach': 'Head'}
+    if CURLS:
+        pj['bones'] = [{'name': b[0], 'parent': b[4]} for b in curl_bones()]
+        pj['springs'] = springs()
+        drop_bones(rig, [b[0] for b in curl_bones()])
+        hb.rig_table = _rig_table
+    _json(os.path.join(pdir(HAIR_ID), 'part.json'), pj)
     bodies = regions + [o for o in bpy.data.objects if o.name.startswith(('HandL', 'HandR', 'NailsL', 'NailsR'))]
     _export(os.path.join(out, base + '.glb'), [rig] + bodies, True)
     _tscn(out, base)
@@ -793,22 +817,16 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
     parts = {'head': HEAD_ID, 'hair': HAIR_ID, 'top': ('tshirt' if FEMALE else 'hoodie') + SFX, 'bottom': 'joggers' + SFX, 'shoes': 'sneakers' + SFX}
     colors = dict(COLORS, top=SHIRT[0], rib=SHIRT[1]) if FEMALE else COLORS
     cj = {'parts': parts, 'paint': PAINT, 'colors': colors, 'shapes': {'Build_Slim': 0.0, 'Build_Heavy': 0.0}}
-    if CURLS:
-        cj['springs'] = springs()
     if hb.SPEC['chest']:
         cj['shapes']['Chest_Size'] = 0.8
         cj['chest'] = {'chains': [['LeftBreast', 'LeftBreast'], ['RightBreast', 'RightBreast']], 'radius': 0.05,
                        'tip_dir': [0, 0, -1], 'tip': 0.1}
     _json(os.path.join(out, 'character.json'), cj)
-    pdir = lambda pid: os.path.join(ROOT, 'characters', 'parts', pid, 'art')
     # head: skinned neck (HeadSkin) + rigid face parts in character space at rest
     _export(os.path.join(pdir(HEAD_ID), HEAD_ID + '.glb'), [rig, head] + face, False)
     _tscn(pdir(HEAD_ID), HEAD_ID)
     _json(os.path.join(pdir(HEAD_ID), 'part.json'), {'slot': 'head', 'attach': 'Head', 'hidden': hidden,
                                                        'expressions': hb.EXPRESSIONS, 'mouths': hb.MOUTHS, 'shut': hb.SHUT})
-    _export(os.path.join(pdir(HAIR_ID), HAIR_ID + '.glb'), ([rig] if hair_skinned else []) + [hair], False)
-    _tscn(pdir(HAIR_ID), HAIR_ID)
-    _json(os.path.join(pdir(HAIR_ID), 'part.json'), {'slot': 'hair'} if hair_skinned else {'slot': 'hair', 'attach': 'Head'})
     for pid, (slot, prefixes, hides) in PARTS.items():
         objs = [o for o in bpy.data.objects if o.type == 'MESH' and o.name.startswith(prefixes)]
         _export(os.path.join(pdir(pid + SFX), pid + SFX + '.glb'), [rig] + objs, False)
