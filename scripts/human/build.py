@@ -240,7 +240,7 @@ def scalp_shell(head, edge, lift=0.003, thick=0.01, cols=128, rows=40):
     return o
 
 
-def union_shell(hair_obj, shell, voxel, tris):
+def union_shell(hair_obj, shell, voxel, tris, smooth=3):
     """Voxel-union the shell into the sculpted hair, decimate, smooth (keeps the Hair object and material)."""
     shell.data.materials.append(hair_obj.data.materials[0])        # one slot: the join keeps a single material
     for x in bpy.data.objects:
@@ -254,7 +254,7 @@ def union_shell(hair_obj, shell, voxel, tris):
     bpy.ops.object.modifier_apply(modifier='Dec')
     bm = bmesh.new()
     bm.from_mesh(hair_obj.data)
-    for _ in range(3):
+    for _ in range(smooth):
         bmesh.ops.smooth_vert(bm, verts=bm.verts, factor=0.4, use_axis_x=True, use_axis_y=True, use_axis_z=True)
     bm.to_mesh(hair_obj.data)
     bm.free()
@@ -280,38 +280,47 @@ def hair_rim(surf, edge, r=0.0065, lift=0.004, n=144, skip=0.0):
 
 
 def hair_chunky(head):
-    """Look B (art director, crops/hair_locks_male.png): a few big separate clay locks with deep gaps (each lock its
-    own metaball family, so the union keeps a crease), fringe and crown tips lifting off the scalp, over a thin cap."""
+    """Look B (art director, crops/hair_locks_male.png): fat clay locks, each its own metaball family with a rounded
+    tip (deep gaps between them): a fringe sweeping across the forehead, side locks with uneven ends at the temples,
+    short tapered back locks stopping above the nape around a crown whorl, over a thin cap."""
     surf = Surface(head)
-    edge = lambda phi: hairline(phi) + 0.02 * _ss((abs(phi) - 1.1) / 0.2) + 0.03 * _ss(1 - abs(phi) / 0.5)
+    edge = lambda phi: (hairline(phi) + 0.055 * _ss(1 - abs(phi) / 0.6) + 0.02 * _ss((abs(phi) - 1.1) / 0.2)
+                        + 0.065 * _ss((abs(phi) - 2.0) / 0.8))           # the nape stays clear
     shell = scalp_shell(head, edge)
     fams = [hair_rim(surf, edge, skip=0.75)]
-    locks = [  # (azimuth, height, lift) ..., r0, r1: volume on top, fringe sweeps right and curls up off the forehead
-        ([(-0.3, 1.83, 0.03), (-0.05, 1.80, 0.032), (0.18, 1.778, 0.04)], 0.046, 0.016),
-        ([(0.35, 1.825, 0.03), (0.6, 1.795, 0.032), (0.82, 1.762, 0.04)], 0.042, 0.015),
-        ([(-0.8, 1.82, 0.03), (-0.62, 1.80, 0.03), (-0.48, 1.788, 0.024)], 0.04, 0.024),
-        ([(-1.15, 1.795, 0.024), (-1.4, 1.755, 0.026), (-1.52, 1.715, 0.03)], 0.04, 0.02),
-        ([(1.2, 1.795, 0.024), (1.42, 1.755, 0.026), (1.52, 1.718, 0.03)], 0.04, 0.02),
-        # back: five broad locks from the crown down to the nape, each its own family (creases between)
-        ([(-1.95, 1.82, 0.026), (-2.0, 1.72, 0.022), (-2.05, 1.62, 0.016)], 0.04, 0.024),
-        ([(1.95, 1.82, 0.026), (2.0, 1.72, 0.022), (2.05, 1.62, 0.016)], 0.04, 0.024),
-        ([(-2.55, 1.83, 0.028), (-2.6, 1.71, 0.024), (-2.62, 1.59, 0.014)], 0.042, 0.024),
-        ([(2.55, 1.83, 0.028), (2.6, 1.71, 0.024), (2.62, 1.59, 0.014)], 0.042, 0.024),
-        ([(3.14, 1.84, 0.03), (3.14, 1.71, 0.026), (3.14, 1.585, 0.016)], 0.044, 0.026),
-        # fringe (crops/hair_locks_male.png): rounded locks from the crown dropping over the upper forehead
-        ([(-0.2, 1.84, 0.03), (-0.32, 1.79, 0.034), (-0.42, 1.735, 0.036)], 0.036, 0.022),
-        ([(0.05, 1.845, 0.03), (0.02, 1.79, 0.034), (-0.04, 1.738, 0.037)], 0.036, 0.022),
-        ([(0.3, 1.84, 0.03), (0.38, 1.79, 0.034), (0.44, 1.742, 0.036)], 0.034, 0.02),
-    ]
+    locks = []                                                       # ((azimuth, height, lift) ..., r0, r1)
+    for p0, pe, ye in ((-1.0, -0.28, 1.748), (-0.6, 0.18, 1.738), (-0.12, 0.6, 1.746), (0.32, 0.96, 1.736)):
+        pm = p0 + (pe - p0) * 0.62                                   # fringe: fat locks sweeping diagonally across
+        locks.append(([(p0, 1.875, 0.016), (pm, 1.79, 0.024), (pe, ye, 0.03), (pe + 0.08, ye + 0.008, 0.036)],
+                      0.036, 0.026))                                 # the forehead, tips turned up above the brows
+    for s_ in (-1, 1):                                               # sides: down over the temple, uneven ends
+        for k, (a_, ye) in enumerate(((1.05, 1.70), (1.4, 1.688), (1.76, 1.665))):
+            ye += 0.008 * s_ * (k - 1)
+            locks.append(([(s_ * (a_ - 0.3), 1.86, 0.016), (s_ * a_, 1.77, 0.02), (s_ * (a_ + 0.06), ye, 0.026)],
+                          0.028, 0.022))
+    for k, d in enumerate((-0.98, -0.58, -0.2, 0.2, 0.58, 0.98)):   # back: short, tapered, from the crown whorl
+        ye = 1.628 + (0.012, -0.006, 0.004, -0.01, 0.008, 0.014)[k]
+        locks.append(([(math.pi + d * 0.35, 1.86, 0.016), (math.pi + d * 0.8, 1.735, 0.02), (math.pi + d, ye, 0.024)],
+                      0.028, 0.018))
     for i, (pts, r0, r1) in enumerate(locks):
         mb = meta('Lock%d' % i, 0.0055)
         lock(mb, surf, pts, r0, r1)
         fams.append(mb)
-    mb = meta('Crown', 0.0055)                                       # crown tufts lifting off
-    for tip in ((-0.035, 1.87, 0.085), (0.03, 1.885, 0.07)):
-        chain(mb, [(0.0, 1.79, 0.05), tip], 0.03, 0.014)
+    for j in range(4):                                               # crown whorl: four short tufts curling round
+        t0 = j * math.pi / 2
+        pts = [(math.pi + 0.32 * u * math.sin(t0 + 1.4 * u), 1.882 - 0.03 * u * math.cos(t0 + 1.4 * u), 0.016 + 0.006 * u)
+               for u in (0.15, 0.45, 0.75, 1.0)]
+        mb = meta('Whorl%d' % j, 0.0045)
+        lock(mb, surf, pts, 0.022, 0.015)
+        fams.append(mb)
+    mb = meta('Crown', 0.0055)                                       # tufts lifting off the top
+    for tip in ((-0.03, 1.865, 0.075), (0.028, 1.875, 0.06)):
+        chain(mb, [(0.0, 1.8, 0.045), tip], 0.026, 0.012)
     fams.append(mb)
-    return union_shell(solid('Hair', fams, 0.0035, 7000, lib.mat('Hair', HAIR, 0.72)), shell, 0.0035, 7500)
+    return union_shell(solid('Hair', fams, 0.003, 9000, lib.mat('Hair', HAIR, 0.9)), shell, 0.003, 10000)
+
+
+BUN = Vector((0, 1.84, 0.012))                                       # bun centre (canonical head space)
 
 
 def hair_bun(head):
@@ -332,22 +341,36 @@ def hair_bun(head):
         mb = meta('Lock%d' % i, 0.0045)
         lock(mb, surf, pts, 0.0135, 0.0105 + 0.003 * k_)
         fams.append(mb)
-    bun = Vector((0, 1.86, 0.045))
-    for i in range(7):                                               # messy bun: curl loops round a core
-        mb = meta('Curl%d' % i, 0.0045)
-        a0 = i * 2 * math.pi / 7
-        c = bun + Vector((0.036 * math.cos(a0), 0.014 * math.sin(3 * a0) + (0.022 if i % 3 == 0 else 0), 0.036 * math.sin(a0)))
-        n = Vector((math.cos(a0), 0.6, math.sin(a0))).normalized()
-        u = n.cross(Vector((0, 1, 0)) if abs(n.y) < 0.9 else Vector((1, 0, 0))).normalized()
-        v = n.cross(u)
-        pts = [c + (u * math.cos(t) + v * math.sin(t)) * 0.031 + n * 0.006 * t / 6
-               for t in [k * 2 * math.pi * 1.1 / 16 for k in range(17)]]
-        chain(mb, pts, 0.016, 0.012, step=0.004)
+    for i, p0 in enumerate((-0.78, -0.47, -0.16, 0.16, 0.47, 0.78)):    # front grooves fanning up to the bun
+        pts = [(p0, edge(p0) + 0.004, 0.006), (p0 * 0.7, 1.78, 0.009 + 0.003 * (i % 2)), (p0 * 0.4, 1.825, 0.01),
+               (p0 * 0.2, 1.85, 0.008)]
+        mb = meta('Front%d' % i, 0.0045)
+        lock(mb, surf, pts, 0.0125, 0.0105)
         fams.append(mb)
+    bun = BUN
     core = meta('BunCore', 0.0055)
-    ball(core, bun, 0.052)
-    ball(core, bun + Vector((0, -0.035, 0.0)), 0.045)                 # seat it on the crown
+    ball(core, bun, 0.03)
+    ball(core, bun + Vector((0, -0.054, -0.008)), 0.034)                 # seat it on the crown, inside the rolls
     fams.append(core)
+    for j, (h, tilt, a0) in enumerate(((-0.024, 0.2, 0.0), (0.002, -0.15, 2.1), (0.026, 0.12, 4.0))):
+        mb = meta('Roll%d' % j, 0.004)                               # round bun: three thick locks wrapped round it,
+        rr = math.sqrt(0.04 ** 2 - h * h)                            # a tube apart (a groove between), slightly askew
+        pts = [bun + Vector((rr * math.cos(a0 + t), h + tilt * rr * math.cos(a0 + t - 0.8), rr * math.sin(a0 + t)))
+               for t in [k * 2 * math.pi * 0.9 / 30 for k in range(31)]]
+        chain(mb, pts, 0.0125, 0.0105, step=0.003)
+        fams.append(mb)
+    knot = meta('BunKnot', 0.004)                                    # the tucked end on top
+    ball(knot, bun + Vector((0.004, 0.038, 0.002)), 0.02)
+    fams.append(knot)
+    for j, (az, up) in enumerate(((0.5, 0.1), (2.7, -0.15), (4.3, 0.3))):  # loose curls springing out of the bun
+        mb = meta('BunCurl%d' % j, 0.0035)
+        o = Vector((math.cos(az), up, math.sin(az))).normalized()
+        u = o.cross(Vector((0, 1, 0))).normalized()
+        w = o.cross(u)
+        pts = [bun + o * (0.045 + 0.04 * t) + Vector((0, -0.03 * t * t, 0))
+               + (u * math.cos(t * 12) + w * math.sin(t * 12)) * 0.009 for t in [k / 30 for k in range(31)]]
+        chain(mb, pts, 0.0062, 0.0042, step=0.0025)
+        fams.append(mb)
     for k, (x0, x1, y1, r) in enumerate(((0.05, -0.05, 1.724, 0.024), (0.04, -0.1, 1.71, 0.02))):
         mb = meta('Fringe%d' % k, 0.0055)
         lock(mb, surf, [(math.atan2(x0, 0.1), 1.8, 0.012), (math.asin(max(-1, min(1, (x0 + x1) / 0.26))), 1.76, 0.014),
@@ -361,7 +384,7 @@ def hair_bun(head):
                    for t in [turns * 2 * math.pi * i / 30 for i in range(31)]]
             chain(mb, pts, 0.0125, 0.008, step=0.003)
             fams.append(mb)
-    return union_shell(solid('Hair', fams, 0.003, 12000, lib.mat('Hair', HAIR, 0.72)), shell, 0.003, 14000)
+    return union_shell(solid('Hair', fams, 0.0025, 24000, lib.mat('Hair', HAIR, 0.9), 1), shell, 0.0025, 24000, 1)
 
 
 def volumes():
@@ -605,6 +628,17 @@ def soft_blush(name='Blush', peak=0.7, fall=1.6):
     return m
 
 
+def hug(o, surf, height):
+    """Press a clay piece onto the skin: keep its outline across the surface, squash its height along the normal
+    to `height` (a brow wraps the brow ridge instead of standing off it in profile)."""
+    vs = [G(v.co) for v in o.data.vertices]
+    top = max(surf.tree.find_nearest(p)[1].dot(p - surf.tree.find_nearest(p)[0]) for p in vs)
+    for v, p in zip(o.data.vertices, vs):
+        loc, n = surf.tree.find_nearest(p)[:2]
+        d = n.dot(p - loc)
+        if d > 0:
+            v.co = B(p - n * d + n * d * height / top)
+
 def face(head_node, skin_obj):
     surf = Surface(skin_obj)
     white = lib.mat('EyeWhite', '#F8F4EA', 0.3)
@@ -649,13 +683,14 @@ def face(head_node, skin_obj):
                 lid['hidden'] = True
         # Brow: chunky clump on the forehead.
         if LOOK_B:                                                  # thick, short, rounded brows (tapered clay)
-            pts = on_curve(surf, [(s * 0.028, 1.683), (s * 0.052, 1.693), (s * 0.075, 1.686)], front, 0.008)
+            pts = on_curve(surf, [(s * 0.028, 1.683), (s * 0.052, 1.693), (s * 0.075, 1.686)], front, 0.004)
             if FEMALE:                                              # lighter: thinner, softer colour, a gentle arch
-                pts = on_curve(surf, [(s * 0.03, 1.688), (s * 0.055, 1.699), (s * 0.08, 1.69)], front, 0.007)
+                pts = on_curve(surf, [(s * 0.03, 1.688), (s * 0.055, 1.699), (s * 0.08, 1.69)], front, 0.004)
             mb = meta('Brow' + side, 0.0025)
             chain(mb, pts, *((0.0072, 0.0052) if FEMALE else (0.0128, 0.0098)), step=0.003)
-            adopt(solid('Brow' + side, [mb], 0.0012, 900, lib.mat('Brow', '#86583F' if FEMALE else BROW, 0.75)),
-                  head_node, pts[1])
+            brow = solid('Brow' + side, [mb], 0.0012, 900, lib.mat('Brow', '#86583F' if FEMALE else BROW, 0.75))
+            hug(brow, surf, 0.0035 if FEMALE else 0.0045)
+            adopt(brow, head_node, pts[1])
         else:
             pts = on_curve(surf, [(s * 0.022, 1.676), (s * 0.05, 1.688), (s * 0.08, 1.678)], front, 0.006)
             lib.tube('Brow' + side, pts, 0.0095, lib.mat('Brow', BROW, 0.75), head_node, res=6, bevel_res=2)

@@ -268,13 +268,24 @@ def curl_bones():
     return out
 
 
+def part_bones():
+    """The hair part's bones: the curl chains and one bun bone (a spring, so the bun bobs)."""
+    return curl_bones() + [(HAIR_ID + '_Bun', hb.head_xf(hb.BUN - Vector((0, 0.035, 0))),
+                            hb.head_xf(hb.BUN + Vector((0, 0.06, 0))), Vector((0, 0, -1)), 'Head')]
+
+
 if CURLS:
     _rig_table = hb.rig_table
-    hb.rig_table = lambda: _rig_table() + curl_bones()        # rig, rig json 'bones' and the export all see them
+    hb.rig_table = lambda: _rig_table() + part_bones()        # rig, rig json 'bones' and the export all see them
 
 
 def curl_weights(q):
-    """Hair vertex (canonical head space) -> weights: along a curl it rides its chain, fading in below the root."""
+    """Hair vertex (canonical head space) -> weights: along a curl it rides its chain, fading in below the root;
+    the bun rides its bone, fading in from the crown."""
+    d = q - hb.BUN
+    if d.y > -0.05 and Vector((d.x, 0, d.z)).length < 0.075 and d.length < 0.11:
+        g = hb._ss((d.y + 0.05) / 0.03)
+        return {k: v for k, v in ((HAIR_ID + '_Bun', g), ('Head', 1 - g)) if v > 1e-4}
     for i, (s, top, bot) in enumerate(CURLS):
         if q.x * s <= 0 or math.hypot(q.x - top.x, q.z - top.z) > 0.03 or not bot.y - 0.025 < q.y < top.y + 0.02:
             continue
@@ -291,7 +302,9 @@ def curl_weights(q):
 
 def springs():
     return [{'kind': 'hair', 'root': b[0], 'end': c[0], 'radius': 0.012, 'tip': 0.03, 'stiffness': 0.8, 'drag': 0.3,
-             'gravity': 0.4} for b, c in zip(curl_bones()[0::2], curl_bones()[1::2])]
+             'gravity': 0.4} for b, c in zip(curl_bones()[0::2], curl_bones()[1::2])] + \
+        [{'kind': 'hair', 'root': HAIR_ID + '_Bun', 'end': HAIR_ID + '_Bun', 'radius': 0.035, 'tip': 0.02,
+          'stiffness': 1.4, 'drag': 0.45, 'gravity': 0.15}]
 
 
 # --- female lofts (art direction 2026-10-16: references/characters/anatomy_notes_female_lower.md) ----------------
@@ -899,9 +912,9 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
     _tscn(pdir(HAIR_ID), HAIR_ID)
     pj = {'slot': 'hair'} if hair_skinned else {'slot': 'hair', 'attach': 'Head'}
     if CURLS:
-        pj['bones'] = [{'name': b[0], 'parent': b[4]} for b in curl_bones()]
+        pj['bones'] = [{'name': b[0], 'parent': b[4]} for b in part_bones()]
         pj['springs'] = springs()
-        drop_bones(rig, [b[0] for b in curl_bones()])
+        drop_bones(rig, [b[0] for b in part_bones()])
         hb.rig_table = _rig_table
     _json(os.path.join(pdir(HAIR_ID), 'part.json'), pj)
     bodies = regions + [o for o in bpy.data.objects if o.name.startswith(('HandL', 'HandR', 'NailsL', 'NailsR'))]
@@ -914,7 +927,7 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
     rj = json.load(open(os.path.join(out, base + '_rig.json')))
     rj['first_person'] += ['Body_LowerArmL', 'Body_LowerArmR']      # bare forearms under a T-shirt
     if CURLS:                                                       # part bones are not body bones
-        part = {b[0] for b in curl_bones()}
+        part = {b[0] for b in part_bones()}
         for c in rj['clips'].values():
             c['bones'] = [b for b in c.get('bones', []) if b not in part]
     _json(os.path.join(out, base + '_rig.json'), rj)

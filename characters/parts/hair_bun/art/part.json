@@ -32,6 +32,10 @@
   {
    "name": "hair_bun_CurlR1_2",
    "parent": "hair_bun_CurlR1_1"
+  },
+  {
+   "name": "hair_bun_Bun",
+   "parent": "Head"
   }
  ],
  "springs": [
@@ -74,6 +78,16 @@
    "stiffness": 0.8,
    "drag": 0.3,
    "gravity": 0.4
+  },
+  {
+   "kind": "hair",
+   "root": "hair_bun_Bun",
+   "end": "hair_bun_Bun",
+   "radius": 0.035,
+   "tip": 0.02,
+   "stiffness": 1.4,
+   "drag": 0.45,
+   "gravity": 0.15
   }
  ]
 }
