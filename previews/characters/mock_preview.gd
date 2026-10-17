@@ -87,7 +87,7 @@ func _load(id: String) -> Node3D:
 		var kv := b.split('=')
 		if kv[0].begins_with('c.'):
 			over.colors[kv[0].substr(2)] = '#' + kv[1]
-		elif kv[0] in ['head', 'hair', 'hat', 'glasses', 'beard', 'top', 'outer', 'bottom', 'shoes', 'accessory']:
+		elif kv[0] in ['head', 'hair', 'hat', 'glasses', 'beard', 'top', 'outer', 'bottom', 'shoes', 'accessory', 'stain']:
 			over.parts[kv[0]] = kv[1]
 		else:
 			over.shapes[kv[0]] = float(kv[1])

@@ -1,0 +1,138 @@
+{
+ "asset_id": "breakfast_v1",
+ "style_id": "warm_ceramic_v1",
+ "date": "2026-10-16",
+ "style_deviations": [
+  "floor terracotta #D08A66",
+  "cardboard #C49A6C",
+  "FRAGILE tape #C0583F",
+  "coffee #5A3218",
+  "toast face #E2B062",
+  "plant #6E8F5E",
+  "furniture wood #C9925A",
+  "coat #6E86A6",
+  "hall planks #B98A62",
+  "fruit #E9965A/#C9564A",
+  "phone call buttons green/red",
+  "window sky emissive",
+  "sill plant Kenney Furniture Kit plantSmall1 (CC0)"
+ ],
+ "room": {
+  "tris": 63542,
+  "file": "breakfast_room.glb"
+ },
+ "props": {
+  "coffee_machine": {
+   "pivot": "base centre on the worktop",
+   "parts": {
+    "Stream": "coffee column spout -> mug (hidden by default)",
+    "Splash": "coffee drop crown at the mug top",
+    "Lever": "grind lever, rotate about +X (0 up, ~+40 pulled)",
+    "HopperLid": "rotate about +X at the back edge"
+   },
+   "node_position": [
+    -0.3,
+    0.92,
+    -0.85
+   ],
+   "tris": 9356,
+   "file": "props/coffee_machine.glb"
+  },
+  "mug": {
+   "pivot": "base centre",
+   "parts": {
+    "Coffee": "surface disc, y 0.02 (empty) -> 0.055 (half) -> 0.09 (full)",
+    "Phone": "the phone plopped in, top sticking out (hidden by default)",
+    "Splats/Splat0..3": "coffee drops on the worktop around the mug (hidden by default)"
+   },
+   "node_position": [
+    -0.3,
+    0.92,
+    -0.66
+   ],
+   "tris": 3340,
+   "file": "props/mug.glb"
+  },
+  "phone": {
+   "pivot": "phone centre (lying flat; top edge toward -Z so MOM reads from Bernard)",
+   "parts": {
+    "Case": "graphite rounded case",
+    "Screen": "quad, UV 0..1 (u right, v toward the top edge): MOM + heart + portrait + call buttons baked; swap its material for a SubViewport texture if wanted. Hidden = off"
+   },
+   "node_position": [
+    0.08,
+    0.9245,
+    -0.64
+   ],
+   "tris": 398,
+   "file": "props/phone.glb"
+  },
+  "toaster": {
+   "pivot": "base centre",
+   "slots": "two slots along X at local z -0.035 / +0.035 (toast / toast_2)",
+   "parts": {
+    "Lever": "slide down -Y 0.09 for `load`"
+   },
+   "node_position": [
+    0.42,
+    0.92,
+    -0.82
+   ],
+   "tris": 3044,
+   "file": "props/toaster.glb"
+  },
+  "toast": {
+   "pivot": "slice centre; faces along +-Z (stands in a slot)",
+   "used_by": [
+    "toast",
+    "toast_2"
+   ],
+   "parts": {
+    "Slice": "crust + golden faces",
+    "Crumbs": "crumb burst for the splat on the roommate (hidden by default; place at the hit point)"
+   },
+   "node_position": [
+    0.42,
+    1.05,
+    -0.855
+   ],
+   "tris": 1592,
+   "file": "props/toast.glb"
+  },
+  "parcel": {
+   "pivot": "base centre",
+   "size": [
+    0.3,
+    0.15,
+    0.2
+   ],
+   "rotation_y": -80.0,
+   "parts": {
+    "FragileFront/Back": "FRAGILE tape (white caps + glass icons) on both long sides"
+   },
+   "node_position": [
+    1.86,
+    0.47,
+    -0.36
+   ],
+   "tris": 954,
+   "file": "props/parcel.glb"
+  },
+  "front_door": {
+   "pivot": "hinge (hall-side face, z 1.25 jamb)",
+   "leaf": {
+    "width": 0.9,
+    "height": 2.05,
+    "thickness": 0.05
+   },
+   "rotate": "Leaf about +Y: 0 shut, negative opens into the hall (greybox -1.6 works); node rotation 0",
+   "node_position": [
+    -4.975,
+    0.0,
+    1.25
+   ],
+   "tris": 2740,
+   "file": "props/front_door.glb"
+  }
+ }
+}

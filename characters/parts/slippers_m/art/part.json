@@ -1,0 +1,7 @@
+{
+ "slot": "shoes",
+ "hides": [
+  "Body_FootL",
+  "Body_FootR"
+ ]
+}

@@ -1110,4 +1110,5 @@ def main():
                                                     {k: v['tris'] for k, v in manifest['props'].items()}))
 
 
-main()
+if __name__ == '__main__':
+    main()

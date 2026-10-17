@@ -26,6 +26,15 @@ const SHOTS := [
 	['overview (ceiling + front wall off)', Vector3(-0.9, 5.4, 5.6), 0.0, -48.0],
 ]
 
+const CLOSE := [         # --close: prop/set detail shots (name, eye, yaw, pitch)
+	['machine + mug', Vector3(-0.12, 1.2, -0.32), 25.0, -32.0],
+	['toaster + phone', Vector3(0.3, 1.2, -0.3), -5.0, -40.0],
+	['nook + table', Vector3(0.6, 1.45, 0.3), -50.0, -28.0],
+	['parcel', Vector3(1.6, 0.95, 0.05), -20.0, -40.0],
+	['fridge', Vector3(-1.0, 1.4, 0.6), 40.0, -14.0],
+	['front door from the hall', Vector3(-2.6, 1.5, 0.8), 90.0, -12.0],
+]
+
 var cam: Camera3D
 var roommate: Node3D
 const TABLE := Vector3(1.41, 0, -0.60)          # round café table, r 0.38, top 0.75; between Bernard and the roommate
@@ -43,10 +52,13 @@ func _a(k: String, d: String) -> String:
 func _ready() -> void:
 	get_window().content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
 	_env()
-	_room()
-	_counter()
-	_table()
-	_hall()
+	if '--art' in OS.get_cmdline_user_args():          # the built set + props (breakfast/art) instead of the blocks
+		_art()
+	else:
+		_room()
+		_counter()
+		_table()
+		_hall()
 	_roommate()
 	cam = Camera3D.new()
 	cam.fov = 70.0
@@ -113,6 +125,47 @@ func _env() -> void:
 	fill.light_energy = 1.2
 	fill.omni_range = 6.0
 	add_child(fill)
+
+
+const HIDDEN := {'coffee_machine': ['Stream', 'Splash'], 'mug': ['Phone', 'Splats'], 'toast': ['Crumbs'],
+	'toast_2': ['Crumbs']}
+
+
+func _art() -> void:
+	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://breakfast/art/layout.json'))
+	var room: Node3D = load('res://breakfast/art/breakfast_room.tscn').instantiate()
+	add_child(room)
+	for n in room.find_children('*', 'MeshInstance3D', true, false):
+		n.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_DOUBLE_SIDED   # single-sided shells block the sun
+		if n.name in ['WindowSky', 'PorchLight']:
+			n.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		if String(n.name).begins_with('Ceiling') or String(n.name).begins_with('FrontPaint') or n.name == 'LampDome' \
+				or String(n.name).begins_with('LampRing') or String(n.name).begins_with('HallCeiling'):
+			n.add_to_group('roof')
+	for id: String in layout.props:
+		var scene := 'toast' if id == 'toast_2' else id
+		var prop: Node3D = load('res://breakfast/art/props/%s.tscn' % scene).instantiate()
+		var a: Array = layout.props[id]
+		prop.position = Vector3(a[0], a[1], a[2])
+		prop.rotation_degrees.y = float(layout.prop_rotation_y.get(id, 0.0))
+		add_child(prop)
+		for part: String in HIDDEN.get(id, []):
+			prop.get_node(part).visible = false
+	for n in get_children():                          # the closed set: sun only through the window, softer fill
+		if n is WorldEnvironment:
+			n.environment.ambient_light_energy = 0.55
+		elif n is DirectionalLight3D:
+			n.light_energy = 2.6
+		elif n is OmniLight3D:
+			n.light_energy = 0.7
+	for k in ['kitchen_lamp', 'pendant', 'hall_lamp']:
+		var l := OmniLight3D.new()
+		var a: Array = layout.lights[k]
+		l.position = Vector3(a[0], a[1], a[2])
+		l.light_color = Color(1, 0.86, 0.68)
+		l.light_energy = 0.9 if k == 'kitchen_lamp' else 0.6
+		l.omni_range = 4.0 if k == 'kitchen_lamp' else 2.5
+		add_child(l)
 
 
 func _room() -> void:
@@ -272,7 +325,7 @@ func _capture() -> void:
 	label.add_theme_color_override('font_color', Color('#2E2624'))
 	cl.add_child(label)
 	var tiles: Array[Image] = []
-	for s in SHOTS:
+	for s in (CLOSE if '--close' in OS.get_cmdline_user_args() else SHOTS):
 		cam.position = s[1]
 		cam.rotation_degrees = Vector3(s[3], s[2], 0)
 		label.text = s[0]

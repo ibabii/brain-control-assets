@@ -23,7 +23,7 @@ import build as hb  # noqa: E402  (reads HUMAN_SPEC / HUMAN_ARM_UP set by build_
 import lib  # noqa: E402
 import rig as R  # noqa: E402
 from lib import B, G  # noqa: E402
-from sculpt import meta, ell, cap, ball, chain, solid, adopt  # noqa: E402
+from sculpt import meta, ell, cap, ball, chain, solid, adopt, Surface, decal  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import accessories as acc  # noqa: E402
 
@@ -39,6 +39,8 @@ PARTS = {  # part id -> (slot, mesh name prefixes, hides)
     'tshirt': ('top', ('Shirt',), ['Body_Torso']),
     'sneakers': ('shoes', ('Sole', 'Upper', 'Lace', 'Stripe'), ['Body_FootL', 'Body_FootR']),
     'overshirt': ('outer', ('Overshirt', 'Os'), ['Body_UpperArmL', 'Body_UpperArmR', 'Body_LowerArmL', 'Body_LowerArmR']),
+    'slippers': ('shoes', ('Slipper',), ['Body_FootL', 'Body_FootR']),
+    'stain_coffee': ('stain', ('Stain',), []),
 }
 SFX = '_f' if FEMALE else '_m'
 HEAD_ID, HAIR_ID = ('head_female', 'hair_bun') if FEMALE else ('head_bernard', 'hair_bernard')
@@ -228,6 +230,84 @@ def overshirt(parent):
 
 
 PRINT = '#F8F4EA', '#4E2629'          # cat print + its ink (user: helps the chest read); paint slots print/print_ink
+
+
+def slippers(parent):
+    """E01 punchline slippers: fuzzy peach (boucle bumps), porcelain cuff, tiny ears, a cartoon face. Same
+    footprint as the sneakers (they replace them in the shoes slot)."""
+    fuzz = lib.mat('SlipperFuzz', '#EFA58C', 0.95)                  # peach, a touch pinker than the floor terracotta
+    cuff = lib.mat('SlipperCuff', '#F8F4EA', 0.95)
+    sole = lib.mat('SlipperSole', '#C98778', 0.9)
+    ink_m = lib.mat('SlipperInk', '#2E2624', 0.7)
+    blush = lib.mat('SlipperBlush', '#D97F6E', 0.9)
+    rng = __import__('random').Random(7)
+    for s, side in ((-1, 'L'), (1, 'R')):
+        x = hb.ANKLE.x * s
+        f = hb.Frame((x, 0.0, -0.05), (-90, s * -6, 0))            # local y = toward the toe, z = up
+        lib.slab('SlipperSole' + side, lib.rrect(0.13, 0.3, 0.06, 6), 0.022, 0.009, sole, f, parent)
+        toe, toe_s = (0, 0.07, 0.06), (0.068, 0.056, 0.105)          # world semis (x, up, length)
+        heel, heel_s = (0, -0.06, 0.06), (0.064, 0.056, 0.075)
+        mb = meta('SlipperMeta' + side, 0.0045)
+        ell(mb, f.at(toe), toe_s)
+        ell(mb, f.at(heel), heel_s)
+        for _ in range(70):                                          # boucle fuzz: little bumps on the top half
+            u, v = rng.uniform(0, 2 * math.pi), rng.uniform(0.15, 1.0)
+            c, sm = (toe, toe_s) if rng.random() < 0.6 else (heel, heel_s)
+            d = Vector((math.cos(u) * math.sqrt(1 - v * v), math.sin(u) * math.sqrt(1 - v * v), v))
+            if c is toe and d.y > 0.45 and v < 0.75:                 # keep the face (toe front) smooth
+                continue
+            p = Vector(c) + Vector((d.x * sm[0], d.y * sm[2], d.z * sm[1])) * 0.92
+            ball(mb, f.at(p), 0.011)
+        up = adopt(solid('SlipperBody' + side, [mb], 0.004, 2600, fuzz), parent, f.o)
+        up.name = 'SlipperBody' + side
+        ring = [f.at((math.cos(t) * 0.052, -0.05 + math.sin(t) * 0.045, 0.118)) for t in
+                [2 * math.pi * k / 24 for k in range(25)]]
+        lib.tube('SlipperCuff' + side, ring, 0.014, cuff, parent, res=6, bevel_res=2)
+        top = Vector(toe) + Vector((0, toe_s[2] * 0.35, toe_s[1] * 0.95))
+        for e in (-1, 1):                                            # ears on top of the toe, inner cuff colour
+            lib.sphere('SlipperEar%s%d' % (side, e), 0.022, fuzz, hb.Frame(f.at(top + Vector((e * 0.035, -0.01, 0.012))),
+                       (-20, s * -6, e * 25)), parent, scale=(1, 1.1, 0.45), seg=16, rings=8)
+            lib.sphere('SlipperEarIn%s%d' % (side, e), 0.013, cuff, hb.Frame(f.at(top + Vector((e * 0.035, -0.006, 0.014))),
+                       (-20, s * -6, e * 25)), parent, scale=(1, 1.1, 0.45), seg=12, rings=6)
+        surf = Surface(up)
+        back = f.dir((0, -1, -0.3)).normalized()                     # look back (and a bit down) at the toe front
+        for name, off, r, m in (('EyeL', (-0.021, 0.1), 0.0105, ink_m), ('EyeR', (0.021, 0.1), 0.0105, ink_m),
+                                ('Nose', (0.0, 0.085), 0.006, sole), ('BlushL', (-0.037, 0.08), 0.009, blush),
+                                ('BlushR', (0.037, 0.08), 0.009, blush)):
+            start = f.at((off[0], 0.4, off[1] + 0.07))
+            loc, n = surf.hit(start, back)
+            sink = 0.55 if name.startswith(('Eye', 'Nose')) else 0.85                # blush sits nearly flush
+            lib.sphere('Slipper%s%s' % (name, side), r, m, hb.Frame(tuple(loc - n * r * sink)), parent, seg=12, rings=6)
+
+
+def coffee_stain(parent):
+    """E01 hoodie coffee splash on his left chest (palm size, darker edge ring, three drops): decals on the hoodie,
+    exported as the `stain_coffee` part (slot `stain`), skinned like the hoodie."""
+    surf = Surface(bpy.data.objects['Top'])
+    ring_m = lib.mat('StainRing', '#6E4528', 0.85)
+    fill_m = lib.mat('StainFill', '#966442', 0.85)
+    cx, cy = -0.095, STAIN_Y
+
+    def blob(r0, seed, drip=True):
+        out = []
+        for k in range(36):
+            t = 2 * math.pi * k / 36
+            r = r0 * (1 + 0.16 * math.sin(3 * t + seed) + 0.08 * math.sin(7 * t + 2 * seed))
+            if drip:
+                r += r0 * 0.55 * math.exp(-((t - 4.45) / 0.18) ** 2) + r0 * 0.35 * math.exp(-((t - 5.0) / 0.15) ** 2)
+            out.append((cx + math.cos(t) * r, cy + math.sin(t) * r))
+        return out
+    fr = hb.Frame((0, 0, -0.6))
+    decal('StainRing', surf, blob(0.047, 0.4), fr, ring_m, parent, offset=0.0014, rings=4)
+    decal('StainFill', surf, [(cx + (x - cx) * 0.8, cy + (y - cy) * 0.8 + 0.002) for x, y in blob(0.047, 0.4)], fr,
+          fill_m, parent, offset=0.0024, rings=4)
+    for i, (dx, dy, r) in enumerate(((0.06, 0.035, 0.008), (-0.055, -0.04, 0.006), (0.045, -0.055, 0.005))):
+        decal('StainDrop%d' % i, surf, [(cx + dx + math.cos(t) * r, cy + dy + math.sin(t) * r)
+                                        for t in [2 * math.pi * k / 12 for k in range(12)]], fr, ring_m, parent,
+              offset=0.0016, rings=2)
+
+
+STAIN_Y = 1.2
 
 
 def _inside(pt, poly):
@@ -744,6 +824,8 @@ def main():
     tshirt(body, rib)
     if not FEMALE:
         overshirt(body)
+        coffee_stain(body)
+    slippers(body)
     if FEMALE:
         female_lower(body)
     hb.matte()
@@ -770,7 +852,7 @@ def main():
             wts[o.name] = R.smooth(o, R.weights_for(o, kind[1], hb.LANDMARKS), kind[2])
         elif o.name == 'HeadSkin':
             wts[o.name] = R.smooth(o, R.weights_for(o, 'neck', hb.LANDMARKS), 3)
-        elif o.name.startswith(('Sole', 'Upper', 'Lace', 'Stripe')):
+        elif o.name.startswith(('Sole', 'Upper', 'Lace', 'Stripe', 'Slipper')):
             wts[o.name] = R.weights_for(o, 'foot', hb.LANDMARKS)
     if hb.SPEC['chest']:
         for n in ('Top', 'BodySkin'):
@@ -803,7 +885,7 @@ def main():
             kind = next((k, n) for pre, k, n in hb.SKIN_KIND if o.name.startswith(pre))  # the v1 band weights
             ws = R.weights_for(o, kind[0], hb.LANDMARKS)
             wts[o.name] = R.smooth(o, ws, kind[1]) if kind[1] else ws
-        elif o.name.startswith(('Hem', 'Collar', 'Cuff', 'Pocket', 'String', 'Aglet')):
+        elif o.name.startswith(('Hem', 'Collar', 'Cuff', 'Pocket', 'String', 'Aglet', 'Stain')):
             wts[o.name] = [top4(w) for w in transfer(o, canon['Top'], wts['Top'], trees['Top'])]
         elif o.name.startswith('PantCuff'):
             wts[o.name] = [top4(w) for w in transfer(o, canon['Pants'], wts['Pants'], trees['Pants'])]
@@ -866,6 +948,8 @@ def main():
             return 'Shirt'
         if name.startswith('Os'):
             return 'Overshirt'
+        if name.startswith('Stain'):
+            return 'Top'
         return 'Pants' if name.startswith('PantCuff') else 'Top' if name.startswith(LAYERS) else None
 
     def keys_for(name):
