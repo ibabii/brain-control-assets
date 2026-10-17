@@ -781,17 +781,27 @@ def toaster():
                'parts': {'Lever': 'slide down -Y 0.09 for `load`'}}
 
 
-def toast_slab(name, frame, parent, bite=False):
-    """Thick slice (0.1 x 0.11 x 0.018) in frame XY: honey crust ring, golden faces."""
+BITES = [((0.034, -0.058), 0.026), ((0.006, -0.066), 0.02)]     # (centre, r): a bite out of the bottom corner
+
+
+def toast_slab(name, frame, parent, bite=False, face_col=None):
+    """Thick slice (0.1 x 0.11 x 0.018) in frame XY: honey crust ring, golden faces; bite = BITES taken out."""
     out = []
-    for k in range(24):
-        t = 2 * math.pi * k / 24
+    n = 72 if bite else 24
+    for k in range(n):
+        t = 2 * math.pi * k / n
         x, y = math.cos(t) * 0.05, math.sin(t) * 0.055
         if y > 0.02:                                   # domed top with two shoulders
             y += 0.012 * abs(math.sin(2 * t))
-        out.append((x, y))
+        for _ in range(3):                             # scalloped bite: points inside go to the circles' edge
+            for (cx, cy), r in (BITES if bite else ()):
+                d = math.hypot(x - cx, y - cy)
+                if d < r:
+                    x, y = cx + (x - cx) * r / max(d, 1e-6), cy + (y - cy) * r / max(d, 1e-6)
+        if not out or math.hypot(x - out[-1][0], y - out[-1][1]) > 0.002:
+            out.append((x, y))
     crust = M('Crust', 'honey', 'wood')
-    face = M('ToastFace', TOASTY, 'paper')
+    face = M('ToastFace', TOASTY, 'paper') if face_col is None else lib.mat('ToastFaceDeep', face_col, 0.85)
     o = lib.slab(name, out, 0.018, 0.005, crust, frame.child((0, 0, -0.009)), parent)
     inner = [(x * 0.82, y * 0.82 - 0.002) for x, y in out]
     lib.slab(name + 'Face', inner, 0.0196, 0.002, face, frame.child((0, 0, -0.0098)), parent)
@@ -810,6 +820,15 @@ def toast():
     return r, {'pivot': 'slice centre; faces along +-Z (stands in a slot)', 'used_by': ['toast', 'toast_2'],
                'parts': {'Slice': 'crust + golden faces', 'Crumbs': 'crumb burst for the splat on the roommate '
                                                                    '(hidden by default; place at the hit point)'}}
+
+
+def toast_bitten():
+    """The exit gag: the slice held in Bernard's teeth (marker Bite, expression bite)."""
+    r = prop_root('toast_bitten')
+    toast_slab('Slice', Frame((0, 0, -0.027), (90, 0, 0)), r, bite=True,   # flat, top crust in the mouth
+               face_col='#D49A55')                                        # browner: reads off a yellow top
+    return r, {'pivot': 'the teeth line: 1/3 of the slice behind it (+Z, in the mouth), 2/3 out along -Z, flat',
+               'attach': 'parent at the Bite marker (Head bone) with its basis; bite out of the outer corner'}
 
 
 def fragile_mat():
@@ -866,7 +885,7 @@ def front_door():
                'rotate': 'Leaf about +Y: 0 shut, negative opens into the hall (greybox -1.6 works); node rotation 0'}
 
 
-PROP_BUILDERS = [coffee_machine, mug, phone, toaster, toast, parcel, front_door]
+PROP_BUILDERS = [coffee_machine, mug, phone, toaster, toast, toast_bitten, parcel, front_door]
 
 
 # --- export ----------------------------------------------------------------------------------------------------
@@ -931,7 +950,7 @@ def main():
         lib.reset()
         r, info = build()
         pid = r.name
-        info.update(node_position=list(PROPS[pid]), tris=BH.tris(r), file='props/%s.glb' % pid)
+        info.update(node_position=list(PROPS[pid]) if pid in PROPS else None, tris=BH.tris(r), file='props/%s.glb' % pid)
         manifest['props'][pid] = info
         BH.export(r, os.path.join(out, 'props', pid + '.glb'), True)
         scene_file(os.path.join(out, 'props', pid + '.tscn'), 'props/%s.glb' % pid,

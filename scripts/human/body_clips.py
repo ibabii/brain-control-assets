@@ -3,6 +3,7 @@ Angles: Godot euler degrees in the character's rest frame. Arms: +X raises forwa
 (Left -Z out). Spine/Head -X bends forward. LowerLeg -X bends the knee, Foot -X points the toes.
 """
 import math
+import sys
 
 from mathutils import Matrix, Vector
 
@@ -218,6 +219,9 @@ def brush_loop(rig):
     face; one side-to-side stroke cycle in 0.5 s. Keys the right arm and hand only (upper layer)."""
     import pose as PZ
     mouth = Vector(PZ.MARKERS['Foam']['pos'])
+    hb = sys.modules.get('build') or sys.modules.get('__main__')
+    if hasattr(hb, 'head_xf'):                                     # look-B heads: the mouth moves with the head scale
+        mouth = hb.head_xf(mouth)
     gx = Vector((-0.78, 0.08, 0.62)).normalized()                  # grip -> bristles: from front-right into the mouth
     gy = Vector((0, 0.25, -1))                                     # back of the hand forward, bristles to the teeth
     gy = (gy - gx * gy.dot(gx)).normalized()

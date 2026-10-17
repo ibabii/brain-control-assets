@@ -11,6 +11,7 @@ extends Node3D
 ##   [--bend "Bone:deg,.."]   swing bones about their X (spring chain test)
 ##   [--labels]   shot name on each tile
 ##   [--faces "rest,wink,.."]  expression per model (head part.json `expressions`, applied like the game)
+##   [--attach "Marker=res://prop.tscn"]  prop on a rig marker (<base>_rig.json), its basis, riding the marker's bone
 ## T-pose = the bind pose (no clip). Everything here is preview-only.
 
 const MOCK := 'res://previews/characters/mock/'
@@ -60,6 +61,8 @@ func _ready() -> void:
 				_shape(h, kv.split(':')[0], float(kv.split(':')[1]))
 		if faces.size():
 			_face(h, id.split(':')[0], faces[mini(i, faces.size() - 1)])
+		if '--attach' in args:
+			_attach(h, id.split(':')[0], _arg('--attach', '').split('=')[0], _arg('--attach', '').split('=')[1])
 	if '--clip' in args:
 		_share(_arg('--from', ''))
 	else:
@@ -361,6 +364,23 @@ func _capture(name: String) -> void:
 ## Expression from the head part's table, with the game's rules (src/human/human_avatar.gd): one mouth shows
 ## (Smile unless the expression shows another), lids only where the expression shows them (the game adds blinks),
 ## LidHalf off unless shown; brow [raise, tilt], pupil, look, mouth scale, lid (deg, or [L, R]).
+func _attach(h: Node3D, base: String, marker: String, scene: String) -> void:
+	var rj: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://characters/%s/art/%s_rig.json' % [base, base]))
+	for m: Dictionary in rj.markers:
+		if m.name != marker:
+			continue
+		var sk: Skeleton3D = h.find_children('*', 'Skeleton3D', true, false)[0]
+		var ba := BoneAttachment3D.new()
+		ba.bone_name = m.bone
+		sk.add_child(ba)
+		var b: Array = m.basis
+		var xf := Transform3D(Basis(Vector3(b[0][0], b[0][1], b[0][2]), Vector3(b[1][0], b[1][1], b[1][2]),
+				Vector3(b[2][0], b[2][1], b[2][2])), Vector3(m.pos[0], m.pos[1], m.pos[2]))
+		var prop: Node3D = load(scene).instantiate()
+		prop.transform = sk.get_bone_global_rest(sk.find_bone(m.bone)).affine_inverse() * xf
+		ba.add_child(prop)
+
+
 func _face(h: Node3D, base: String, name: String) -> void:
 	var cj: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://characters/%s/art/character.json' % base))
 	var head: String = cj.parts.head

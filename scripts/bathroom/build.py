@@ -529,6 +529,26 @@ def plant(base, parent, small=False):
         o2.name = 'PlantLeaves'
 
 
+# Warm vanity light over the mirror (art director, look B): gameplay adds a SpotLight3D at `pos` aimed at `aim`
+# (Bernard's face at the human mark), soft shadows (light_size), never from below; the art ships the fixture.
+VANITY_LIGHT = dict(pos=(0, 2.0, ZB + 0.16), aim=(0, 1.6, 0.1), color=(1.0, 0.76, 0.52), kelvin=2850, energy=1.6,
+                    range=2.6, angle=48, light_size=0.25)
+
+
+def vanity_light(parent):
+    """Opal tube shade on a honey wall bar above the mirror frame (top 1.93)."""
+    p = lib.empty('VanityLight', (0, 2.02, ZB), parent)
+    honey = M('Honey', 'honey', 'painted')
+    lib.slab('VanityPlate', lib.rrect(0.58, 0.07, 0.03, 4), 0.016, 0.005, honey, Frame((0, 2.02, ZB)), p)
+    for x in (-0.2, 0.2):
+        tube('VanityArm%d' % (x > 0), [(x, 2.02, ZB + 0.012), (x, 2.02, ZB + 0.075)], 0.008, honey, p)
+    glow = lib.mat('VanityGlow', '#FFF1DA', 0.4, emit='#FFD9A8', strength=2.2)
+    cyl('VanityShade', 0.042, -0.26, 0.26, glow, Frame((0, 2.02, ZB + 0.085), (0, 0, 90)), p, seg=28, bevel=0.012)
+    for k, x in enumerate((-0.258, 0.272)):                        # end caps (+Y of the cylinder runs along -X)
+        cyl('VanityCap%d' % k, 0.046, 0.0, 0.014, honey, Frame((x, 2.02, ZB + 0.085), (0, 0, 90)), p, seg=28,
+            bevel=0.004)
+
+
 def mirror_frame(parent):
     """Honey frame around the game's glass (0.74 x 0.6 at z -0.665): whole frame behind z -0.67."""
     parent = lib.empty('Mirror', (0, 1.58, ZB), parent)
@@ -1071,6 +1091,7 @@ def main():
     room(root)
     vanity(root)
     mirror_frame(root)
+    vanity_light(root)
     tub(root)
     toilet(root)
     bath_mat(root)
@@ -1089,7 +1110,7 @@ def main():
         info.update(node_position=list(PROPS[r.name]), tris=tris(r), file='props/%s.glb' % r.name)
         manifest['props'][r.name] = info
     layout = {'props': {k: list(v) for k, v in PROPS.items()}, 'towel_bar': list(TOWEL_BAR), 'colliders': colliders(),
-              'lamp': [0, H, 0.4], 'hall_light': list(HALL_LIGHT), 'mirror_glass': {'center': [0, 1.58, -0.665], 'size': [0.74, 0.6]}}
+              'lamp': [0, H, 0.4], 'hall_light': list(HALL_LIGHT), 'vanity_light': VANITY_LIGHT, 'mirror_glass': {'center': [0, 1.58, -0.665], 'size': [0.74, 0.6]}}
     os.makedirs(os.path.join(lib.ROOT, 'source', 'bathroom'), exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(lib.ROOT, 'source', 'bathroom', 'bathroom.blend'))
     export(root, os.path.join(out, 'bathroom_room.glb'), False)

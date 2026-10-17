@@ -494,6 +494,12 @@ def markers(L):
                     'basis': [[1, 0, 0], [0, 1, 0], [0, 0, 1]]})
     out.append({'name': 'EyeCam', 'bone': 'Head', 'pos': [0, L['EYE_Y'], -0.10], 'basis': [[1, 0, 0], [0, 1, 0], [0, 0, 1]]})
     out.append({'name': 'Foam', 'bone': 'Head', 'pos': [0, 1.525, -0.118], 'basis': [[1, 0, 0], [0, 1, 0], [0, 0, 1]]})
+    # Bite: a slice clamped in the teeth (expression bite); the basis tips it down 24 deg, toward the right 22 deg,
+    # rolled 16 deg so its face reads from the front (props/toast_bitten: origin on the teeth line, 2/3 out along -Z)
+    from mathutils import Euler
+    m = Euler((math.radians(-24), math.radians(-22), math.radians(-16)), 'YXZ').to_matrix()
+    out.append({'name': 'Bite', 'bone': 'Head', 'pos': [0.004, 1.5225, -0.112],
+                'basis': [list(m.col[0]), list(m.col[1]), list(m.col[2])]})
     return out
 
 

@@ -111,6 +111,17 @@ func _lights() -> void:
 	sun.light_energy = 0.6
 	sun.shadow_enabled = true
 	add_child(sun)
+	var vl: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://bathroom/art/layout.json')).vanity_light
+	var spot := SpotLight3D.new()                      # the game's vanity light (layout.json vanity_light)
+	add_child(spot)
+	spot.position = Vector3(vl.pos[0], vl.pos[1], vl.pos[2])
+	spot.look_at(Vector3(vl.aim[0], vl.aim[1], vl.aim[2]))
+	spot.light_color = Color(vl.color[0], vl.color[1], vl.color[2])
+	spot.light_energy = vl.energy
+	spot.spot_range = vl.range
+	spot.spot_angle = vl.angle
+	spot.light_size = vl.light_size
+	spot.shadow_enabled = true
 	var lamp := OmniLight3D.new()
 	lamp.position = Vector3(0, 2.4, 0.4)
 	lamp.light_color = Color(1, 0.95, 0.85)

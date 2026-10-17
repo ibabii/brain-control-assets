@@ -793,15 +793,11 @@ def face(head_node, skin_obj):
     flat = on_curve(surf, [(-0.024, 1.523), (0, 1.522), (0.024, 1.523)], front, 0.0024)
     fl = lib.tube('Flat', flat, 0.0038, ink, mouth, res=6, bevel_res=2)     # neutral, no smile
     fl['hidden'] = True
-    if FACE.get('lines'):                                           # age: smile lines + crow's feet (always shown)
+    if FACE.get('lines'):                                           # age (~55): one smile line per cheek
         age = lib.mat('AgeLine', SKIN, 0.6)                          # painted skin*0.72 (characters PAINT)
         for s in (-1, 1):
             pts = on_curve(surf, [(s * 0.044, 1.562), (s * 0.049, 1.548), (s * 0.047, 1.537)], front, 0.0008)
             lib.tube('AgeSmile%d' % (s + 1), pts, 0.0013, age, head_node, res=4, bevel_res=1)
-            ex = s * (0.052 + 0.038)
-            for k, (dx, dy) in enumerate(((0.013, 0.008), (0.014, -0.004))):
-                pts = on_curve(surf, [(ex, EYE_Y + 0.002 * (1 - 2 * k)), (ex + s * dx, EYE_Y + dy)], front, 0.0012)
-                lib.tube('AgeCrow%d%d' % (s + 1, k), pts, 0.0011, age, head_node, res=4, bevel_res=1)
     # Furrow: a small worried crease between the brows (panic)
     fy = 1.672 if FEMALE else 1.668
     for k, x0 in enumerate((-0.006, 0.006)):
@@ -821,6 +817,16 @@ def face(head_node, skin_obj):
              [-0.044 + 0.088 * i / 12 for i in range(1, 12)]]
     decal('Yell', surf, yell, front, ink, mouth, offset=0.0016)['hidden'] = True
     decal('OSmall', surf, ellipse(0.009, 0.0115, 16, 0.0, 1.517), front, ink, mouth, offset=0.0016)['hidden'] = True
+    # BiteOpen: open around a held slice (expression bite; the prop rides the Bite marker), teeth rows top and bottom
+    tilt = math.radians(-6)
+    bite = [(0.004 + x * math.cos(tilt) - y * math.sin(tilt), 1.52 + x * math.sin(tilt) + y * math.cos(tilt))
+            for x, y in ellipse(0.031, 0.0125, 24)]
+    decal('BiteOpen', surf, bite, front, ink, mouth, offset=0.0016)['hidden'] = True
+    teeth = [[(x + 0.004, y + 1.5292) for x, y in lib.rrect(0.036, 0.0055, 0.0025, 3)],
+             [(x + 0.004, y + 1.5108) for x, y in lib.rrect(0.03, 0.0045, 0.002, 3)]]
+    for k, t in enumerate(teeth):
+        decal('BiteTeeth%d' % k, surf, t, front, lib.mat('Teeth', '#F8F4EA', 0.4), mouth, offset=0.0022,
+              rings=2)['hidden'] = True
     shy = on_curve(surf, [(-0.022 + 0.044 * i / 8, 1.5225 - 0.0035 * (1 - ((i - 4) / 4) ** 2)
                            + 0.0016 * math.sin(i * math.pi / 2)) for i in range(9)], front, 0.0024)
     lib.tube('Shy', shy, 0.0032, ink, mouth, res=6, bevel_res=2)['hidden'] = True
@@ -832,7 +838,7 @@ def face(head_node, skin_obj):
 # (game's gaze); lid: LidL/R X rotation (deg, rest 45, + = open), one value or [L, R]; mouth: Open/Tongue scale.
 # A shut eye (wink, blink, happy): show Shut<side>, hide that side's eye parts. Mouth parts: one shows at a time.
 SHUT = {k: ['White' + k, 'Look' + k, 'Lash' + k] for k in 'LR'}
-MOUTHS = ['Smile', 'Open', 'O', 'Flat', 'Grimace', 'Wobble', 'Grin', 'Yell', 'OSmall', 'Shy']
+MOUTHS = ['Smile', 'Open', 'O', 'Flat', 'Grimace', 'Wobble', 'Grin', 'Yell', 'OSmall', 'Shy', 'BiteOpen']
 EXPRESSIONS = {
     'rest': {'show': [], 'brow': [0.0, 0.0], 'pupil': 1.0, 'look': None},
     'alarm': {'show': ['O'], 'hide': ['LidL', 'LidR'], 'brow': [0.0, 26.0], 'pupil': 0.55, 'look': None},
@@ -848,6 +854,7 @@ EXPRESSIONS = {
                     'look': [[-3.0, -5.0]] * 2},
     'wink': {'show': ['ShutR'], 'hide': SHUT['R'], 'brow': [0.0, -8.0], 'pupil': 1.0, 'look': None},
     'surprised': {'show': ['OSmall'], 'brow': [0.018, -16.0], 'pupil': 1.0, 'look': None},
+    'bite': {'show': ['BiteOpen', 'BiteTeeth0', 'BiteTeeth1'], 'brow': [0.003, -6.0], 'pupil': 1.0, 'look': None},
 }
 
 

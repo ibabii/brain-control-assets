@@ -7,6 +7,9 @@
   "LidHalfL",
   "LidHalfR",
   "Furrow",
+  "BiteOpen",
+  "BiteTeeth0",
+  "BiteTeeth1",
   "Flat",
   "Grimace",
   "GrimaceLine",
@@ -190,6 +193,19 @@
    ],
    "pupil": 1.0,
    "look": null
+  },
+  "bite": {
+   "show": [
+    "BiteOpen",
+    "BiteTeeth0",
+    "BiteTeeth1"
+   ],
+   "brow": [
+    0.003,
+    -6.0
+   ],
+   "pupil": 1.0,
+   "look": null
   }
  },
  "mouths": [
@@ -202,7 +218,8 @@
   "Grin",
   "Yell",
   "OSmall",
-  "Shy"
+  "Shy",
+  "BiteOpen"
  ],
  "shut": {
   "L": [
