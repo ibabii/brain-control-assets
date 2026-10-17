@@ -177,9 +177,18 @@ def cap(surf):
     hat = HATS['Hair_Hat']
     band = _band(surf, hat, hat['press'] + 0.002)
     mat = lib.mat('Cap', '#2C3A5A', 0.85)
-    prof = [(1.0, 0.0, 0.0), (1.05, 0.035, 0.35), (1.14, 0.08, 0.75), (1.25, 0.12, 1.0), (1.3, 0.14, 1.0),
-            (1.26, 0.152, 1.0), (1.0, 0.157, 1.0), (0.3, 0.16, 1.0)]
-    out = [_loft('Cap', band, prof, mat)]
+    c0 = sum(band, Vector()) / len(band)
+
+    def fwd(q, h):                                                    # the top tilts a little forward (-Z down)
+        return q + Vector((0, (q.z - c0.z) * 0.12 * min(1.0, h / 0.05), 0))
+    # low crown: up the band's own height, then a flat slightly oval top overhanging ~15% all round
+    top = surf.hit(Vector((c0.x, 2.3, c0.z)), Vector((0, -1, 0)))[0].y      # the skull's top over the band centre
+    k = max(1.0, (top + hat['press'] + 0.008 - c0.y) / 0.073)              # crown just clears the pressed hair
+    prof = [(1.0, 0.0, 0.0), (1.04, 0.025 * k, 0.5), (1.1, 0.045 * k, 1.0), (1.17, 0.056 * k, 1.0),
+            (1.18, 0.063 * k, 1.0), (1.12, 0.069 * k, 1.0), (0.85, 0.072 * k, 1.0), (0.3, 0.073 * k, 1.0)]
+    print('CLEAR CAP crown %.0f mm over the band centre' % (1000 * 0.073 * k))
+    oval = [c0 + Vector(((p.x - c0.x) * 1.06, p.y - c0.y, (p.z - c0.z) * 0.98)) for p in band]
+    out = [_loft('Cap', oval, prof, mat, fwd)]
     bd = meta('CapBand', 0.003)
     chain(bd, band + band[:1], 0.011, 0.011, step=0.003)
     out.append(solid('CapBand', [bd], 0.0025, 4000, lib.mat('CapVisor', '#1E1E22', 0.5)))
@@ -194,7 +203,7 @@ def cap(surf):
     out.append(solid('CapVisor', [vis], 0.0018, 3500, lib.mat('CapVisor', '#1E1E22', 0.5)))
     bg = meta('CapBadge', 0.0015)
     c = sum(band, Vector()) / len(band)
-    ball(bg, c + (front - c) * 1.1 + Vector((0, 0.055 - (front.y - c.y) * 0.4, -0.003)), 0.011)   # on the crown
+    ball(bg, c + (front - c) * 1.06 + Vector((0, 0.03, -0.004)), 0.01)                           # on the crown front
     out.append(solid('CapBadge', [bg], 0.0015, 600, lib.mat('Badge', '#C9A24A', 0.4, metal=0.6)))
     return out
 

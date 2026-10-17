@@ -1001,22 +1001,20 @@ def hat_check(key, moved, cran):
     stem = 'cap_driver' if key == 'Hair_Hat' else 'beret'
     objs = acc.ACC[stem][1]
     trees = []
-    for o in objs:
-        dg = bpy.context.evaluated_depsgraph_get()
-        trees.append(BVHTree.FromObject(o, dg))
-    pokes = []
-    for q, w in moved:
+    for o in objs:                                                   # world space (the parts carry a pivot offset)
+        o.data.calc_loop_triangles()
+        trees.append(BVHTree.FromPolygons([o.matrix_world @ v.co for v in o.data.vertices],
+                                          [t.vertices for t in o.data.loop_triangles]))
+    pokes, where = [], []
+    for q, w in moved:                                               # covered hair: an outward ray meets the hat
         if w < 0.5:
             continue
-        d = q - cran
-        hit = None
-        for t in trees:
-            loc = t.ray_cast(B(cran), B(d).normalized(), 1.0)[0]
-            if loc is not None:
-                dist = (G(loc) - cran).length
-                hit = dist if hit is None else min(hit, dist)
-        if hit is not None and d.length > hit + 0.001:
-            pokes.append(d.length - hit)
+        d = (q - cran).normalized()
+        if not any(t.ray_cast(B(q + d * 0.0005), B(d), 0.3)[0] is not None for t in trees):
+            pokes.append(q)
+    if os.environ.get('HAT_DEBUG'):
+        for q in pokes[:: max(1, len(pokes) // 10)]:
+            print('CLEAR POKE %s y %.3f phi %.0f' % (key, q.y, math.degrees(math.atan2(q.x - cran.x, -(q.z - cran.z)))))
     band = [o for o in objs if o.name.endswith(('Band', 'CapBand', 'BeretBand'))]
     gaps = []
     if band:
@@ -1032,8 +1030,11 @@ def hat_check(key, moved, cran):
             a = int((math.degrees(math.atan2(v.x - cran.x, -(v.z - cran.z))) + 180) // 5)
             bins[a] = min(bins.get(a, 1.0), t.find(v)[2])
         gaps = list(bins.values())
-    print('CLEAR HAT %s poke %d (max %.0f mm)  band-to-hair gap max %.0f mm (median %.0f)' % (
-        key, len(pokes), 1000 * max(pokes, default=0), 1000 * max(gaps, default=0),
+    if os.environ.get('HAT_DEBUG'):
+        for q, e in sorted(where, key=lambda t: -t[1])[:8] + [t for t in where if t[1] < 0][:4]:
+            print('CLEAR POKE %s y %.3f phi %.0f out %.0f mm' % (key, q.y, math.degrees(math.atan2(q.x - cran.x, -(q.z - cran.z))), 1000 * e))
+    print('CLEAR HAT %s exposed %d of %d hair verts under it  band-to-hair gap max %.0f mm (median %.0f)' % (
+        key, len(pokes), sum(1 for _, w in moved if w >= 0.5), 1000 * max(gaps, default=0),
         1000 * sorted(gaps)[len(gaps) // 2] if gaps else 0))
 
 
