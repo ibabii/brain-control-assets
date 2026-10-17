@@ -507,10 +507,10 @@ def markers(L):
     out.append({'name': 'Bite', 'bone': 'Head', 'pos': [0.004, 1.5225, -0.112],
                 'basis': [list(m.col[0]), list(m.col[1]), list(m.col[2])]})
     # PhoneEar: the phone (props/phone, centre pivot, long axis X, screen +Y) flat against the right ear, screen to
-    # the ear, speaker end back by the ear and the mic end down toward the mouth (phone_wedge)
-    x = Vector((0, -0.45, -0.89)).normalized()
+    # the ear, centred on it front-back, pinned by the raised shoulder (phone_wedge)
+    x = Vector((0, -0.2, -1)).normalized()                        # long axis front-back, mic end a little down
     y = Vector((-1, 0, 0))
-    out.append({'name': 'PhoneEar', 'bone': 'Head', 'pos': [0.162, 1.585, -0.02], 'basis': [list(x), list(y), list(x.cross(y))]})
+    out.append({'name': 'PhoneEar', 'bone': 'Head', 'pos': [0.162, 1.602, 0.0], 'basis': [list(x), list(y), list(x.cross(y))]})
     return out
 
 

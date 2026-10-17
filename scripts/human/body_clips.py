@@ -3,6 +3,7 @@ Angles: Godot euler degrees in the character's rest frame. Arms: +X raises forwa
 (Left -Z out). Spine/Head -X bends forward. LowerLeg -X bends the knee, Foot -X points the toes.
 """
 import math
+import os
 import sys
 
 from mathutils import Matrix, Vector
@@ -549,12 +550,21 @@ def grab_toast(rig):
 
 
 def toast_mouth(rig):
-    """From grab_toast's hold the right hand puts the toast in his teeth (release at f12: swap the toast to the
-    Bite marker and show `bite`), then drops to the side."""
+    """From grab_toast's hold the right hand lifts the slice into his teeth: at f12 it sits exactly where
+    toast_bitten hangs on the Bite marker (same slice, toast_geom). Release at f14: swap to toast_bitten and show
+    `bite`; the hand opens and drops away to the side."""
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'breakfast'))
+    import toast_geom as TG
+    import pose as PZ
+    m = PZ.MARKERS['Bite']
+    B = Matrix(m['basis']).transposed()                          # columns = the marker axes
+    gx, gy = TG.bitten(TG.GRIP)
+    c, s_ = math.cos(TG.BITE_TURN), math.sin(TG.BITE_TURN)
+    bite = (_head(m['pos']) + B @ Vector((gx, gy, TG.BITE_Z)), B @ Vector((c, s_, 0)), B @ Vector((-s_, c, 0)),
+            (0.6, 1.1, -0.15))
     chest = (_body(TOAST_CHEST[0]),) + TOAST_CHEST[1:]
-    mouth = (_head((0.05, 1.515, -0.16)), (1, 0, 0), (0, 1, 0), (0.55, 1.15, -0.1))   # slice face-on under the mouth
-    return [(0, _hold(rig, 1, *chest)), (12, _hold(rig, 1, *mouth)), (16, _hold(rig, 1, *mouth, fingers='spread')),
-            (30, _rest_arm(rig, 1))]
+    return [(0, _hold(rig, 1, *chest)), (12, _hold(rig, 1, *bite)), (14, _hold(rig, 1, *bite, fingers='spread')),
+            (28, _rest_arm(rig, 1))]
 
 
 def take_parcel(rig):
@@ -568,7 +578,7 @@ def take_parcel(rig):
 def phone_wedge():
     """Phone pinched between the right ear and a raised right shoulder (prop on the Head marker PhoneEar): head
     tilted onto it, shoulder up. Neck layer only, so the arms stay free for the other holds. Held."""
-    w = {'rot': {'Head': (0, 0, -16), 'Neck': (0, 0, -8), 'RightShoulder': (0, 0, 22), 'UpperChest': (0, 0, -3)}}
+    w = {'rot': {'Head': (0, 0, -18), 'Neck': (0, 0, -10), 'RightShoulder': (0, 0, 24), 'UpperChest': (0, 0, -3)}}
     return [(0, {'rot': {}}), (8, w), (30, w)]
 
 
