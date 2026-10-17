@@ -11,7 +11,7 @@ extends Node3D
 ##   [--bend "Bone:deg,.."]   swing bones about their X (spring chain test)
 ##   [--labels]   shot name on each tile
 ##   [--faces "rest,wink,.."]  expression per model (head part.json `expressions`, applied like the game)
-##   [--attach "Marker=res://prop.tscn"]  prop on a rig marker (<base>_rig.json), its basis, riding the marker's bone
+##   [--attach "Marker=res://prop.tscn[@x,y,z@rx,ry,rz]"]  prop on a rig marker (<base>_rig.json), its basis, riding the marker's bone; optional offset (m) / rotation (deg) in the marker frame
 ## T-pose = the bind pose (no clip). Everything here is preview-only.
 
 const MOCK := 'res://previews/characters/mock/'
@@ -62,7 +62,8 @@ func _ready() -> void:
 		if faces.size():
 			_face(h, id.split(':')[0], faces[mini(i, faces.size() - 1)])
 		if '--attach' in args:
-			_attach(h, id.split(':')[0], _arg('--attach', '').split('=')[0], _arg('--attach', '').split('=')[1])
+			var at := _arg('--attach', '').split('=')
+			_attach(h, id.split(':')[0], at[0], at[1])
 	if '--clip' in args:
 		_share(_arg('--from', ''))
 	else:
@@ -364,7 +365,14 @@ func _capture(name: String) -> void:
 ## Expression from the head part's table, with the game's rules (src/human/human_avatar.gd): one mouth shows
 ## (Smile unless the expression shows another), lids only where the expression shows them (the game adds blinks),
 ## LidHalf off unless shown; brow [raise, tilt], pupil, look, mouth scale, lid (deg, or [L, R]).
-func _attach(h: Node3D, base: String, marker: String, scene: String) -> void:
+func _attach(h: Node3D, base: String, marker: String, spec: String) -> void:
+	var bits := spec.split('@')
+	var scene := bits[0]
+	var off := Transform3D.IDENTITY
+	if bits.size() > 2:
+		var o := bits[1].split_floats(',')
+		var r := bits[2].split_floats(',')
+		off = Transform3D(Basis.from_euler(Vector3(deg_to_rad(r[0]), deg_to_rad(r[1]), deg_to_rad(r[2]))), Vector3(o[0], o[1], o[2]))
 	var rj: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://characters/%s/art/%s_rig.json' % [base, base]))
 	for m: Dictionary in rj.markers:
 		if m.name != marker:
@@ -377,7 +385,7 @@ func _attach(h: Node3D, base: String, marker: String, scene: String) -> void:
 		var xf := Transform3D(Basis(Vector3(b[0][0], b[0][1], b[0][2]), Vector3(b[1][0], b[1][1], b[1][2]),
 				Vector3(b[2][0], b[2][1], b[2][2])), Vector3(m.pos[0], m.pos[1], m.pos[2]))
 		var prop: Node3D = load(scene).instantiate()
-		prop.transform = sk.get_bone_global_rest(sk.find_bone(m.bone)).affine_inverse() * xf
+		prop.transform = sk.get_bone_global_rest(sk.find_bone(m.bone)).affine_inverse() * xf * off
 		ba.add_child(prop)
 
 

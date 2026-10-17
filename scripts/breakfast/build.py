@@ -781,11 +781,12 @@ def toaster():
                'parts': {'Lever': 'slide down -Y 0.09 for `load`'}}
 
 
-BITES = [((0.034, -0.058), 0.026), ((0.006, -0.066), 0.02)]     # (centre, r): a bite out of the bottom corner
+BITES = [((0.042, -0.05), 0.024), ((0.014, -0.064), 0.018)]     # (centre, r): a bite out of the far corner
 
 
-def toast_slab(name, frame, parent, bite=False, face_col=None):
-    """Thick slice (0.1 x 0.11 x 0.018) in frame XY: honey crust ring, golden faces; bite = BITES taken out."""
+def toast_slab(name, frame, parent, bite=False, face_col=None, crust_col=None, xf=None, th=0.018):
+    """Thick slice (0.1 x 0.11 x th) in frame XY: honey crust ring, golden faces; bite = BITES taken out;
+    xf maps outline points (x, y) after the inner face is derived (scale / turn / move the whole slice)."""
     out = []
     n = 72 if bite else 24
     for k in range(n):
@@ -800,11 +801,14 @@ def toast_slab(name, frame, parent, bite=False, face_col=None):
                     x, y = cx + (x - cx) * r / max(d, 1e-6), cy + (y - cy) * r / max(d, 1e-6)
         if not out or math.hypot(x - out[-1][0], y - out[-1][1]) > 0.002:
             out.append((x, y))
-    crust = M('Crust', 'honey', 'wood')
-    face = M('ToastFace', TOASTY, 'paper') if face_col is None else lib.mat('ToastFaceDeep', face_col, 0.85)
-    o = lib.slab(name, out, 0.018, 0.005, crust, frame.child((0, 0, -0.009)), parent)
-    inner = [(x * 0.82, y * 0.82 - 0.002) for x, y in out]
-    lib.slab(name + 'Face', inner, 0.0196, 0.002, face, frame.child((0, 0, -0.0098)), parent)
+    crust = M('Crust', 'honey', 'wood') if crust_col is None else lib.mat('CrustDeep', crust_col, 0.85)
+    face = M('ToastFace', TOASTY, 'paper') if face_col is None else lib.mat('ToastCrumb', face_col, 0.9)
+    k = 0.82 if xf is None else 0.78
+    inner = [(x * k, y * k - 0.002) for x, y in out]
+    if xf:
+        out, inner = [xf(p) for p in out], [xf(p) for p in inner]
+    o = lib.slab(name, out, th, 0.005, crust, frame.child((0, 0, -th / 2)), parent)
+    lib.slab(name + 'Face', inner, th + 0.0016, 0.002, face, frame.child((0, 0, -th / 2 - 0.0008)), parent)
     return o
 
 
@@ -825,10 +829,20 @@ def toast():
 def toast_bitten():
     """The exit gag: the slice held in Bernard's teeth (marker Bite, expression bite)."""
     r = prop_root('toast_bitten')
-    toast_slab('Slice', Frame((0, 0, -0.027), (90, 0, 0)), r, bite=True,   # flat, top crust in the mouth
-               face_col='#D49A55')                                        # browner: reads off a yellow top
-    return r, {'pivot': 'the teeth line: 1/3 of the slice behind it (+Z, in the mouth), 2/3 out along -Z, flat',
-               'attach': 'parent at the Bite marker (Head bone) with its basis; bite out of the outer corner'}
+    s, th = 1.8, math.radians(-8)                      # cartoon-big (reads at 60 px)
+
+    def turn(p):
+        return (s * (p[0] * math.cos(th) - p[1] * math.sin(th)), s * (p[0] * math.sin(th) + p[1] * math.cos(th)))
+    raw = [turn((math.cos(t) * 0.05, math.sin(t) * 0.055 + (0.012 * abs(math.sin(2 * t)) if math.sin(t) * 0.055 > 0.02
+                 else 0))) for t in [2 * math.pi * k / 96 for k in range(96)]]
+    top = max(raw, key=lambda q: q[1] - 0.9 * q[0])    # clamped by the top-left corner (1.5 cm in the teeth): hangs
+                                                       # down to his right (+X)
+    move = lambda p: (lambda q: (q[0] - top[0], q[1] - top[1] + 0.015))(turn(p))
+    toast_slab('Slice', Frame((0, 0, 0)), r, bite=True, face_col='#EDD5A3', crust_col='#B5773D', xf=move,
+               th=0.024)
+    return r, {'pivot': 'the clamped top-left corner on the teeth line; the slice hangs down to his right (+X, -Y), face to -Z',
+               'attach': 'parent at the Bite marker (Head bone) with its basis (tilts the hanging slice forward, '
+                         'off the chin); bite out of the far bottom corner'}
 
 
 def fragile_mat():

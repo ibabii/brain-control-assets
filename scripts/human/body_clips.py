@@ -230,7 +230,7 @@ def brush_loop(rig):
     keys = []
     for f in (0, 4, 8, 11, 15):
         a = math.sin(2 * math.pi * f / 15)
-        head = mouth + Vector((0.025 * a, -0.008 + 0.005 * abs(a), -0.022))      # bristles scrub side to side
+        head = mouth + Vector((0.025 * a, -0.004 + 0.005 * abs(a), -0.022))      # bristles scrub side to side
         b = lib.rot((0, 5 * a, 0)) @ basis
         pos = head - (b @ Vector((1, 0, 0))) * 0.17 - (b @ Vector((0, 1, 0))) * 0.01
         wrist, turn = PZ.grip(rig, 1, pos, b)
