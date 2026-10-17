@@ -38,7 +38,7 @@ PARTS = {  # part id -> (slot, mesh name prefixes, hides)
                 ['Body_Hips', 'Body_UpperLegL', 'Body_UpperLegR', 'Body_LowerLegL', 'Body_LowerLegR']),
     'tshirt': ('top', ('Shirt',), ['Body_Torso']),
     'sneakers': ('shoes', ('Sole', 'Upper', 'Lace', 'Stripe'), ['Body_FootL', 'Body_FootR']),
-    'overshirt': ('outer', ('Overshirt', 'Os'), ['Body_UpperArmL', 'Body_UpperArmR', 'Body_LowerArmL', 'Body_LowerArmR']),
+    'overshirt': ('outer', ('Overshirt', 'Os'), ['Body_UpperArmL', 'Body_UpperArmR']),   # rolled: forearms show
     'slippers': ('shoes', ('Slipper',), ['Body_FootL', 'Body_FootR']),
     'stain_coffee': ('stain', ('Stain',), []),
 }
@@ -155,23 +155,31 @@ def overshirt(parent):
     m = lambda s, x: hb.mirror(x, s)
     c, bl, fl = v['chest'], v['belly'], v['flare']
     b = meta('OsBody', 0.008)
-    ell(b, (0, 1.22, 0.0), (c[0] - 0.004, c[1], c[2] - 0.004))
-    ell(b, (0, 1.04, v['belly_z'] * 0.6), (bl[0] - 0.008, bl[1], bl[2] - 0.01))
-    ell(b, (0, 0.92, 0.0), (fl[0] - 0.014, 0.08, fl[2] - 0.012))
-    cap(b, (-0.15, 1.34, 0.006), (0.15, 1.34, 0.006), v['shoulder'] - 0.004)
+    ell(b, (0, 1.22, 0.0), (c[0] - 0.008, c[1], c[2] - 0.008))          # light cotton, ~1 cm over the tee
+    ell(b, (0, 1.04, v['belly_z'] * 0.6), (bl[0] - 0.012, bl[1], bl[2] - 0.014))
+    ell(b, (0, 0.92, 0.0), (fl[0] - 0.018, 0.08, fl[2] - 0.016))
+    cap(b, (-0.15, 1.34, 0.006), (0.15, 1.34, 0.006), v['shoulder'] - 0.008)
     ell(b, (0, 1.40, 0.04), (0.085, 0.05, 0.07))                       # the back of the neck under the collar
     fams = [b]
     for s_ in (-1, 1):
         sl = meta('OsSleeve%d' % s_, 0.008)
         sh, el, wr = m(s_, hb.SHOULDER), m(s_, hb.ELBOW), m(s_, hb.WRIST)
-        ball(sl, sh + Vector((-s_ * 0.008, -0.01, 0)), 0.072 * v['limb'])
-        cap(sl, sh, sh + (el - sh) * 0.6, 0.072 * v['limb'])           # roomy over the tee's sleeve bands
-        cap(sl, sh + (el - sh) * 0.6, el, 0.066 * v['limb'])
-        cap(sl, el, wr - m(s_, hb.FORE) * 0.1, 0.056 * v['limb'])      # ends inside the cuff
+        ball(sl, sh + Vector((-s_ * 0.006, -0.012, 0)), 0.061 * v['limb'])
+        cap(sl, sh, sh + (el - sh) * 0.5, 0.0615 * v['limb'])         # just over the tee's sleeve bands
+        cap(sl, sh + (el - sh) * 0.5, el, 0.055 * v['limb'])           # light cotton: tapers to the elbow
+        cap(sl, el, el + (wr - el) * ROLL, 0.05 * v['limb'])           # rolled up to mid-forearm (ends in the roll)
         fams.append(sl)
     mat = lib.mat('Overshirt', OVERSHIRT, 0.9)
     o = solid('Overshirt', fams, 0.006, 9000, mat)
-    width = lambda y: 0.042 + 0.02 * hb._ss((1.25 - y) / 0.35) + 0.035 * hb._ss((y - 1.29) / 0.09)
+    cx, cz = c[0] - 0.008, c[2] - 0.008
+    for vt in o.data.vertices:                                        # flat front panels: hang straight from the chest
+        q = G(o.matrix_world @ vt.co)
+        if q.z < 0 and q.y < 1.26:
+            zc = -cz * math.sqrt(max(0.0, 1 - (q.x / cx) ** 2))
+            wgt = hb._ss((1.26 - q.y) / 0.1) * hb._ss((cx - abs(q.x)) / 0.05)
+            q.z = q.z + (min(q.z, zc) - q.z) * wgt
+            vt.co = o.matrix_world.inverted() @ B(q)
+    width = lambda y: 0.058 + 0.022 * hb._ss((1.25 - y) / 0.35) + 0.03 * hb._ss((y - 1.29) / 0.09)   # opener panels
     bm = bmesh.new()                                                  # cut the front open and the bottom off
     bm.from_mesh(o.data)
     cut = [f for f in bm.faces if (lambda q: q.y < 0.865 or (q.z < -0.03 and abs(q.x) < width(q.y) and q.y < 1.47))(
@@ -189,7 +197,7 @@ def overshirt(parent):
     bm.to_mesh(o.data)
     bm.free()
     sol = o.modifiers.new('Cloth', 'SOLIDIFY')                       # a real cloth edge (no see-through rim)
-    sol.thickness, sol.offset = 0.005, -1.0
+    sol.thickness, sol.offset = 0.004, -1.0
     for x in bpy.data.objects:
         x.select_set(x == o)
     bpy.context.view_layer.objects.active = o
@@ -222,11 +230,16 @@ def overshirt(parent):
     adopt(solid('OsCollar', [col], 0.0025, 3000, trim), parent, (0, 1.4, 0))
     decal('OsPocket', surf, [(-0.125, 1.17), (-0.06, 1.17), (-0.058, 1.245), (-0.127, 1.245)], hb.Frame(), trim,
           parent, offset=0.002, rings=3, depth=0.004)
-    for s_, side in ((-1, 'L'), (1, 'R')):
-        wr, d = m(s_, hb.WRIST), m(s_, hb.FORE)
-        lr = 0.06 * v['limb']
-        hb.band('OsCuff' + side, hb.frame_along(wr - d * 0.06, d), lr, lr, 0.05, 0.06, trim, parent)
+    for s_, side in ((-1, 'L'), (1, 'R')):                            # rolled sleeve: two soft turns, not a cuff
+        el, wr = m(s_, hb.ELBOW), m(s_, hb.WRIST)
+        end, d = el + (wr - el) * ROLL, (wr - el).normalized()
+        lr = 0.053 * v['limb']
+        hb.band('OsRoll' + side, hb.frame_along(end - d * 0.012, d), lr, lr, 0.03, 0.12, trim, parent)
+        hb.band('OsRoll2' + side, hb.frame_along(end - d * 0.036, d), lr * 1.02, lr * 1.02, 0.022, 0.1, trim, parent)
     return shirt
+
+
+ROLL = 0.45                            # overshirt sleeves end this far down the forearm (elbow 0 -> wrist 1)
 
 
 PRINT = '#F8F4EA', '#4E2629'          # cat print + its ink (user: helps the chest read); paint slots print/print_ink
@@ -1039,6 +1052,61 @@ def main():
             if slot == 'hair':
                 hat_keys(o, check=False)
     export_all(rig, head, hair, regions, hair_skinned)
+    for pid, variant in ([] if FEMALE else HEAD_VARIANTS):
+        head = variant_head(rig, head, pid, variant)
+
+
+HEAD_VARIANTS = [('head_roommate', {'jaw': 'square', 'brow': 'straight', 'eye': 0.9, 'smile': 'half'})]
+
+
+def variant_head(rig, head, pid, variant):
+    """Another head part on the same rig from hb.FACE flags (face shape, brows, eyes, mouth): the default head's
+    objects are freed first so every face part keeps its contract name (all expressions work unchanged)."""
+    root = bpy.data.objects['Character']
+    old = [o for o in head.children_recursive if not o.name.startswith(('Hair', 'Acc_'))] + [head]
+    old += [o for o in bpy.data.objects if o.name.startswith('HeadSkin') and o not in old]   # skinned: under the rig
+    for o in old:
+        bpy.data.objects.remove(o, do_unlink=True)
+    hb.FACE.clear()
+    hb.FACE.update(variant)
+    h2 = lib.empty('Face', hb.NECK, root)
+    skin = adopt(hb.head_skin(), h2, hb.NECK)
+    hb.face(h2, skin)
+    k = hb.SPEC['head']
+    if k > 1.22:                                         # same neck taper and eye-pivot scale as hb.head_parts
+        for v in skin.data.vertices:
+            p = G(v.co) + hb.NECK
+            g = (1.0 + 0.22 * hb._ss((p.y - 1.43) / 0.07)) / k
+            f = g + (1 - g) * hb._ss((p.y - 1.50) / 0.07)
+            v.co = B(Vector((p.x * f, p.y, p.z * f)) - hb.NECK)
+    if k != 1.0:
+        new = hb.HEAD_PIVOT + (hb.NECK - hb.HEAD_PIVOT) * k
+        h2.matrix_world = Matrix.Translation(B(new)) @ Matrix.Scale(k, 4)
+        bpy.context.view_layer.update()
+    hb.matte()
+    canon = [G(skin.matrix_world @ v.co) for v in skin.data.vertices]
+    w = R.smooth(skin, R.weights_for(skin, 'neck', hb.LANDMARKS), 3)
+    inv = skin.matrix_world.inverted()
+    for v, c in zip(skin.data.vertices, canon):
+        v.co = inv @ B(hb.warp(c))
+    R.skin(skin, w, rig)
+    if not hb.IDENT:
+        h2.matrix_world = Matrix.Translation(B(hb.warp(hb.NECK) - hb.NECK)) @ h2.matrix_world
+        bpy.context.view_layer.update()
+    for o in list(h2.children_recursive) + [skin]:
+        ensure_uvs(o)
+    face = list(h2.children_recursive)
+    if skin not in face:                                 # skinning parents HeadSkin to the rig
+        face.append(skin)
+    hidden = [o.name for o in face if o.get('hidden')]
+    pdir = os.path.join(ROOT, 'characters', 'parts', pid, 'art')
+    _export(os.path.join(pdir, pid + '.glb'), [rig, h2] + face, False)
+    _tscn(pdir, pid)
+    _json(os.path.join(pdir, 'part.json'), {'slot': 'head', 'attach': 'Head', 'hidden': hidden, 'face': variant,
+                                             'expressions': hb.EXPRESSIONS, 'mouths': hb.MOUTHS, 'shut': hb.SHUT})
+    hb.FACE.clear()
+    print('CHAR_HEAD', pid, variant)
+    return h2
 
 
 def hat_keys(hair, check=True):
@@ -1307,6 +1375,7 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
 
 PAINT = {'CK2_Print': 'print', 'CK2_PrintInk': 'print_ink', 'CK2_Shirt' + SHIRT[0][1:]: 'top', 'CK2_Rib': 'rib', 'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush', 'CK2_BlushHot': 'blush*0.88'}
 PAINT['CK2_Overshirt'] = 'outer'
+PAINT['CK2_HairFade'] = 'skin*0.62'      # clipped fade on curly crops: a skin shadow, any skin tone
 COLORS = {'skin': hb.SKIN, 'hair': hb.HAIR, 'eyes': '#2E2624', 'blush': 'auto', 'outer': OVERSHIRT}
 for _m, _slot in (('Top', 'top'), ('Pants', 'bottom'), ('PantCuff', 'bottom'), ('Shoe', 'shoes')):
     _key = {'Top': 'top', 'Pants': 'pants', 'PantCuff': 'pants', 'Shoe': 'shoe'}[_m]

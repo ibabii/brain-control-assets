@@ -72,6 +72,10 @@ def mirror(v, s):
 
 # --- parts -------------------------------------------------------------------------------------------------
 
+FACE = {}   # face-shape/brow variant for the next head built (characters: head_<id> parts), e.g.
+#            {'jaw': 'square', 'brow': 'straight', 'eye': 0.9, 'smile': 'half'}; empty = the default face
+
+
 def head_skin():
     mb = meta('HeadSkin', 0.006)
     ell(mb, (0, 1.635, 0.0), (0.128, 0.145, 0.132))               # cranium (top 1.78)
@@ -84,6 +88,10 @@ def head_skin():
         for s in (-1, 1):
             ell(mb, (s * 0.062, 1.565, -0.062), (0.058, 0.048, 0.058))   # round cheeks
         ell(mb, (0, 1.586, -0.137), (0.029, 0.027, 0.027))            # bulb nose
+    if FACE.get('jaw') == 'square':                                  # squarer jaw: corners at the angle, flatter chin
+        for s in (-1, 1):
+            ell(mb, (s * 0.066, 1.534, -0.014), (0.046, 0.042, 0.066))
+        ell(mb, (0, 1.508, -0.066), (0.058, 0.03, 0.05))
     # Neck into the collar. Look B's bigger head reaches lower: a short neck stays under the hood when leaning.
     cap(mb, (0, 1.43 if LOOK_B else 1.36, 0.012), (0, 1.50, 0.0), 0.05 if LOOK_B else 0.054)
     ears = meta('Ears', 0.004)                                       # own family: a crease, not a cheek lump
@@ -653,12 +661,15 @@ def face(head_node, skin_obj):
         e = Vector((s * ex, EYE_Y, hit.z + (0.0145 if LOOK_B else 0.011)))   # look B: more of the white shows
         eye = lib.empty('Eye' + side, e, head_node)
         semi = ((0.036, 0.040, 0.025) if FEMALE else (0.034, 0.041, 0.025)) if LOOK_B else (0.029, 0.037, 0.024)
+        ek = FACE.get('eye', 1.0)                                    # smaller eyes: white, pupil and lids scale
+        semi = (semi[0] * ek, semi[1] * ek, semi[2])
         w = lib.sphere('White' + side, 1.0, white, Frame(e), eye, scale=semi, seg=24, rings=14)
         # Gaze pivot 1 cm behind the white's centre and pupils lifted 2.5 mm: within the json eye limits (EYE_LIMITS)
         # the pupil stays whole on the flattened white (solved numerically; rotating about the centre tore it).
         look = lib.empty('Look' + side, e + Vector((0, 0, 0.01)), eye)
         wsurf = Surface(w)
-        pr = ((0.0198, 0.0218) if FEMALE else (0.0186, 0.0212)) if LOOK_B else (0.0145, 0.018)   # ~75% of the white (ref)   # look B: fits the visible white          # look B: big dark eyes, bright highlight
+        pr = ((0.0198, 0.0218) if FEMALE else (0.0186, 0.0212)) if LOOK_B else (0.0145, 0.018)
+        pr = (pr[0] * ek, pr[1] * ek)   # ~75% of the white (ref)   # look B: fits the visible white          # look B: big dark eyes, bright highlight
         p = decal('Pupil' + side, wsurf, ellipse(pr[0], pr[1], 32, -s * 0.003, 0.001 if LOOK_B else -0.002), Frame((e.x, e.y, 0)),
                   pupil, look, offset=0.0025)
         gr = 0.0056 if LOOK_B else 0.0045
@@ -686,8 +697,12 @@ def face(head_node, skin_obj):
             pts = on_curve(surf, [(s * 0.028, 1.683), (s * 0.052, 1.693), (s * 0.072, 1.686)], front, 0.002)
             if FEMALE:                                              # lighter: thinner, softer colour, a gentle arch
                 pts = on_curve(surf, [(s * 0.03, 1.688), (s * 0.055, 1.699), (s * 0.08, 1.69)], front, 0.004)
+            rad = (0.0072, 0.0052) if FEMALE else (0.0128, 0.0098)
+            if FACE.get('brow') == 'straight':                      # straighter, thicker, sitting lower
+                pts = on_curve(surf, [(s * 0.025, 1.677), (s * 0.051, 1.68), (s * 0.077, 1.676)], front, 0.002)
+                rad = (0.0148, 0.0128)
             mb = meta('Brow' + side, 0.0025)
-            chain(mb, pts, *((0.0072, 0.0052) if FEMALE else (0.0128, 0.0098)), step=0.003)
+            chain(mb, pts, *rad, step=0.003)
             brow = solid('Brow' + side, [mb], 0.0012, 900, lib.mat('Brow', '#86583F' if FEMALE else BROW, 0.75))
             hug(brow, surf, 0.0035 if FEMALE else 0.0034)
             adopt(brow, head_node, pts[1])
@@ -743,7 +758,10 @@ def face(head_node, skin_obj):
             uv.data[loop.index].uv = (0.5 + (q.x - bx) / (2 * ba), 0.5 + (q.y - by) / (2 * bb))
         bh['hidden'] = True
     mouth = lib.empty('Mouth', (0, 1.522, -0.11), head_node)
-    smile = on_curve(surf, [(-0.036, 1.531), (-0.018, 1.521), (0, 1.518), (0.018, 1.521), (0.036, 1.531)], front, 0.002)
+    smile = [(-0.036, 1.531), (-0.018, 1.521), (0, 1.518), (0.018, 1.521), (0.036, 1.531)]
+    if FACE.get('smile') == 'half':                                  # lopsided half-smile: one corner up, one flat
+        smile = [(-0.03, 1.523), (-0.014, 1.5205), (0.004, 1.5195), (0.022, 1.523), (0.038, 1.533)]
+    smile = on_curve(surf, smile, front, 0.002)
     lib.tube('Smile', smile, 0.0042, ink, mouth, res=8, bevel_res=2)
     d_shape = [(0.038 * math.cos(a), 1.531 - 0.034 * math.sin(a)) for a in [math.pi * i / 16 for i in range(17)]]
     d_shape += [(x, 1.531 + 0.004 * (1 - (x / 0.038) ** 2)) for x in [-0.038 + 0.076 * i / 8 for i in range(1, 8)]]

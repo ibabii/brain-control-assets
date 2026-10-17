@@ -208,39 +208,59 @@ def cap(surf):
     return out
 
 
+CURL_CLUMPS = [   # (azimuth phi: 0 front / pi back, elevation, radius, lift): ~19 chunky clumps, mixed sizes
+    (-0.78, 0.62, 0.026, 0.004), (-0.36, 0.64, 0.031, 0.008), (0.06, 0.66, 0.028, 0.006), (0.45, 0.63, 0.033, 0.01),
+    (0.84, 0.6, 0.025, 0.003),                                                       # fringe row, uneven
+    (-1.12, 0.95, 0.03, 0.006), (-0.42, 1.04, 0.036, 0.014), (0.36, 1.0, 0.034, 0.012), (1.08, 0.94, 0.029, 0.006),
+    (-0.75, 1.32, 0.035, 0.016), (0.18, 1.36, 0.038, 0.018), (0.92, 1.28, 0.032, 0.012),   # fuller top
+    (-1.62, 0.78, 0.022, 0.0), (1.6, 0.8, 0.023, 0.001), (-2.2, 0.86, 0.026, 0.004), (2.25, 0.84, 0.027, 0.005),
+    (-2.85, 0.92, 0.028, 0.006), (2.8, 0.95, 0.03, 0.007), (3.14, 1.2, 0.031, 0.01),      # back, smaller low down
+]
+
+
 def hair_curly(skin, surf):
-    """Short dark curly crop (the roommate; ref_heads_expressions 'male 3'): a round mass of tight clay curls, fuller
-    on top, short at the sides and nape; neighbouring curls in different families so each one reads."""
-    edge = lambda phi: hb.hairline(phi) + 0.01 + 0.025 * hb._ss((abs(phi) - 1.9) / 0.7)
-    shell = hb.scalp_shell(skin, edge, lift=0.003, thick=0.006)
-    curls = []                                                       # (centre, radius): real spheres, voxel-unioned
-    el0 = lambda phi: math.asin(max(-0.95, min(0.95, (edge(phi) + 0.008 - hb.CRANIUM.y) / 0.15)))
-    rows = 9
-    for j in range(rows + 1):
-        e_mid = el0(0.0) + (math.pi / 2 - el0(0.0)) * j / rows
-        ring = max(1, int(46 * math.cos(e_mid)))                       # ~2 cm apart on every row
-        for i in range(ring):
-            phi = -math.pi + 2 * math.pi * (i + 0.5 * (j % 2)) / ring
-            e0 = el0(phi)
-            el = e0 + (math.pi / 2 - e0) * j / rows
-            d = Vector((math.cos(el) * math.sin(phi), math.sin(el), -math.cos(el) * math.cos(phi)))
-            loc, nrm = surf.hit(hb.CRANIUM + d * 0.4, -d)
-            top = hb._ss((el - 0.5) / 0.7)                            # fuller on top, short at the sides/back
-            back = hb._ss((abs(phi) - 2.0) / 0.8)
-            r = 0.012 + 0.003 * top - 0.002 * back
-            jit = 0.003 * math.sin(i * 12.9898 + j * 78.233)
-            curls.append((loc + nrm * (0.006 + 0.008 * top + jit), r * 1.15))   # every curl stands proud
+    """Short dark curly crop (the roommate): ~19 chunky clay curl clumps in mixed sizes over a close-cropped base that
+    fades at the sides and nape; fuller on top, uneven silhouette. Each clump = a main lump + 3 spiralling sub-lumps."""
     import bmesh
+    from mathutils import Matrix
+    edge = lambda phi: hb.hairline(phi) + 0.01 + 0.025 * hb._ss((abs(phi) - 1.9) / 0.7)
+    high = lambda phi: edge(phi) + 0.028 * hb._ss((abs(phi) - 1.0) / 0.6)            # the mass stops above the fade
+    shell = hb.scalp_shell(skin, high, lift=0.002, thick=0.005)
+    fade = hb.scalp_shell(skin, edge, lift=0.0006, thick=0.0012)                    # clipped sides + nape: skin shadow
+    fade.name = 'HairFade'
+    fade.data.materials.clear()
+    fade.data.materials.append(lib.mat('HairFade', '#7A5440', 0.9))
+    spheres = []
+
+    def on_skull(phi, el):
+        d = Vector((math.cos(el) * math.sin(phi), math.sin(el), -math.cos(el) * math.cos(phi)))
+        return surf.hit(hb.CRANIUM + d * 0.4, -d)
+    for k, (phi, el, r, lift) in enumerate(CURL_CLUMPS):
+        loc, nrm = on_skull(phi, el)
+        t1 = nrm.cross(Vector((0, 1, 0)) if abs(nrm.y) < 0.9 else Vector((1, 0, 0))).normalized()
+        t2 = nrm.cross(t1)
+        r, lift = r * 0.82, lift * 0.6                         # short crop: chunky, not a pompadour
+        c = loc + nrm * (r * 0.3 + lift)
+        spheres.append((c, r))
+        a0 = k * 2.1
+        for i in range(3):                                     # sub-lumps spiral round and up: a C-curl
+            a = a0 + i * 2.2
+            rr = r * (0.62 - 0.08 * i)
+            spheres.append((c + (t1 * math.cos(a) + t2 * math.sin(a)) * r * 0.72 + nrm * r * (0.05 + 0.12 * i), rr))
+    for phi in [i * 0.7 for i in range(-4, 5)] + [2.6, -2.6, 3.14]:   # sunk filler: base volume between the clumps
+        for el in (0.85, 1.2):
+            loc, nrm = on_skull(phi, el)
+            spheres.append((loc - nrm * 0.016, 0.028))
     bm = bmesh.new()
-    for c, r in curls:
-        bmesh.ops.create_uvsphere(bm, u_segments=12, v_segments=8, radius=r, matrix=__import__('mathutils').Matrix.Translation(B(c)))
+    for c, r in spheres:
+        bmesh.ops.create_uvsphere(bm, u_segments=16, v_segments=10, radius=r, matrix=Matrix.Translation(B(c)))
     me = bpy.data.meshes.new('HairCurly')
     bm.to_mesh(me)
     bm.free()
     hair = bpy.data.objects.new('HairCurly', me)
     bpy.context.scene.collection.objects.link(hair)
     hair.data.materials.append(lib.mat('Hair', hb.HAIR, 0.9))
-    return [hb.union_shell(hair, shell, 0.0025, 16000, smooth=1)]
+    return [hb.union_shell(hair, shell, 0.0025, 16000, smooth=2), fade]
 
 
 def build(head, skin):

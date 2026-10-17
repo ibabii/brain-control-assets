@@ -700,8 +700,18 @@ def phone_screen_mat():
     c.ellipse((0.455, 0.81), 0.013, 0.013, PAL['graphite'])
     ink.heart(c, (0.58, 0.8), 0.13, PAL['clay'], fill=PAL['clay'])
     w2 = int(w / 1.38)                                                # bold, stretched 1.38x wide: ~70% of the width
-    probe = ink.Canvas(w2, h, '#000000')
-    ink.text(probe, 'MOM', (0.5, 0.33), 0.86, '#ffffff', weight=4)
+    probe = ink.Canvas(w2, h, '#000000')                             # plain sans block caps: an M with a deep V
+    sw = h * 0.085                                                    # stroke width (px)
+    y0, y1, x0 = 0.1, 0.6, 0.16                                     # letter band (v) and left edge (u)
+    lw, gap = 0.2, 0.04
+
+    def m_(u):
+        probe.stroke([(u, y0), (u, y1), (u + lw / 2, y0 + 0.08), (u + lw, y1), (u + lw, y0)], sw, '#ffffff')
+    m_(x0)
+    probe.ellipse((x0 + lw + gap + lw / 2, (y0 + y1) / 2), lw * w2 / h / 2 - 0.0, (y1 - y0) / 2, '#ffffff')
+    probe.ellipse((x0 + lw + gap + lw / 2, (y0 + y1) / 2), lw * w2 / h / 2 - sw / h, (y1 - y0) / 2 - sw / h,
+                  '#000000')
+    m_(x0 + 2 * (lw + gap))
     m = probe.rgb[..., 0]
     xs = np.linspace(0, w2 - 1, w)
     mask = np.stack([np.interp(xs, np.arange(w2), row) for row in m])
