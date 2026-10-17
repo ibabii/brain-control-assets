@@ -448,23 +448,47 @@ def curl_name(i, s):
     return '%s_Curl%s%d' % (HAIR_ID, 'L' if s < 0 else 'R', i % 2)    # part bones carry the part id
 
 
+CURL_SEGS = 4              # bones per ringlet (cheek curls swing without shearing into the face)
+BUN_CURLS = ((0.5, 0.1), (2.7, -0.15), (4.3, 0.3))   # build.hair_bun's loose curls (azimuth, rise)
+
+
+def bun_curl_axis(j, t):
+    """Centre line of build.hair_bun's loose curl j (no helix), t 0 (bun surface) .. 1 (tip)."""
+    az, up = BUN_CURLS[j]
+    o = Vector((math.cos(az), up, math.sin(az))).normalized()
+    return hb.BUN + o * (0.045 * hb.BUN_S + 0.045 * t) + Vector((0, -0.03 * t * t, 0))
+
+
 def curl_bones():
-    """Two bones per curl under Head: <part>_Curl<L|R><n>_1 (upper), _2 (lower). Declared by the hair part
-    (part.json `bones`), not the base: the build rig has them for skinning, the base export drops them."""
+    """Ringlet chains under Head: <part>_Curl<L|R><n>_1.._4 (top to bottom), and the bun's loose curls
+    <part>_BunCurl<j>_1.._3 under the bun bone. Declared by the hair part (part.json `bones`), not the base."""
     out = []
     for i, (s, top, bot) in enumerate(CURLS):
         n = curl_name(i, s)
-        mid = (top + bot) / 2
-        out += [(n + '_1', hb.head_xf(top), hb.head_xf(mid), Vector((0, 0, -1)), 'Head'),
-                (n + '_2', hb.head_xf(mid), hb.head_xf(bot), Vector((0, 0, -1)), n + '_1')]
+        for k in range(CURL_SEGS):
+            a, b = top + (bot - top) * k / CURL_SEGS, top + (bot - top) * (k + 1) / CURL_SEGS
+            out.append(('%s_%d' % (n, k + 1), hb.head_xf(a), hb.head_xf(b), Vector((0, 0, -1)),
+                        'Head' if k == 0 else '%s_%d' % (n, k)))
+    return out
+
+
+def bun_curl_bones():
+    out = []
+    for j in range(len(BUN_CURLS)):
+        n = '%s_BunCurl%d' % (HAIR_ID, j)
+        for k in range(3):
+            a, b = bun_curl_axis(j, k / 3 - (0.12 if k == 0 else 0)), bun_curl_axis(j, (k + 1) / 3)
+            out.append(('%s_%d' % (n, k + 1), hb.head_xf(a), hb.head_xf(b), Vector((0, 0, -1)),
+                        HAIR_ID + '_Bun' if k == 0 else '%s_%d' % (n, k)))
     return out
 
 
 def part_bones():
-    """The hair part's bones: the curl chains and one bun bone (a spring, so the bun bobs)."""
+    """The hair part's bones: the ringlet chains, one bun bone (a spring, so the bun bobs), the bun's curl chains."""
     z = hb.BUN_S
     return curl_bones() + [(HAIR_ID + '_Bun', hb.head_xf(hb.BUN - Vector((0, 0.035 * z, 0))),
-                            hb.head_xf(hb.BUN + Vector((0, 0.06 * z, 0))), Vector((0, 0, -1)), 'Head')]
+                            hb.head_xf(hb.BUN + Vector((0, 0.06 * z, 0))), Vector((0, 0, -1)), 'Head')] + \
+        bun_curl_bones()
 
 
 if CURLS:
@@ -472,21 +496,41 @@ if CURLS:
     hb.rig_table = lambda: _rig_table() + part_bones()        # rig, rig json 'bones' and the export all see them
 
 
+def _chain_w(prefix, t, n):
+    """Smooth weights along an n-bone chain at t 0..1 (each bone peaks at its middle)."""
+    w = {'%s_%d' % (prefix, k + 1): max(0.0, 1 - abs(t * n - (k + 0.5))) for k in range(n)}
+    if t * n < 0.5:
+        w['%s_1' % prefix] = 1.0
+    if t * n > n - 0.5:
+        w['%s_%d' % (prefix, n)] = 1.0
+    tot = sum(w.values())
+    return {k: v / tot for k, v in w.items() if v > 1e-4}
+
+
 def curl_weights(q):
-    """Hair vertex (canonical head space) -> weights: along a curl it rides its chain, fading in below the root;
-    the bun rides its bone, fading in from the crown."""
-    d, z = q - hb.BUN, hb.BUN_S
+    """Hair vertex (canonical head space) -> weights. Bun curls ride their chains (fading into the bun at the
+    root), the bun rides its bone (fading in from the crown), ringlets ride their whole chain (only a short fade
+    into Head at the root, so the swing never drags the cheek); the rest is Head."""
+    z = hb.BUN_S
+    for j in range(len(BUN_CURLS)):                            # closest point on the curl's centre line
+        best = min(((q - bun_curl_axis(j, t / 20)).length, t / 20) for t in range(-2, 21))
+        if best[0] < 0.022 and best[1] > -0.05:
+            t = max(0.0, best[1])
+            g = hb._ss(t / 0.15)
+            w = {k: v * g for k, v in _chain_w('%s_BunCurl%d' % (HAIR_ID, j), t, 3).items()}
+            if g < 1:
+                w[HAIR_ID + '_Bun'] = 1 - g
+            return {k: v for k, v in w.items() if v > 1e-4}
+    d = q - hb.BUN
     if d.y > -0.05 * z and Vector((d.x, 0, d.z)).length < 0.075 * z + 0.02 and d.length < 0.11 * z + 0.03:
         g = hb._ss((d.y + 0.05 * z) / (0.03 * z))
         return {k: v for k, v in ((HAIR_ID + '_Bun', g), ('Head', 1 - g)) if v > 1e-4}
     for i, (s, top, bot) in enumerate(CURLS):
-        if q.x * s <= 0 or math.hypot(q.x - top.x, q.z - top.z) > 0.03 or not bot.y - 0.025 < q.y < top.y + 0.02:
+        if q.x * s <= 0 or math.hypot(q.x - top.x, q.z - top.z) > 0.042 or not bot.y - 0.025 < q.y < top.y + 0.02:
             continue
-        n = curl_name(i, s)
-        t = (top.y - q.y) / (top.y - bot.y)
-        g = hb._ss(t / 0.12)
-        lo = hb._ss((t - 0.4) / 0.2)
-        w = {n + '_1': g * (1 - lo), n + '_2': g * lo}
+        t = max(0.0, min(1.0, (top.y - q.y) / (top.y - bot.y)))
+        g = hb._ss(t / 0.06)
+        w = {k: v * g for k, v in _chain_w(curl_name(i, s), t, CURL_SEGS).items()}
         if g < 1:
             w['Head'] = 1 - g
         return {k: v for k, v in w.items() if v > 1e-4}
@@ -494,10 +538,14 @@ def curl_weights(q):
 
 
 def springs():
-    return [{'kind': 'hair', 'root': b[0], 'end': c[0], 'radius': 0.012, 'tip': 0.03, 'stiffness': 0.8, 'drag': 0.3,
-             'gravity': 0.4} for b, c in zip(curl_bones()[0::2], curl_bones()[1::2])] + \
-        [{'kind': 'hair', 'root': HAIR_ID + '_Bun', 'end': HAIR_ID + '_Bun', 'radius': 0.05, 'tip': 0.03,
-          'stiffness': 1.4, 'drag': 0.45, 'gravity': 0.15}]
+    cb, bc = curl_bones(), bun_curl_bones()
+    out = [{'kind': 'hair', 'root': cb[i][0], 'end': cb[i + CURL_SEGS - 1][0], 'radius': 0.012, 'tip': 0.03,
+            'stiffness': 0.8, 'drag': 0.3, 'gravity': 0.4} for i in range(0, len(cb), CURL_SEGS)]
+    out.append({'kind': 'hair', 'root': HAIR_ID + '_Bun', 'end': HAIR_ID + '_Bun', 'radius': 0.05, 'tip': 0.03,
+                'stiffness': 1.4, 'drag': 0.45, 'gravity': 0.15})
+    out += [{'kind': 'hair', 'root': bc[i][0], 'end': bc[i + 2][0], 'radius': 0.008, 'tip': 0.02, 'stiffness': 0.9,
+             'drag': 0.35, 'gravity': 0.3} for i in range(0, len(bc), 3)]   # ~20 deg of swing on a walk (tune)
+    return out
 
 
 def drape_field(pts):

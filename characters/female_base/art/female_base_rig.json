@@ -977,7 +977,8 @@
  "loops": [
   "idle",
   "brush_loop",
-  "walk_loop"
+  "walk_loop",
+  "talk"
  ],
  "clips": {
   "RESET": {
