@@ -4,10 +4,10 @@ ceb6c99afba42459ae62a33f5195c897ac93f4753aecdc43a8457bfb52bc3485  ./female_base/
 b6ada8beb349bd8a5f2a36ef16691ded4b4dedb2d90dbe95162c87bd87562940  ./female_base/art/female_base.tscn
 9fdd40b27b966c5dd605e869370ab6b5423b56a6e055820d92cf03842adc9184  ./female_base/art/female_base_rig.json
 15509f6158abbd99e8d1ce1d161d060ca648febc7135eaef7863e78246db975f  ./male_base/art/character.json
-11075c2584458013653ec42912a5654e05726c136092440da1d4bcb715a8e319  ./male_base/art/male_base.glb
+e00e5c90d7ead8a394799329924c29d7fe1811ecb966e56431b6bc02b3659ce5  ./male_base/art/male_base.glb
 b64a7946b2f0f1c25980fe7c5dfb7b823001a3744964742e124a98ecf162cb85  ./male_base/art/male_base.glb.import
 7f4fa5be18464b315a82cf2662555a3a9d475ee4c0dad9402adb8bca08608ab9  ./male_base/art/male_base.tscn
-e07aa32d09c84b320b3f0ae4ded82affa9361bad8ba915a8eeff995d91991de5  ./male_base/art/male_base_rig.json
+9a3909ea173253728569cbadc0b5c4cda7c8439bfbdcead7532b8f548f064d66  ./male_base/art/male_base_rig.json
 a7441cdde9730217cec6fa10699bdd71f88d4960e9c2d5d403a091514747e242  ./parts/beard_full_f/art/beard_full_f.glb
 7b24e99b0431c322eb7f2fe88768cf1e0c9c1f1e2607d8177a868c0107e41bbe  ./parts/beard_full_f/art/beard_full_f.glb.import
 9c7ff98a4661e773421c35612752bd5835d51ac7f42f80a44a90061d4b7b1ae2  ./parts/beard_full_f/art/beard_full_f.tscn
@@ -100,6 +100,10 @@ a3cb2a43e585660a7dc9bfc918e51be914b858a03ba1a2e6a3a4bdde25cc55e3  ./parts/jogger
 5c5858b389e189f3c45edf9588a050ad891b8ee2932ae3c7c0a81dbb4a1874d1  ./parts/overshirt_m/art/overshirt_m.glb.import
 54af67d5c286299f8b966e2112a941b97639cbb56f700de911e466a08cc8d069  ./parts/overshirt_m/art/overshirt_m.tscn
 b78cd09bc7c4d9dad25149e62f2fe13deba8355c1d5abebe7b3a84c2d778f046  ./parts/overshirt_m/art/part.json
+7f2e471f3803d0f5e0f38147a3f2018ef193963bb4b938be4a71f90e8b85db7b  ./parts/slippers_m/art/part.json
+1789044ac5b8d651cf89b803f34f4a0acc5c79b309f87c3da5fdcfae273f350c  ./parts/slippers_m/art/slippers_m.glb
+ed3c22031ee146aefd4108fe13ba3d4722b69c6518754988474550e2b5198d41  ./parts/slippers_m/art/slippers_m.glb.import
+63cc42e6361e0f187396070a622464f7d3c05523b30b382dc7d522adfc27e03a  ./parts/slippers_m/art/slippers_m.tscn
 7f2e471f3803d0f5e0f38147a3f2018ef193963bb4b938be4a71f90e8b85db7b  ./parts/sneakers_f/art/part.json
 fc94fe8a3e27992db9e70d9390e5447a4c99663eb9293d50ba7cfd36a7ffd644  ./parts/sneakers_f/art/sneakers_f.glb
 b6264065244add729487fee16de82bf18199ba594590bcdf62ebe0a8f1d39b47  ./parts/sneakers_f/art/sneakers_f.glb.import
@@ -108,6 +112,10 @@ a50acf865d5154429f48e0734509f98479f0f6f0276740a6efd4ad03f197eaf5  ./parts/sneake
 397c65cb8cf316a46c3642ab5c8ff30866e35c3c963901c56d5f90e8731ffd9f  ./parts/sneakers_m/art/sneakers_m.glb
 7a512a875757a2f89e22e6608dd414c7deb9490b954f6d36a09c6c7b20058d7e  ./parts/sneakers_m/art/sneakers_m.glb.import
 60138192707361eacf1ff5dcc4f0c117241a8cd509c2f94e31e8b3aa16889f86  ./parts/sneakers_m/art/sneakers_m.tscn
+9f8ec008cc6344fbb3f8e92fe3422918de28a463f2fe90c0a00e53397efb793a  ./parts/stain_coffee_m/art/part.json
+47e46e2f147ba933b4f30e1628faf1f4050db9154fba28619cc189439abfe55d  ./parts/stain_coffee_m/art/stain_coffee_m.glb
+69c83063861001aa39e138155d4299528a17c7cc4c5d3a756799b4ff040a95be  ./parts/stain_coffee_m/art/stain_coffee_m.glb.import
+a4560cdd049ccf63c7360bf4ea4ab46a28cee69712c20a09747006effc9320e8  ./parts/stain_coffee_m/art/stain_coffee_m.tscn
 138c75efc83a3115fe93bf88b4ccd124c54cd6f99369a7e4589a7e17927f2fa4  ./parts/tshirt_f/art/part.json
 76bfb00cfa0670fb2088db1838dcec804a5499f6766db7fd64749c9abeea39e3  ./parts/tshirt_f/art/tshirt_f.glb
 e410d9d7525ff6165845e069facda10b419939da328017dbecca19feadf76504  ./parts/tshirt_f/art/tshirt_f.glb.import
