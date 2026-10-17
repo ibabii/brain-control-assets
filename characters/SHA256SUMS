@@ -1,10 +1,10 @@
 ea4de3810c9c1529a41cbd2e85d22838b64cc21d2e86a4451a1371620155e54c  ./female_base/art/character.json
-f9294915a0a887f0918d076aa3ffacb457368e2ce35a44276ffba4be614fbc65  ./female_base/art/female_base.glb
+03c19b7d64c193db5892c30f5839b8b41ddccd7d267d438b13163eb0a577974e  ./female_base/art/female_base.glb
 ceb6c99afba42459ae62a33f5195c897ac93f4753aecdc43a8457bfb52bc3485  ./female_base/art/female_base.glb.import
 b6ada8beb349bd8a5f2a36ef16691ded4b4dedb2d90dbe95162c87bd87562940  ./female_base/art/female_base.tscn
 9fdd40b27b966c5dd605e869370ab6b5423b56a6e055820d92cf03842adc9184  ./female_base/art/female_base_rig.json
 15509f6158abbd99e8d1ce1d161d060ca648febc7135eaef7863e78246db975f  ./male_base/art/character.json
-fa502be0eb84b2a4db78160083a3159cf25c02c0695b937aa2a4e0d850e4de43  ./male_base/art/male_base.glb
+012aa00f8fb5b0bc449db7582813adfb658fe2120bdd009ead3c2f1b0de36e88  ./male_base/art/male_base.glb
 b64a7946b2f0f1c25980fe7c5dfb7b823001a3744964742e124a98ecf162cb85  ./male_base/art/male_base.glb.import
 7f4fa5be18464b315a82cf2662555a3a9d475ee4c0dad9402adb8bca08608ab9  ./male_base/art/male_base.tscn
 a112cbcacc51801dd66c8251015fe5e6dd078fb72f9fb8e5681150f14febce4f  ./male_base/art/male_base_rig.json
@@ -24,11 +24,11 @@ c9fcb7a75e802579e11c6d97c94658dadf8b7cbe1135f8df8142725e43ce5c28  ./parts/beret_
 78d56afd1ee435eef751a6cf1cc5f3d6c61d81044cdbeb3c6f3ae2438ed1c49e  ./parts/beret_m/art/beret_m.glb.import
 025a3c67fd023a9d552c22ca5c1d735d72354d78b55eefcb9485ce8c1e829ec3  ./parts/beret_m/art/beret_m.tscn
 2e668f2da06bcfbc2f6f3b7692df437cbc15efffb0b526c23c89f9c28736fb79  ./parts/beret_m/art/part.json
-a4d77575ad439a0b931c7aea608b3a1fbe2c5c866551b360dbd34640dcc2515f  ./parts/cap_driver_f/art/cap_driver_f.glb
+2f76ef5d30315e8054ee4c3d25ae1b416d27ba454ca30929aa3ebafd4fc54fcb  ./parts/cap_driver_f/art/cap_driver_f.glb
 825c58bbdc2ccb3f9401871f2773877cd758b99c5e03a93f1caca8ff6c30c9bb  ./parts/cap_driver_f/art/cap_driver_f.glb.import
 c812f454546d265174eccd464111b419a17fe862dd0ae380b16e46aea1b61e82  ./parts/cap_driver_f/art/cap_driver_f.tscn
 f516ac6152dbfbe27a6e8487c34f4aaed6d1f8ed93a0f20c9f3adab080bba69d  ./parts/cap_driver_f/art/part.json
-a2576c0200525d67201c21f5a124b3722593ff6a8c8854a775c1b1335a78bb9b  ./parts/cap_driver_m/art/cap_driver_m.glb
+0a32955cdf1fa7e43e091c21bd33e52c1a1b3fafd063b9b8f295656924f0e857  ./parts/cap_driver_m/art/cap_driver_m.glb
 cf018a3cd229140018d154e59a8abce2dbb7e1d2689f2ccd384d4814a8222125  ./parts/cap_driver_m/art/cap_driver_m.glb.import
 4019c3f8ded4a3e1f9578266d9c5866adcf2a75071469f541d81d09c6d1093d7  ./parts/cap_driver_m/art/cap_driver_m.tscn
 f516ac6152dbfbe27a6e8487c34f4aaed6d1f8ed93a0f20c9f3adab080bba69d  ./parts/cap_driver_m/art/part.json
@@ -56,7 +56,7 @@ da4104a0666df70da426fc915bc48edc27fbc0f1664df0b71707ca724f636eab  ./parts/hair_c
 4297f41699d4226849662b4c692455b3a81718911f2b5597c50676d79bcc2a18  ./parts/hair_curly_m/art/hair_curly_m.glb.import
 ca3f4d3046f911969cccf223476fb893c362a6ffa4ad540a668b3a707333e0d8  ./parts/hair_curly_m/art/hair_curly_m.tscn
 2fa40469b9fa48b7fc2dfd7c66de4feb0d51ad7543a7726549ef7d81e5014283  ./parts/hair_curly_m/art/part.json
-35265c6b7eadb9cbb9c6bb653e03b63e4767cb245a5ae3cedd47615dd1e0e911  ./parts/head_bernard/art/head_bernard.glb
+7b260a01a7b31562d3da4de830e73a15d1d4af9b19a3f320f4d417b479296e88  ./parts/head_bernard/art/head_bernard.glb
 ae762330ebfdfd43542c616dcae0424da1099df757460ee2e30966b7e151abe3  ./parts/head_bernard/art/head_bernard.glb.import
 58d0384f4b3672baa860782e99c76eced259a8e3be132d2573ab50c0e4507219  ./parts/head_bernard/art/head_bernard.tscn
 380aa2a91a241ff2cfb0ef0b27025076d288ad2eec4fb8736e45cf6936ad422f  ./parts/head_bernard/art/head_bernard_BlushFade.png
@@ -64,7 +64,7 @@ f5a2381cef232f6aa1a49da5631d386fde6817c06af4a33746cf773ac61f53a6  ./parts/head_b
 1389673ffc102d097f77d818fa1b22325e9b2e419a81a5e68c16ae357b6bff9f  ./parts/head_bernard/art/head_bernard_BlushHotFade.png
 bdeb0177a01629c5e92612c673b28e5e187a275576e4328094f563f2ea9c5109  ./parts/head_bernard/art/head_bernard_BlushHotFade.png.import
 b16b6482d6104195e7fdc2e9211f875ac8d4aa060b16165e6e274bd586dd7ca4  ./parts/head_bernard/art/part.json
-5e04312cfcb5abcc8a161ebc24506ebfd40d505f8cff106211bd3e6357744681  ./parts/head_female/art/head_female.glb
+b04a2c55905379724ec5e0d45da6acef5f338ae6903ef4708f35c2b5259f54f7  ./parts/head_female/art/head_female.glb
 e79df7fb0056bb1ae995f53724ebc55114a580872e5202374401f28896ae00f2  ./parts/head_female/art/head_female.glb.import
 0e0c39decdbc562518279cc63d008c63ea7668fa2e94c4d118beb165ac7d9116  ./parts/head_female/art/head_female.tscn
 380aa2a91a241ff2cfb0ef0b27025076d288ad2eec4fb8736e45cf6936ad422f  ./parts/head_female/art/head_female_BlushFade.png
