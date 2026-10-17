@@ -1,8 +1,8 @@
-ea4de3810c9c1529a41cbd2e85d22838b64cc21d2e86a4451a1371620155e54c  ./female_base/art/character.json
-03c19b7d64c193db5892c30f5839b8b41ddccd7d267d438b13163eb0a577974e  ./female_base/art/female_base.glb
+2ef57e3c1a69a54aa38839b7574f02554d08a7dab93f0b766b20465871067831  ./female_base/art/character.json
+555fcb10c17832809024131b97b3a488827dd8f6e9c973d49aa8d171582d4e95  ./female_base/art/female_base.glb
 ceb6c99afba42459ae62a33f5195c897ac93f4753aecdc43a8457bfb52bc3485  ./female_base/art/female_base.glb.import
 b6ada8beb349bd8a5f2a36ef16691ded4b4dedb2d90dbe95162c87bd87562940  ./female_base/art/female_base.tscn
-9fdd40b27b966c5dd605e869370ab6b5423b56a6e055820d92cf03842adc9184  ./female_base/art/female_base_rig.json
+81451c90d141f96323b372fe48aabe23aea5da39fcea4e59181969430c98d2d1  ./female_base/art/female_base_rig.json
 10e229e69f920c34065ef519fbb2c56ea155fe08403eaeb3efc26da14fb1008e  ./male_base/art/character.json
 f871613fc9dc96aa252a24a0945e20a75dbd5587dbbfd4a333de2ed9e25ee02a  ./male_base/art/male_base.glb
 b64a7946b2f0f1c25980fe7c5dfb7b823001a3744964742e124a98ecf162cb85  ./male_base/art/male_base.glb.import
@@ -44,11 +44,11 @@ a5daafb816edb2bcacacc365e89854d31b4577c94f9ffbf8426118308c4c5200  ./parts/hair_b
 2462fe550596cb00c773c9e1b7684b08e2163f3cdce9fb874aeb859194fd34a8  ./parts/hair_bernard/art/hair_bernard.glb.import
 31377f7c5198bf91b0537f5e503fea6e8f127a0015f8a2d1cf2810d2175b9f39  ./parts/hair_bernard/art/hair_bernard.tscn
 2fa40469b9fa48b7fc2dfd7c66de4feb0d51ad7543a7726549ef7d81e5014283  ./parts/hair_bernard/art/part.json
-238616224145351347c2a06310a48b4ef7895769145b0596c2902f33cecb8baa  ./parts/hair_bun/art/hair_bun.glb
+d138951b9b900d3869451c2ac5f4bd2f64aef90e0b4fbf7fd4eb6656adfb1b1f  ./parts/hair_bun/art/hair_bun.glb
 0a14eb8237183beee064a31a9583620d2caa48b9d2760d93e7b382e8d4ea917d  ./parts/hair_bun/art/hair_bun.glb.import
 f8a223e2515b5b61bdecdb4dbcbffb4c89c643e219873dd50682236b3fc8b317  ./parts/hair_bun/art/hair_bun.tscn
-39dc2ed76faea8017231b94b23a42be129c7dd20b4382c6581cc9fbf6bd02254  ./parts/hair_bun/art/part.json
-e0076e01b6dfa6cda1c10d2d2fafbe9060bdb482b43e496cfb40f20ba0bcfe37  ./parts/hair_curly_f/art/hair_curly_f.glb
+c9ce4f5c90d15b032883eda3005ef3b3a92774c4e87eb629af084cf8f37b6f43  ./parts/hair_bun/art/part.json
+b6da5adf88c1d7bb618c2628c74760c63c37dac5f948126e544224b4842502e1  ./parts/hair_curly_f/art/hair_curly_f.glb
 da4104a0666df70da426fc915bc48edc27fbc0f1664df0b71707ca724f636eab  ./parts/hair_curly_f/art/hair_curly_f.glb.import
 6cb617d6b63f417eb81c0b689381809a73f3f85d69bd8f5935b4c3d807150349  ./parts/hair_curly_f/art/hair_curly_f.tscn
 2fa40469b9fa48b7fc2dfd7c66de4feb0d51ad7543a7726549ef7d81e5014283  ./parts/hair_curly_f/art/part.json
@@ -108,6 +108,10 @@ a3cb2a43e585660a7dc9bfc918e51be914b858a03ba1a2e6a3a4bdde25cc55e3  ./parts/jogger
 5c5858b389e189f3c45edf9588a050ad891b8ee2932ae3c7c0a81dbb4a1874d1  ./parts/overshirt_m/art/overshirt_m.glb.import
 54af67d5c286299f8b966e2112a941b97639cbb56f700de911e466a08cc8d069  ./parts/overshirt_m/art/overshirt_m.tscn
 526dca446d8c8ec3e704fd7d4cd564681abf2292ac2bf09a35c6d69ea83ce85c  ./parts/overshirt_m/art/part.json
+7f2e471f3803d0f5e0f38147a3f2018ef193963bb4b938be4a71f90e8b85db7b  ./parts/slippers_f/art/part.json
+250f2cf7427e51cabf89ad415f00c4804be7961f145fe2b5b0c95d0095b34657  ./parts/slippers_f/art/slippers_f.glb
+d6daa4b16f21104d06def1fc05696d06bb44dbb243cecdde78c4596e162f3ef9  ./parts/slippers_f/art/slippers_f.glb.import
+7c5475e8ac21c17f59329fe4714e88ce1c011d006aa9724bb249c234daaddb63  ./parts/slippers_f/art/slippers_f.tscn
 7f2e471f3803d0f5e0f38147a3f2018ef193963bb4b938be4a71f90e8b85db7b  ./parts/slippers_m/art/part.json
 b1b565f8c7c565752e84d3696abf29332a8885f013125298a6241d845acaefd1  ./parts/slippers_m/art/slippers_m.glb
 ed3c22031ee146aefd4108fe13ba3d4722b69c6518754988474550e2b5198d41  ./parts/slippers_m/art/slippers_m.glb.import
