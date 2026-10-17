@@ -23,7 +23,7 @@ import build as hb  # noqa: E402  (reads HUMAN_SPEC / HUMAN_ARM_UP set by build_
 import lib  # noqa: E402
 import rig as R  # noqa: E402
 from lib import B, G  # noqa: E402
-from sculpt import meta, ell, cap, ball, solid, adopt  # noqa: E402
+from sculpt import meta, ell, cap, ball, chain, solid, adopt  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import accessories as acc  # noqa: E402
 
@@ -38,6 +38,7 @@ PARTS = {  # part id -> (slot, mesh name prefixes, hides)
                 ['Body_Hips', 'Body_UpperLegL', 'Body_UpperLegR', 'Body_LowerLegL', 'Body_LowerLegR']),
     'tshirt': ('top', ('Shirt',), ['Body_Torso']),
     'sneakers': ('shoes', ('Sole', 'Upper', 'Lace', 'Stripe'), ['Body_FootL', 'Body_FootR']),
+    'overshirt': ('outer', ('Overshirt', 'Os'), ['Body_UpperArmL', 'Body_UpperArmR', 'Body_LowerArmL', 'Body_LowerArmR']),
 }
 SFX = '_f' if FEMALE else '_m'
 HEAD_ID, HAIR_ID = ('head_female', 'hair_bun') if FEMALE else ('head_bernard', 'hair_bernard')
@@ -136,6 +137,93 @@ def tshirt(parent, rib):
     if FEMALE:
         cat_print(shirt, parent)
     hb.band('ShirtCollar', hb.Frame((0, 1.405, 0.0)), 0.066, 0.062, 0.022, 0.12, rib, parent)
+    return shirt
+
+
+OVERSHIRT = '#26324A'                  # the roommate's ink-navy overshirt (paint slot `outer`)
+
+
+def overshirt(parent):
+    """Open button-up overshirt worn over a T-shirt (the roommate, s1 cast): a loose hip-length shell a little over
+    the tee, cut open down the front, with plackets, buttons on the right panel, a folded collar, a chest pocket
+    and wrist cuffs. Male base (slot `outer`)."""
+    import bmesh
+    from sculpt import Surface, decal
+    v = hb.TOP_VOL
+    m = lambda s, x: hb.mirror(x, s)
+    c, bl, fl = v['chest'], v['belly'], v['flare']
+    b = meta('OsBody', 0.008)
+    ell(b, (0, 1.22, 0.0), (c[0] - 0.004, c[1], c[2] - 0.004))
+    ell(b, (0, 1.04, v['belly_z'] * 0.6), (bl[0] - 0.008, bl[1], bl[2] - 0.01))
+    ell(b, (0, 0.92, 0.0), (fl[0] - 0.014, 0.08, fl[2] - 0.012))
+    cap(b, (-0.15, 1.34, 0.006), (0.15, 1.34, 0.006), v['shoulder'] - 0.004)
+    ell(b, (0, 1.40, 0.04), (0.085, 0.05, 0.07))                       # the back of the neck under the collar
+    fams = [b]
+    for s_ in (-1, 1):
+        sl = meta('OsSleeve%d' % s_, 0.008)
+        sh, el, wr = m(s_, hb.SHOULDER), m(s_, hb.ELBOW), m(s_, hb.WRIST)
+        ball(sl, sh + Vector((-s_ * 0.008, -0.01, 0)), 0.072 * v['limb'])
+        cap(sl, sh, sh + (el - sh) * 0.6, 0.072 * v['limb'])           # roomy over the tee's sleeve bands
+        cap(sl, sh + (el - sh) * 0.6, el, 0.066 * v['limb'])
+        cap(sl, el, wr - m(s_, hb.FORE) * 0.1, 0.056 * v['limb'])      # ends inside the cuff
+        fams.append(sl)
+    mat = lib.mat('Overshirt', OVERSHIRT, 0.9)
+    o = solid('Overshirt', fams, 0.006, 9000, mat)
+    width = lambda y: 0.042 + 0.02 * hb._ss((1.25 - y) / 0.35) + 0.035 * hb._ss((y - 1.29) / 0.09)
+    bm = bmesh.new()                                                  # cut the front open and the bottom off
+    bm.from_mesh(o.data)
+    cut = [f for f in bm.faces if (lambda q: q.y < 0.865 or (q.z < -0.03 and abs(q.x) < width(q.y) and q.y < 1.47))(
+        G(f.calc_center_median()))]
+    bmesh.ops.delete(bm, geom=cut, context='FACES')
+    for vt in bm.verts:                                               # clean edges: snap the cut onto its curves
+        if not vt.is_boundary:
+            continue
+        q = G(vt.co)
+        if q.y < 0.885:
+            q.y = 0.865
+        elif q.z < -0.0 and q.y < 1.47:
+            q.x = math.copysign(width(q.y), q.x)
+        vt.co = B(q)
+    bm.to_mesh(o.data)
+    bm.free()
+    sol = o.modifiers.new('Cloth', 'SOLIDIFY')                       # a real cloth edge (no see-through rim)
+    sol.thickness, sol.offset = 0.005, -1.0
+    for x in bpy.data.objects:
+        x.select_set(x == o)
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.object.modifier_apply(modifier='Cloth')
+    shirt = adopt(o, parent, (0, 1.1, 0))
+    surf = Surface(shirt)
+    trim = lib.mat('Overshirt', OVERSHIRT, 0.9)
+    for s_ in (-1, 1):                                                # plackets down both edges
+        pts = []
+        for i in range(25):
+            y = 0.87 + (1.31 - 0.87) * i / 24
+            x = s_ * (width(y) + 0.006)
+            loc, nrm = surf.hit((x, y, -0.4), (0, 0, 1))
+            pts.append(loc + nrm * 0.002)
+        lib.tube('OsPlacket%s' % ('L' if s_ < 0 else 'R'), pts, 0.0065, trim, parent, res=6, bevel_res=2)
+    btn = lib.mat('OsButton', '#E9E1D2', 0.5)
+    for k in range(6):                                                # buttons on the wearer's right panel
+        y = 0.93 + 0.072 * k
+        loc, nrm = surf.hit((width(y) + 0.02, y, -0.4), (0, 0, 1))
+        lib.tube('OsButton%d' % k, [loc, loc + nrm * 0.004], 0.0065, btn, parent, res=3, bevel_res=1)
+    col = meta('OsCollar', 0.003)                                     # folded collar: round the neck, points down
+    ring = []
+    for i in range(41):
+        phi = 0.62 + (2 * math.pi - 1.24) * i / 40
+        ring.append(Vector((0.086 * math.sin(phi), 1.402 + 0.016 * (1 - math.cos(phi)) / 2, -0.082 * math.cos(phi))))
+    chain(col, ring, 0.013, 0.013, step=0.003)
+    for s_, end in ((1, ring[0]), (-1, ring[-1])):
+        chain(col, [end, end + Vector((s_ * 0.012, -0.035, -0.022)), end + Vector((s_ * 0.022, -0.07, -0.03))],
+              0.013, 0.006, step=0.003)
+    adopt(solid('OsCollar', [col], 0.0025, 3000, trim), parent, (0, 1.4, 0))
+    decal('OsPocket', surf, [(-0.125, 1.17), (-0.06, 1.17), (-0.058, 1.245), (-0.127, 1.245)], hb.Frame(), trim,
+          parent, offset=0.002, rings=3, depth=0.004)
+    for s_, side in ((-1, 'L'), (1, 'R')):
+        wr, d = m(s_, hb.WRIST), m(s_, hb.FORE)
+        lr = 0.06 * v['limb']
+        hb.band('OsCuff' + side, hb.frame_along(wr - d * 0.06, d), lr, lr, 0.05, 0.06, trim, parent)
     return shirt
 
 
@@ -654,6 +742,8 @@ def main():
     hb.hands(body)
     mannequin(body)
     tshirt(body, rib)
+    if not FEMALE:
+        overshirt(body)
     if FEMALE:
         female_lower(body)
     hb.matte()
@@ -673,6 +763,8 @@ def main():
             wts[o.name] = R.smooth(o, [body_weights(p) for p in canon[o.name]], 4)
         elif o.name == 'Pants' and FEMALE:   # loft: lower butt follows the thighs (no hanging skirt in a squat)
             wts[o.name] = R.smooth(o, [pants_weights(p) for p in canon[o.name]], 6)
+        elif o.name == 'Overshirt':                               # loose like the hoodie: the top weights
+            wts[o.name] = R.smooth(o, R.weights_for(o, 'top', hb.LANDMARKS), 4)
         elif o.name in ('Top', 'Pants'):
             kind = hb.SKIN_KIND[0 if o.name == 'Top' else 1]
             wts[o.name] = R.smooth(o, R.weights_for(o, kind[1], hb.LANDMARKS), kind[2])
@@ -699,7 +791,7 @@ def main():
             mixed.append(top4(m_))
         wts['Top'] = R.smooth(top, mixed, 2)
     trees = {}
-    for n in ('Top', 'Pants'):
+    for n in [x for x in ('Top', 'Pants', 'Overshirt') if x in canon]:
         t = KDTree(len(canon[n]))
         for i, p in enumerate(canon[n]):
             t.insert(p, i)
@@ -715,6 +807,8 @@ def main():
             wts[o.name] = [top4(w) for w in transfer(o, canon['Top'], wts['Top'], trees['Top'])]
         elif o.name.startswith('PantCuff'):
             wts[o.name] = [top4(w) for w in transfer(o, canon['Pants'], wts['Pants'], trees['Pants'])]
+        elif o.name.startswith('Os'):                                 # overshirt trims ride the overshirt
+            wts[o.name] = [top4(w) for w in transfer(o, canon['Overshirt'], wts['Overshirt'], trees['Overshirt'])]
     for n in ('BodySkin',):
         t = KDTree(len(canon[n]))
         for i, p in enumerate(canon[n]):
@@ -739,7 +833,7 @@ def main():
         for _k in hb.CHEST_MOTION:
             fields[_k] = lambda c, _k=_k: hb.chest_motion(c, _k)
     own = {}
-    for n in ('BodySkin', 'Top', 'Pants', 'Shirt'):            # smooth fields (a copy by nearest points ripples)
+    for n in [x for x in ('BodySkin', 'Top', 'Pants', 'Shirt', 'Overshirt') if x in canon]:   # smooth fields
         fs = fields
         if n == 'BodySkin' and 'Chest_Size' in fields:                 # bare body: round underside (no bridge)
             fs = dict(fields, Chest_Size=lambda c: hb.bust(c, False)[1],
@@ -770,6 +864,8 @@ def main():
     def host_of(name):
         if name.startswith(('ShirtCollar', 'ShirtSleeve')):
             return 'Shirt'
+        if name.startswith('Os'):
+            return 'Overshirt'
         return 'Pants' if name.startswith('PantCuff') else 'Top' if name.startswith(LAYERS) else None
 
     def keys_for(name):
@@ -854,10 +950,14 @@ def main():
             o.matrix_world = mw
     bpy.context.view_layer.update()
     hat_keys(hair)
+    for slot, objs in acc.ACC.values():                  # library hair parts take the hat keys too
+        for o in objs:
+            if slot == 'hair':
+                hat_keys(o, check=False)
     export_all(rig, head, hair, regions, hair_skinned)
 
 
-def hat_keys(hair):
+def hat_keys(hair, check=True):
     """One hair key per hat (accessories.HATS): hair above that hat's band lies down to `press` off the scalp, so
     the hat (part.json shapes {key: 1}) sits on it; the cap's brim also tucks the fringe. Final space: the head
     scale and neck shift undone for the band test. Then a 3D check per hat: band-to-hair gap and hair poking out."""
@@ -890,7 +990,8 @@ def hat_keys(hair):
                 except ValueError:
                     pass
             moved.append((q, w))
-        hat_check(key, moved, cran)
+        if check:
+            hat_check(key, moved, cran)
 
 
 def hat_check(key, moved, cran):
@@ -1111,6 +1212,8 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
                                                        'expressions': hb.EXPRESSIONS, 'mouths': hb.MOUTHS, 'shut': hb.SHUT})
     for pid, (slot, prefixes, hides) in PARTS.items():
         objs = [o for o in bpy.data.objects if o.type == 'MESH' and o.name.startswith(prefixes)]
+        if not objs:
+            continue
         _export(os.path.join(pdir(pid + SFX), pid + SFX + '.glb'), [rig] + objs, False)
         _tscn(pdir(pid + SFX), pid + SFX)
         _json(os.path.join(pdir(pid + SFX), 'part.json'), {'slot': slot, 'hides': hides})
@@ -1118,7 +1221,8 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
 
 
 PAINT = {'CK2_Print': 'print', 'CK2_PrintInk': 'print_ink', 'CK2_Shirt' + SHIRT[0][1:]: 'top', 'CK2_Rib': 'rib', 'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush', 'CK2_BlushHot': 'blush*0.88'}
-COLORS = {'skin': hb.SKIN, 'hair': hb.HAIR, 'eyes': '#2E2624', 'blush': 'auto'}
+PAINT['CK2_Overshirt'] = 'outer'
+COLORS = {'skin': hb.SKIN, 'hair': hb.HAIR, 'eyes': '#2E2624', 'blush': 'auto', 'outer': OVERSHIRT}
 for _m, _slot in (('Top', 'top'), ('Pants', 'bottom'), ('PantCuff', 'bottom'), ('Shoe', 'shoes')):
     _key = {'Top': 'top', 'Pants': 'pants', 'PantCuff': 'pants', 'Shoe': 'shoe'}[_m]
     PAINT['CK2_' + _m + hb.COLOURWAYS['A'][_key][1:]] = _slot

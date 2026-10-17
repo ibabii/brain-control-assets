@@ -199,11 +199,47 @@ def cap(surf):
     return out
 
 
+def hair_curly(skin, surf):
+    """Short dark curly crop (the roommate; ref_heads_expressions 'male 3'): a round mass of tight clay curls, fuller
+    on top, short at the sides and nape; neighbouring curls in different families so each one reads."""
+    edge = lambda phi: hb.hairline(phi) + 0.01 + 0.025 * hb._ss((abs(phi) - 1.9) / 0.7)
+    shell = hb.scalp_shell(skin, edge, lift=0.003, thick=0.006)
+    curls = []                                                       # (centre, radius): real spheres, voxel-unioned
+    el0 = lambda phi: math.asin(max(-0.95, min(0.95, (edge(phi) + 0.008 - hb.CRANIUM.y) / 0.15)))
+    rows = 9
+    for j in range(rows + 1):
+        e_mid = el0(0.0) + (math.pi / 2 - el0(0.0)) * j / rows
+        ring = max(1, int(46 * math.cos(e_mid)))                       # ~2 cm apart on every row
+        for i in range(ring):
+            phi = -math.pi + 2 * math.pi * (i + 0.5 * (j % 2)) / ring
+            e0 = el0(phi)
+            el = e0 + (math.pi / 2 - e0) * j / rows
+            d = Vector((math.cos(el) * math.sin(phi), math.sin(el), -math.cos(el) * math.cos(phi)))
+            loc, nrm = surf.hit(hb.CRANIUM + d * 0.4, -d)
+            top = hb._ss((el - 0.5) / 0.7)                            # fuller on top, short at the sides/back
+            back = hb._ss((abs(phi) - 2.0) / 0.8)
+            r = 0.012 + 0.003 * top - 0.002 * back
+            jit = 0.003 * math.sin(i * 12.9898 + j * 78.233)
+            curls.append((loc + nrm * (0.006 + 0.008 * top + jit), r * 1.15))   # every curl stands proud
+    import bmesh
+    bm = bmesh.new()
+    for c, r in curls:
+        bmesh.ops.create_uvsphere(bm, u_segments=12, v_segments=8, radius=r, matrix=__import__('mathutils').Matrix.Translation(B(c)))
+    me = bpy.data.meshes.new('HairCurly')
+    bm.to_mesh(me)
+    bm.free()
+    hair = bpy.data.objects.new('HairCurly', me)
+    bpy.context.scene.collection.objects.link(hair)
+    hair.data.materials.append(lib.mat('Hair', hb.HAIR, 0.9))
+    return [hb.union_shell(hair, shell, 0.0025, 16000, smooth=1)]
+
+
 def build(head, skin):
     """ACCESSORY_HOOK: every accessory for this base, adopted under the head empty (they scale with the head)."""
     surf = Surface(skin)
     for stem, slot, objs in (('glasses_round', 'glasses', glasses(surf)), ('beard_full', 'beard', beard(head, surf)),
-                             ('beret', 'hat', beret(surf)), ('cap_driver', 'hat', cap(surf))):
+                             ('beret', 'hat', beret(surf)), ('cap_driver', 'hat', cap(surf)),
+                             ('hair_curly', 'hair', hair_curly(skin, surf))):
         for o in objs:
             o.name = 'Acc_' + stem + '_' + o.name
             adopt(o, head, hb.NECK)

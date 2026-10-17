@@ -1,0 +1,9 @@
+{
+ "slot": "outer",
+ "hides": [
+  "Body_UpperArmL",
+  "Body_UpperArmR",
+  "Body_LowerArmL",
+  "Body_LowerArmR"
+ ]
+}
