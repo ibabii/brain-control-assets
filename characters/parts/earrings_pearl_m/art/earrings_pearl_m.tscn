@@ -1,0 +1,5 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://characters/parts/earrings_pearl_m/art/earrings_pearl_m.glb" id="1"]
+
+[node name="earrings_pearl_m" instance=ExtResource("1")]

@@ -354,6 +354,8 @@ def clip_bones(rig, layer, side=None, wrist=False):
         return names
     if layer == 'full':
         return [b for b in names if not is_finger(b) and b != 'Root']
+    if layer == 'neck':                                      # head tilts over any arms (phone wedged on the shoulder)
+        return [b for b in names if b in ('UpperChest', 'Neck', 'Head') or 'Shoulder' in b]
     if layer == 'torso':                                     # gestures over any lower body (standing, seated)
         return [b for b in names if b in ('Spine', 'Chest', 'UpperChest', 'Neck', 'Head') or 'Shoulder' in b
                 or 'Arm' in b or 'Hand' in b or is_finger(b)]
@@ -405,6 +407,10 @@ def clips(rig, arm_up, landmarks, full=True, mock=False):
         names.append(body_clip(rig, name, fn(rig), layer='upper', side=side))
     for name, fn in (body_clips.TORSO.items() if full else ()):
         names.append(body_clip(rig, name, fn(), layer='torso'))
+    for name, (fn, side) in (body_clips.HOLDS.items() if full else ()):
+        names.append(body_clip(rig, name, fn(rig), layer='upper', side=side))
+    for name, fn in (body_clips.NECK.items() if full else ()):
+        names.append(body_clip(rig, name, fn(), layer='neck'))
     LOOPS.extend(n for n in body_clips.LOOPS if n not in LOOPS)
     for s in (-1, 1):
         for kind in ('grip', 'relaxed', 'spread'):
@@ -500,6 +506,11 @@ def markers(L):
     m = Euler((math.radians(35), math.radians(-10), 0), 'YXZ').to_matrix()
     out.append({'name': 'Bite', 'bone': 'Head', 'pos': [0.004, 1.5225, -0.112],
                 'basis': [list(m.col[0]), list(m.col[1]), list(m.col[2])]})
+    # PhoneEar: the phone (props/phone, centre pivot, long axis X, screen +Y) flat against the right ear, screen to
+    # the ear, speaker end back by the ear and the mic end down toward the mouth (phone_wedge)
+    x = Vector((0, -0.45, -0.89)).normalized()
+    y = Vector((-1, 0, 0))
+    out.append({'name': 'PhoneEar', 'bone': 'Head', 'pos': [0.162, 1.585, -0.02], 'basis': [list(x), list(y), list(x.cross(y))]})
     return out
 
 

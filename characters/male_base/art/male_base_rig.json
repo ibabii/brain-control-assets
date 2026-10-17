@@ -181,6 +181,32 @@
      0.8067072629928589
     ]
    ]
+  },
+  {
+   "name": "PhoneEar",
+   "bone": "Head",
+   "pos": [
+    0.20250000059604645,
+    1.5750000476837158,
+    -7.450580596923828e-09
+   ],
+   "basis": [
+    [
+     0.0,
+     -0.45121991634368896,
+     -0.8924127221107483
+    ],
+    [
+     -1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.8924127221107483,
+     -0.45121991634368896
+    ]
+   ]
   }
  ],
  "ragdoll": [
@@ -2316,6 +2342,195 @@
     "yaw": 0.0
    },
    "length": 2.0
+  },
+  "hold_mug": {
+   "layer": "upper",
+   "bones": [
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.0
+  },
+  "grab_toast": {
+   "layer": "upper",
+   "bones": [
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.2
+  },
+  "toast_mouth": {
+   "layer": "upper",
+   "bones": [
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.0
+  },
+  "take_parcel": {
+   "layer": "upper",
+   "bones": [
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.333
+  },
+  "phone_wedge": {
+   "layer": "neck",
+   "bones": [
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "RightShoulder"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.0
   },
   "hand_grip_L": {
    "layer": "hand",

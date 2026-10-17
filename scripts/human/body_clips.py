@@ -493,6 +493,90 @@ LOOPS.append('talk')
 MOCK = {'squat': squat}                 # character-system mock only (not in the shipped Human)
 
 
+# --- Bernard's E01 holds (look-B male_base). Arm clips are 'upper' (one arm, plays over anything); phone_wedge is
+# 'neck' (head, neck, shoulders). Props ride Grip_L/R through their Grips/Left|Right nodes; targets go through the
+# build's warp / head scale so they land on this body.
+
+def _hb():
+    hb = sys.modules.get('build') or sys.modules.get('__main__')
+    return hb if hasattr(hb, 'head_xf') else None
+
+
+def _body(p):
+    hb = _hb()
+    return hb.warp(Vector(p)) if hb else Vector(p)
+
+
+def _head(p):
+    hb = _hb()
+    return hb.head_xf(Vector(p)) if hb else Vector(p)
+
+
+def _hold(rig, side, pos, x, y, pole, fingers='grip'):
+    """IK keys so Grip_<side> sits at pos with +X = x (thumb side), +Y = y (back of the hand)."""
+    import pose as PZ
+    x = Vector(x).normalized()
+    y = Vector(y)
+    y = (y - x * y.dot(x)).normalized()
+    wrist, turn = PZ.grip(rig, side, pos, Matrix((x, y, x.cross(y))).transposed())
+    n = 'Right' if side > 0 else 'Left'
+    return {'ik': {n + 'Arm': (wrist, pole)}, 'world': {n + 'Hand': turn}, 'local': R.finger_pose(side, fingers)}
+
+
+def _rest_arm(rig, side):
+    """The arm hanging relaxed (Grip beside the thigh), as the start/end of an upper clip."""
+    return _hold(rig, side, _body((0.24 * side, 0.83, -0.02)), (0, 0, -1), (side, 0, 0), (0.6 * side, 1.2, 0.3),
+                 'relaxed')
+
+
+def hold_mug(rig):
+    """Right hand holds the mug in front of the chest (thumb up, back of the hand out to the right). Held."""
+    k = _hold(rig, 1, _body((0.13, 1.18, -0.3)), (0, 1, 0), (0.9, 0, -0.35), (0.6, 0.8, 0.3))
+    return [(0, _rest_arm(rig, 1)), (10, k), (30, k)]
+
+
+TOAST_CHEST = (Vector((0.1, 1.24, -0.3)), (1, 0, 0), (0, 1, 0), (0.6, 0.8, 0.3))   # slice upright, face-on, below the
+                                                                                 # fist; fingers curl back toward him
+
+
+def grab_toast(rig):
+    """Right hand reaches forward and down to the popped toast (open), grabs it (closes at f13), brings it up in
+    front of the chest and holds."""
+    reach = (_body((0.2, 1.02, -0.48)), (-1, 0, 0), (0, 1, 0), (0.7, 1.0, 0.2))
+    return [(0, _rest_arm(rig, 1)), (9, _hold(rig, 1, *reach, fingers='spread')), (13, _hold(rig, 1, *reach)),
+            (24, _hold(rig, 1, _body(TOAST_CHEST[0]), *TOAST_CHEST[1:])),
+            (36, _hold(rig, 1, _body(TOAST_CHEST[0]), *TOAST_CHEST[1:]))]
+
+
+def toast_mouth(rig):
+    """From grab_toast's hold the right hand puts the toast in his teeth (release at f12: swap the toast to the
+    Bite marker and show `bite`), then drops to the side."""
+    chest = (_body(TOAST_CHEST[0]),) + TOAST_CHEST[1:]
+    mouth = (_head((0.05, 1.515, -0.16)), (1, 0, 0), (0, 1, 0), (0.55, 1.15, -0.1))   # slice face-on under the mouth
+    return [(0, _hold(rig, 1, *chest)), (12, _hold(rig, 1, *mouth)), (16, _hold(rig, 1, *mouth, fingers='spread')),
+            (30, _rest_arm(rig, 1))]
+
+
+def take_parcel(rig):
+    """Left arm reaches out palm up for the parcel (it lands at f12), then carries it on the forearm against the
+    left side, hand under the box, elbow bent. Held."""
+    give = _hold(rig, -1, _body((-0.16, 1.12, -0.46)), (-1, 0, 0), (0, -1, 0), (-0.7, 0.9, 0.2), 'spread')
+    carry = _hold(rig, -1, _body((-0.25, 1.0, -0.3)), (-1, 0, 0), (0, -1, 0), (-0.7, 0.8, 0.4), 'relaxed')
+    return [(0, _rest_arm(rig, -1)), (10, give), (14, give), (26, carry), (40, carry)]
+
+
+def phone_wedge():
+    """Phone pinched between the right ear and a raised right shoulder (prop on the Head marker PhoneEar): head
+    tilted onto it, shoulder up. Neck layer only, so the arms stay free for the other holds. Held."""
+    w = {'rot': {'Head': (0, 0, -16), 'Neck': (0, 0, -8), 'RightShoulder': (0, 0, 22), 'UpperChest': (0, 0, -3)}}
+    return [(0, {'rot': {}}), (8, w), (30, w)]
+
+
+HOLDS = {'hold_mug': (hold_mug, 1), 'grab_toast': (grab_toast, 1), 'toast_mouth': (toast_mouth, 1),
+         'take_parcel': (take_parcel, -1)}
+NECK = {'phone_wedge': phone_wedge}
+
+
 FULL = {'faceplant': faceplant, 'sit_tub': sit_tub, 'get_up_back': get_up_back, 'get_up_front': get_up_front,
         'sit_chair': sit_chair, 'sit_table': sit_table, **FULL_EXTRA}
 BOXES = {'sit_tub': TUB, 'climb_out_tub': TUB}
