@@ -19,6 +19,8 @@ from mathutils import Matrix, Vector
 HERE = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(HERE, '..', 'cockpit_v2'))
 import lib  # noqa: E402
+sys.path.insert(0, os.path.dirname(__file__))
+import toast_geom as TG  # noqa: E402
 import ink  # noqa: E402
 from lib import Frame, UPF  # noqa: E402
 from sculpt import meta, ell, ball, solid  # noqa: E402
@@ -754,7 +756,7 @@ def paste_portrait(c, path, centre, r):
 
 
 def phone_body(parent, frame, with_screen=True):
-    case = M('PhoneCase', 'graphite', 'rubber')
+    case = M('PhoneCase', 'graphite', 'ceramic')           # a little sheen: the edge catches light (phone_wedge)
     L, W, sl, sw = PHONE
     lib.slab('Case', lib.rrect(L, W, 0.013, 4), 0.009, 0.0035, case, frame.child((0, -0.0045, 0), UPF), parent)
     if with_screen:
@@ -799,15 +801,10 @@ BITES = [((0.042, -0.05), 0.024), ((0.014, -0.064), 0.018)]     # (centre, r): a
 
 
 def toast_slab(name, frame, parent, bite=False, face_col=None, crust_col=None, xf=None, th=0.018):
-    """Thick slice (0.1 x 0.11 x th) in frame XY: honey crust ring, golden faces; bite = BITES taken out;
-    xf maps outline points (x, y) after the inner face is derived (scale / turn / move the whole slice)."""
+    """Thick slice (toast_geom.outline, th thick) in frame XY: crust ring, crumb faces; bite = BITES taken out;
+    xf maps outline points (x, y) after the inner face is derived (turn / move the whole slice)."""
     out = []
-    n = 72 if bite else 24
-    for k in range(n):
-        t = 2 * math.pi * k / n
-        x, y = math.cos(t) * 0.05, math.sin(t) * 0.055
-        if y > 0.02:                                   # domed top with two shoulders
-            y += 0.012 * abs(math.sin(2 * t))
+    for x, y in TG.outline(72 if bite else 24):
         for _ in range(3):                             # scalloped bite: points inside go to the circles' edge
             for (cx, cy), r in (BITES if bite else ()):
                 d = math.hypot(x - cx, y - cy)
@@ -817,7 +814,7 @@ def toast_slab(name, frame, parent, bite=False, face_col=None, crust_col=None, x
             out.append((x, y))
     crust = M('Crust', 'honey', 'wood') if crust_col is None else lib.mat('CrustDeep', crust_col, 0.85)
     face = M('ToastFace', TOASTY, 'paper') if face_col is None else lib.mat('ToastCrumb', face_col, 0.9)
-    k = 0.82 if xf is None else 0.78
+    k = 0.8
     inner = [(x * k, y * k - 0.002) for x, y in out]
     if xf:
         out, inner = [xf(p) for p in out], [xf(p) for p in inner]
@@ -828,8 +825,8 @@ def toast_slab(name, frame, parent, bite=False, face_col=None, crust_col=None, x
 
 def toast():
     r = prop_root('toast')
-    toast_slab('Slice', Frame((0, 0, 0)), r)
-    grip_node(r, 'Right', (0, 0.045, 0), (1, 0, 0), (0, 1, 0))         # pinched by the top edge (grab_toast)
+    toast_slab('Slice', Frame((0, 0, 0)), r, face_col=TG.CRUMB, crust_col=TG.CRUST, th=TG.TH)
+    grip_node(r, 'Right', TG.GRIP + (0,), (1, 0, 0), (0, 1, 0))       # pinched by the top edge (grab_toast)
     crumbs = lib.empty('Crumbs', (0, 0, 0), r)
     rng = np.random.default_rng(3)
     crumb = M('Crust', 'honey', 'wood')
@@ -844,17 +841,8 @@ def toast():
 def toast_bitten():
     """The exit gag: the slice held in Bernard's teeth (marker Bite, expression bite)."""
     r = prop_root('toast_bitten')
-    s, th = 1.8, math.radians(-8)                      # cartoon-big (reads at 60 px)
-
-    def turn(p):
-        return (s * (p[0] * math.cos(th) - p[1] * math.sin(th)), s * (p[0] * math.sin(th) + p[1] * math.cos(th)))
-    raw = [turn((math.cos(t) * 0.05, math.sin(t) * 0.055 + (0.012 * abs(math.sin(2 * t)) if math.sin(t) * 0.055 > 0.02
-                 else 0))) for t in [2 * math.pi * k / 96 for k in range(96)]]
-    top = max(raw, key=lambda q: q[1] - 0.9 * q[0])    # clamped by the top-left corner (in front of the lips, under the top teeth): hangs
-                                                       # down to his right (+X)
-    move = lambda p: (lambda q: (q[0] - top[0] - 0.012, q[1] - top[1] + 0.008))(turn(p))   # corner in the opening
-    toast_slab('Slice', Frame((0, 0, -0.018)), r, bite=True, face_col='#EDD5A3', crust_col='#B5773D', xf=move,
-               th=0.024)
+    toast_slab('Slice', Frame((0, 0, TG.BITE_Z)), r, bite=True, face_col=TG.CRUMB, crust_col=TG.CRUST, xf=TG.bitten,
+               th=TG.TH)                                   # the same slice as `toast`, corner in the teeth
     return r, {'pivot': 'the clamped top-left corner on the teeth line; the slice hangs down to his right (+X, -Y), face to -Z',
                'attach': 'parent at the Bite marker (Head bone) with its basis (tilts the hanging slice forward, '
                          'off the chin); bite out of the far bottom corner'}

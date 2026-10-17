@@ -330,8 +330,8 @@ def earrings_pearl(surf):
 
 def hair_bob(skin, surf):
     """Soft wavy bob (Mom, AD FIX): chunky clay locks from the crown down to chin length, waving in and out, tips
-    curled under; a side-swept fringe above the brows. Broad grey bands (CK2_HairGrey -> slot hair_grey) on the
-    temple locks and the fringe lock at the part: same mesh, a second material."""
+    curled under; a side-swept fringe above the brows. Salt-and-pepper (CK2_HairGrey -> slot hair_grey): a narrow grey
+    streak sunk along each temple lock and the fringe lock at the part, and a few fine flecks on the back."""
     import bmesh
     from mathutils import Matrix
     edge = lambda phi: hb.hairline(phi) + 0.004
@@ -401,8 +401,24 @@ def hair_bob(skin, surf):
             lift = 0.014 + 0.008 * math.sin(math.pi * t) + 0.003 * math.sin(t * 9 + k)
             spheres.append((loc + nrm * lift, r0 * (1 - 0.3 * t), grey))
     objs = []
+    streaks, back, prev = [], 0, None                       # grey locks -> brown + a streak a third as wide on top
+    for c, r, g in spheres:
+        out = (c - hb.CRANIUM).normalized()
+        if g:
+            p = (c + out * r * 0.6, r * 0.42)
+            if prev and (prev[0] - p[0]).length < 0.03:         # dense along the lock: a smooth streak, not beads
+                for t in (0.25, 0.5, 0.75):
+                    streaks.append((prev[0].lerp(p[0], t), prev[1] + (p[1] - prev[1]) * t, True))
+            streaks.append(p + (True,))
+            prev = p
+            continue
+        elif abs(math.atan2(c.x, -c.z)) > 2.4 and 1.52 < c.y < 1.72:
+            back += 1
+            if back % 23 == 0:                                  # a few fine flecks on the back
+                streaks.append((c + out * r * 0.93, 0.0045, True))
+    spheres = [(c, r, False) for c, r, g in spheres] + streaks
     for name, grey, mat in (('HairBob', False, lib.mat('Hair', hb.HAIR, 0.9)),
-                            ('HairBobGrey', True, lib.mat('HairGrey', '#A8A39C', 0.9))):
+                            ('HairBobGrey', True, lib.mat('HairGrey', '#A39C94', 0.9))):
         bm = bmesh.new()
         for c, r, g in spheres:
             if g == grey:
@@ -421,6 +437,12 @@ def hair_bob(skin, surf):
         x.select_set(x == gr)
     bpy.context.view_layer.objects.active = gr
     bpy.ops.object.voxel_remesh()
+    bm = bmesh.new()                                        # soften the streak edges
+    bm.from_mesh(gr.data)
+    for _ in range(4):
+        bmesh.ops.smooth_vert(bm, verts=bm.verts, factor=0.5, use_axis_x=True, use_axis_y=True, use_axis_z=True)
+    bm.to_mesh(gr.data)
+    bm.free()
     for f in gr.data.polygons:
         f.use_smooth = True
     return [hair, gr]

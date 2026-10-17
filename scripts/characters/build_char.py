@@ -1516,7 +1516,7 @@ PAINT['CK2_HairFade'] = 'skin*0.62'      # clipped fade on curly crops: a skin s
 PAINT['CK2_CgRib'] = 'outer'               # cardigan knit bands take the outer colour
 PAINT['CK2_HairGrey'] = 'hair_grey'        # grey streak bands (bob)
 PAINT['CK2_AgeLine'] = 'skin*0.8'         # smile lines on older faces
-COLORS = {'skin': hb.SKIN, 'hair': hb.HAIR, 'hair_grey': '#8E8882', 'eyes': '#2E2624', 'blush': 'auto', 'outer': OVERSHIRT}
+COLORS = {'skin': hb.SKIN, 'hair': hb.HAIR, 'hair_grey': '#A39C94', 'eyes': '#2E2624', 'blush': 'auto', 'outer': OVERSHIRT}
 for _m, _slot in (('Top', 'top'), ('Pants', 'bottom'), ('PantCuff', 'bottom'), ('Shoe', 'shoes')):
     _key = {'Top': 'top', 'Pants': 'pants', 'PantCuff': 'pants', 'Shoe': 'shoe'}[_m]
     PAINT['CK2_' + _m + hb.COLOURWAYS['A'][_key][1:]] = _slot
