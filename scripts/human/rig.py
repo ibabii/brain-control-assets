@@ -503,13 +503,13 @@ def markers(L):
     out.append({'name': 'EyeCam', 'bone': 'Head', 'pos': [0, L['EYE_Y'], -0.10], 'basis': [[1, 0, 0], [0, 1, 0], [0, 0, 1]]})
     out.append({'name': 'Foam', 'bone': 'Head', 'pos': [0, 1.525, -0.118], 'basis': [[1, 0, 0], [0, 1, 0], [0, 0, 1]]})
     # Bite: a slice clamped by a corner in the teeth (expression bite), its long axis (corner -> centre) ~30 deg to
-    # his right and ~35 deg below the horizontal, rolled ~45 deg about it so the broad face shows to the front
+    # his right and ~30 deg below the horizontal (the chin shows), rolled ~45 deg so the broad face shows to the front
     # (props/toast_bitten: origin at the corner, slice in its XY plane, face -Z)
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'breakfast'))
     import toast_geom as TG
     pts = [TG.bitten(q) for q in TG.outline(96)]
     ll = Vector((sum(q[0] for q in pts), sum(q[1] for q in pts), 0)).normalized()          # local long axis
-    yaw, pitch = math.radians(30), math.radians(35)
+    yaw, pitch = math.radians(30), math.radians(30)
     d = Vector((math.sin(yaw) * math.cos(pitch), -math.sin(pitch), -math.cos(yaw) * math.cos(pitch)))
     up = (Vector((0, 1, 0)) - d * d.y).normalized()
     side = d.cross(up)

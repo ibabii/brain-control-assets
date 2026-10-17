@@ -2,11 +2,12 @@
 (scripts/human/body_clips.py), so the slice in his hand and the one in his teeth are the same."""
 import math
 
-W, H, TH = 0.05, 0.055, 0.018            # half width, half height (before the domed top), thickness
+S = 2.0                                  # cartoon scale (2026-10-17): reads at the doorway on the big heads
+W, H, TH = 0.05 * S, 0.055 * S, 0.027    # half width, half height (before the domed top), thickness
 CRUST, CRUMB = '#B5773D', '#EDD5A3'      # golden-brown crust rim, light crumb face
-GRIP = (0.03, 0.05)                      # Grips/Right: the top edge right of centre, slice XY (z 0)
+GRIP = (0.03 * S, 0.05 * S)                      # Grips/Right: the top edge right of centre, slice XY (z 0)
 BITE_TURN = math.radians(-8)             # toast_bitten: the slice turned in its plane...
-BITE_INSET = (-0.012, 0.008)             # ...its top-left corner moved to the origin, just into the mouth
+BITE_INSET = (-0.012, 0.008)             # ...its top-left corner moved to the origin, just into the mouth (absolute)
 BITE_Z = -0.018                          # slice centre plane in front of the lips
 
 
@@ -15,8 +16,8 @@ def outline(n):
     for k in range(n):
         t = 2 * math.pi * k / n
         x, y = math.cos(t) * W, math.sin(t) * H
-        if y > 0.02:                                  # domed top with two shoulders
-            y += 0.012 * abs(math.sin(2 * t))
+        if y > 0.02 * S:                              # domed top with two shoulders
+            y += 0.012 * S * abs(math.sin(2 * t))
         pts.append((x, y))
     return pts
 

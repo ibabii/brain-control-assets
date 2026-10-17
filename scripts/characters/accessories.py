@@ -217,8 +217,9 @@ CURL_CLUMPS = [   # (azimuth phi: 0 front / pi back, elevation, radius, lift): ~
     (-2.85, 0.92, 0.028, 0.006), (2.8, 0.95, 0.03, 0.007), (3.14, 1.2, 0.031, 0.01),      # back, smaller low down
     (-2.4, 0.5, 0.025, 0.003), (2.45, 0.48, 0.026, 0.003), (-2.95, 0.55, 0.027, 0.004), (2.9, 0.5, 0.026, 0.004),
     (-2.6, 0.12, 0.021, 0.0), (2.65, 0.1, 0.02, 0.0), (3.14, 0.2, 0.023, 0.001),          # down the back to the nape
-    (-2.85, -0.22, 0.019, 0.0), (2.8, -0.24, 0.019, 0.0), (-2.6, -0.1, 0.018, 0.0), (2.62, -0.08, 0.018, 0.0),
-    (3.14, -0.5, 0.019, 0.0), (-2.78, -0.58, 0.017, 0.0), (2.8, -0.56, 0.017, 0.0),   # inside the back mass
+    (-2.45, -0.25, 0.024, 0.002), (2.5, -0.27, 0.024, 0.002), (-2.9, -0.3, 0.025, 0.002), (2.92, -0.28, 0.025, 0.002),
+    (-2.65, -0.6, 0.022, 0.0), (2.7, -0.62, 0.022, 0.0), (3.14, -0.65, 0.023, 0.0),     # distinct clumps down the
+    (-2.95, -0.84, 0.019, 0.0), (2.98, -0.83, 0.019, 0.0),                              # back to the nape (Male 3)
 ]
 
 
@@ -234,17 +235,29 @@ def hair_curly(skin, surf):
     back = lambda phi: hb._ss((abs(phi) - 2.0) / 0.6)                              # 0 at the sides, 1 at the back
     side = lambda phi: hb.hairline(phi) + 0.01 + 0.025 * hb._ss((abs(phi) - 1.9) / 0.7)
     wav = lambda phi, k, a: a * math.sin(k * phi) * hb._ss((abs(phi) - 0.9) / 0.4)   # wavy, not a ruled line
-    high = lambda phi: (el(side(phi) + 0.028 * hb._ss((abs(phi) - 1.0) / 0.6)) * (1 - back(phi)) - 0.95 * back(phi))
+    high = lambda phi: (el(side(phi) + 0.028 * hb._ss((abs(phi) - 1.0) / 0.6)) * (1 - back(phi)) - 0.8 * back(phi))   # the gradient carries on to the nape
     edge = lambda phi: el(side(phi)) * (1 - back(phi)) - 1.02 * back(phi) + wav(phi, 7, 0.03)
     low = lambda phi: edge(phi) - wav(phi, 11, 0.02) - 0.07 * hb._ss((abs(phi) - 0.9) / 0.4)
     shell = hb.scalp_shell(skin, None, lift=0.002, thick=0.005, edge_el=high)
-    fades = []                                                  # clipped sides + nape: two skin-shadow steps, soft
-    for name, line, lift in (('HairFade', edge, 0.0009), ('HairFade2', low, 0.0005)):
-        f = hb.scalp_shell(skin, None, lift=lift, thick=0.0012, edge_el=line)
-        f.name = name
-        f.data.materials.clear()
-        f.data.materials.append(lib.mat(name, '#7A5440' if name == 'HairFade' else '#A3765C', 0.9))
-        fades.append(f)
+    # clipped sides + nape: one skin-painted shell with a vertex-colour gradient (multiplies the paint): skin at its
+    # lower edge, a dark skin shadow under the curls; no steps
+    fade = hb.scalp_shell(skin, None, lift=0.0007, thick=0.0012, edge_el=low)
+    fade.name = 'HairFade'
+    col = fade.data.color_attributes.new('Col', 'FLOAT_COLOR', 'POINT')
+    for v, c in zip(fade.data.vertices, col.data):
+        d = G(fade.matrix_world @ v.co) - hb.CRANIUM
+        e, ph = math.asin(max(-1.0, min(1.0, d.y / d.length))), math.atan2(d.x, -d.z)
+        t = hb._ss((e - low(ph)) / max(0.05, high(ph) + 0.05 - low(ph)))
+        k = 1 - 0.72 * t                                              # linear: 1 = skin, 0.28 ~ skin*0.56 in sRGB
+        c.color = (k, k, k, 1.0)
+    m = lib.mat('HairFade', '#FFFFFF', 0.9)
+    nt = m.node_tree
+    ca = nt.nodes.new('ShaderNodeVertexColor')
+    ca.layer_name = 'Col'
+    nt.links.new(ca.outputs['Color'], next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'])
+    fade.data.materials.clear()
+    fade.data.materials.append(m)
+    fades = [fade]
     spheres = []
 
     def on_skull(phi, el):
@@ -256,7 +269,7 @@ def hair_curly(skin, surf):
         t2 = nrm.cross(t1)
         top = hb._ss((el_ - 0.9) / 0.3)                        # flatter on top (~10 % lower silhouette)
         r, lift = r * 0.82 * (1 - 0.2 * top), lift * 0.6 * (1 - 0.95 * top)   # short crop: chunky, not a pompadour
-        c = loc + nrm * (r * (0.3 - 0.35 * top - 0.65 * hb._ss(-el_ / 0.4)) + lift)   # sunk on top + low down
+        c = loc + nrm * (r * (0.3 - 0.35 * top - 0.25 * hb._ss(-el_ / 0.4)) + lift)   # sunk on top, a little low down
         spheres.append((c, r))
         a0 = k * 2.1
         for i in range(3):                                     # sub-lumps spiral round and up: a C-curl

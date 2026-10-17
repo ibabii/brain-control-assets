@@ -22,7 +22,7 @@ import lib  # noqa: E402
 sys.path.insert(0, os.path.dirname(__file__))
 import toast_geom as TG  # noqa: E402
 import ink  # noqa: E402
-from lib import Frame, UPF  # noqa: E402
+from lib import B, Frame, UPF  # noqa: E402
 from sculpt import meta, ell, ball, solid  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location('bathroom_build', os.path.join(HERE, '..', 'bathroom', 'build.py'))
@@ -61,7 +61,7 @@ CLOCK = (7, 30)                                # wall clock time (hours, minutes
 HINGE = (-4.975, 0.0, 1.25)                    # front door: hinge on the hall-side face of the end wall
 PROPS = {   # id: node position (game); base pivots on the worktop (0.92) unless noted
     'coffee_machine': (-0.3, 0.92, -0.85), 'mug': (-0.3, 0.92, -0.66), 'phone': (0.08, 0.9245, -0.64),
-    'toaster': (0.42, 0.92, -0.82), 'toast': (0.42, 1.05, -0.855), 'toast_2': (0.42, 1.05, -0.785),
+    'toaster': (0.42, 0.92, -0.82), 'toast': (0.42, 1.07, -0.8655), 'toast_2': (0.42, 1.07, -0.7745),
     'parcel': (1.86, NOOK_Y, -0.36), 'front_door': HINGE,      # parcel on the nook seat at his left
 }
 PROP_YAW = {'parcel': -80.0}                   # long FRAGILE side toward Bernard
@@ -561,6 +561,21 @@ def fridge_papers(p, z1):
     uv_quad('FridgeDrawing', Frame((-1.82, 0.98, z1 + 0.0025), (0, 0, -3)), 0.14, 0.105, canvas_mat('Drawing', c), p)
 
 
+def hall_print(p):
+    """Small framed print at eye height on the hall's long south wall, by the front door: a sage leaf sprig on cream.
+    Kept near the door end so it stays out of the punchline camera's frame."""
+    fp = Frame((-4.15, 1.5, HALL[3] - 0.002), (0, 180, 0))
+    lib.slab('HallPrintFrame', lib.rrect(0.3, 0.38, 0.01, 2), 0.022, 0.006, M('FrameWood', HONEY_WOOD, 'wood'), fp,
+             p, holes=[lib.rrect(0.24, 0.32, 0.004, 1)[::-1]])
+    c = ink.Canvas(240, 320, PAL['cream'])
+    c.stroke([(0.5, 0.1), (0.48, 0.45), (0.52, 0.85)], 4, '#5E7A52')
+    for i, v in enumerate((0.25, 0.4, 0.55, 0.7)):
+        for sgn in (-1, 1):
+            c.ellipse((0.5 + sgn * 0.13, v + 0.03), 0.09, 0.035, LEAF, rot=sgn * (0.5 + 0.1 * i))
+    c.ellipse((0.52, 0.88), 0.05, 0.05, PAL['peach'])
+    uv_quad('HallPrintArt', fp.child((0, 0, 0.004)), 0.24, 0.32, canvas_mat('HallPrintArt', c), p)
+
+
 def key_shelf(p):
     """Little honey shelf by the coat hooks with a clay bowl and a set of keys (out of the punchline frame)."""
     z = HALL[2]
@@ -616,14 +631,16 @@ def table(root):
     f, l = facing()
     plate = SEAT + f * 0.42 + l * 0.12
     porcelain = M('Plate', 'porcelain', 'ceramic')
-    lathe('Plate', [(0, 0), (0.07, 0), (0.1, 0.012), (0.11, 0.016), (0.105, 0.017), (0.07, 0.004), (0, 0.004)],
-          porcelain, Frame((plate.x, t, plate.z)), p)
-    toast_slab('PlateToast', Frame((plate.x, t + 0.012, plate.z), (-90, 25, 0)), p, bite=True)
+    ps = 1.5                                                             # big plate for the 2x slice
+    lathe('Plate', [(0, 0), (0.07 * ps, 0), (0.1 * ps, 0.012), (0.11 * ps, 0.016), (0.105 * ps, 0.017),
+                    (0.07 * ps, 0.004), (0, 0.004)], porcelain, Frame((plate.x, t, plate.z)), p)
+    toast_slab('PlateToast', Frame((plate.x, t + 0.018, plate.z), (-90, 25, 0)), p, bite=True,
+               xf=lambda q: (q[0] * 0.85, q[1] * 0.85), th=TG.TH)          # the same big toast, a touch smaller
     mug = SEAT + f * 0.4 - l * 0.2
     mug_body('RoommateMug', Frame((mug.x, t, mug.z), (0, 160, 0)), p, M('RmMug', 'clay', 'ceramic'), None)
     lathe('RoommateCoffee', [(0, 0.075), (0.038, 0.075)], M('Coffee', COFFEE, 0.6), Frame((mug.x, t, mug.z)), p)
     napkin = M('Napkin', 'cream', 'fabric')
-    nap = SEAT + f * 0.36 + l * 0.27
+    nap = SEAT + f * 0.33 + l * 0.36
     rbox('Napkin', (0.12, 0.004, 0.12), napkin, Frame((nap.x, t + 0.002, nap.z), (0, 20, 0)), p, 0.002)
 
 
@@ -726,6 +743,7 @@ def hall(root):
     coat_hooks(p)
     shoe_rack(p)
     key_shelf(p)
+    hall_print(p)
     lib.slab('Doormat', lib.rrect(0.55, 0.8, 0.03, 3), 0.012, 0.004, tex_mat('Coir', '#C9A26A',
              weave_tex('CoirTex', '#C9A26A', n=14), 0.95), Frame((x0 + 0.38, 0.0, 0.8), UPF), p)
 
@@ -978,14 +996,17 @@ def phone():
                                    'swap its material for a SubViewport texture if wanted. Hidden = off' % PHONE[2:]}}
 
 
+TOASTER_SCALE = (1.35, 1.0, 1.3)        # x, y, z (Godot): fits the 2x slice (slots 0.216 x 0.034)
+
+
 def toaster():
     r = prop_root('toaster')
     peach = M('ToasterPeach', 'peach', 'ceramic')
     dark = M('ToasterDark', 'graphite', 'rubber')
-    slots = [[(x, z + 0.035 * s) for x, z in lib.rrect(0.13, 0.022, 0.01, 3)] for s in (-1, 1)]
+    slots = [[(x, z + 0.035 * s) for x, z in lib.rrect(0.16, 0.026, 0.01, 3)] for s in (-1, 1)]
     lib.slab('Body', lib.rrect(0.27, 0.17, 0.06, 6), 0.175, 0.035, peach, Frame((0, 0.012, 0), UPF), r,
              holes=[s[::-1] for s in slots])
-    rbox('Well', (0.15, 0.14, 0.1), dark, Frame((0, 0.1, 0)), r, 0.004)           # slot interiors read dark
+    rbox('Well', (0.17, 0.14, 0.1), dark, Frame((0, 0.1, 0)), r, 0.004)           # slot interiors read dark
     for i, (x, z) in enumerate(((-0.1, -0.06), (0.1, -0.06), (-0.1, 0.06), (0.1, 0.06))):
         cyl('Foot%d' % i, 0.012, 0.0, 0.014, dark, Frame((x, 0, z)), r, seg=12)
     rbox('LeverSlot', (0.004, 0.11, 0.016), dark, Frame((0.136, 0.1, 0.0)), r, 0.002)
@@ -993,11 +1014,17 @@ def toaster():
     rbox('LeverKnob', (0.04, 0.025, 0.035), M('LeverCream', 'cream', 'ceramic'), Frame((0.155, 0.15, 0)), lever, 0.01)
     cyl('Dial', 0.018, 0.0, 0.012, M('LeverCream', 'cream', 'ceramic'), Frame((0.07, 0.06, 0.086), (90, 0, 0)), r)
     rbox('DialMark', (0.003, 0.012, 0.002), dark, Frame((0.07, 0.068, 0.099)), r, 0.0008)
-    return r, {'pivot': 'base centre', 'slots': 'two slots along X at local z -0.035 / +0.035 (toast / toast_2)',
+    sc = B(Vector((TOASTER_SCALE[0], TOASTER_SCALE[1], TOASTER_SCALE[2])))   # wider/deeper for the big slice;
+    S_ = Matrix.Diagonal((abs(sc.x), abs(sc.y), abs(sc.z), 1.0))             # same height, lever travel unchanged
+    for o in r.children_recursive:
+        if o.type == 'MESH':
+            o.data.transform(o.matrix_world.inverted() @ S_ @ o.matrix_world)
+    return r, {'pivot': 'base centre', 'slots': 'two slots along X at local z -%.3f / +%.3f (toast / toast_2)'
+               % ((0.035 * TOASTER_SCALE[2],) * 2),
                'parts': {'Lever': 'slide down -Y 0.09 for `load`'}}
 
 
-BITES = [((0.042, -0.05), 0.024), ((0.014, -0.064), 0.018)]     # (centre, r): a bite out of the far corner
+BITES = [((0.042 * TG.S, -0.05 * TG.S), 0.024 * TG.S), ((0.014 * TG.S, -0.064 * TG.S), 0.018 * TG.S)]   # far-corner bite
 
 
 def toast_slab(name, frame, parent, bite=False, face_col=None, crust_col=None, xf=None, th=0.018):

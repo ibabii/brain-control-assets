@@ -18,7 +18,7 @@
   "sill plant Kenney Furniture Kit plantSmall1 (CC0)"
  ],
  "room": {
-  "tris": 71222,
+  "tris": 71624,
   "file": "breakfast_room.glb"
  },
  "props": {
@@ -73,7 +73,7 @@
   },
   "toaster": {
    "pivot": "base centre",
-   "slots": "two slots along X at local z -0.035 / +0.035 (toast / toast_2)",
+   "slots": "two slots along X at local z -0.046 / +0.046 (toast / toast_2)",
    "parts": {
     "Lever": "slide down -Y 0.09 for `load`"
    },
@@ -98,8 +98,8 @@
    },
    "node_position": [
     0.42,
-    1.05,
-    -0.855
+    1.07,
+    -0.8655
    ],
    "tris": 1592,
    "file": "props/toast.glb"

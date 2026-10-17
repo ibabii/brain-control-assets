@@ -1017,6 +1017,21 @@ def main():
                 m_[b] = m_.get(b, 0.0) + v * k
             mixed.append(top4(m_))
         wts['Top'] = R.smooth(top, mixed, 2)
+    if 'Overshirt' in canon:                       # overshirt sleeves ride the arm's own weights (the loose top
+        t = KDTree(len(canon['BodySkin']))         # weights balloon them when the elbow bends); torso keeps the top's
+        for i, p in enumerate(canon['BodySkin']):
+            t.insert(p, i)
+        t.balance()
+        osh = bpy.data.objects['Overshirt']
+        body_w = transfer(osh, canon['BodySkin'], wts['BodySkin'], t)
+        mixed = []
+        for p, w0, w1 in zip(canon['Overshirt'], wts['Overshirt'], body_w):
+            k = hb._ss((abs(p.x) - 0.19) / 0.06)
+            m_ = {b: v * (1 - k) for b, v in w0.items()}
+            for b, v in w1.items():
+                m_[b] = m_.get(b, 0.0) + v * k
+            mixed.append(top4(m_))
+        wts['Overshirt'] = R.smooth(osh, mixed, 2)
     trees = {}
     for n in [x for x in ('Top', 'Pants', 'Overshirt', 'Cardigan') if x in canon]:
         t = KDTree(len(canon[n]))
@@ -1414,12 +1429,23 @@ def _export(path, objs, anims):
                    export_morph_normal=os.environ.get('CHAR_MORPH_NORMAL', '1') == '1', **kw)
 
 
+# Meshes whose albedo is multiplied by vertex colours (Godot's glTF import leaves the flag off): part stem ->
+# (node, material name, roughness). The .tscn overrides the surface with a same-named material, so paint still works.
+VC_NODES = {'hair_curly': ('Acc_hair_curly_HairFade', 'CK2_HairFade', 0.92)}
+
+
 def _tscn(folder, name):
     path = os.path.join(folder, name + '.tscn')
     rel = os.path.relpath(os.path.join(folder, name + '.glb'), ROOT)
+    vc = next((v for k, v in VC_NODES.items() if name.startswith(k)), None)
     with open(path, 'w') as f:
-        f.write('[gd_scene format=3]\n\n[ext_resource type="PackedScene" path="res://%s" id="1"]\n\n'
-                '[node name="%s" instance=ExtResource("1")]\n' % (rel, name))
+        f.write('[gd_scene format=3]\n\n[ext_resource type="PackedScene" path="res://%s" id="1"]\n\n' % rel)
+        if vc:
+            f.write('[sub_resource type="StandardMaterial3D" id="vc"]\nresource_name = "%s"\n'
+                    'vertex_color_use_as_albedo = true\nroughness = %s\n\n' % (vc[1], vc[2]))
+        f.write('[node name="%s" instance=ExtResource("1")]\n' % name)
+        if vc:
+            f.write('\n[node name="%s" parent="."]\nsurface_material_override/0 = SubResource("vc")\n' % vc[0])
 
 
 def _json(path, data):
@@ -1512,8 +1538,7 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
 
 PAINT = {'CK2_Print': 'print', 'CK2_PrintInk': 'print_ink', 'CK2_Shirt' + SHIRT[0][1:]: 'top', 'CK2_Rib': 'rib', 'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush', 'CK2_BlushHot': 'blush*0.88'}
 PAINT['CK2_Overshirt'] = 'outer'
-PAINT['CK2_HairFade'] = 'skin*0.62'      # clipped fade on curly crops: a skin shadow, any skin tone
-PAINT['CK2_HairFade2'] = 'skin*0.8'      # its lighter outer step (a soft edge, no hard rim)
+PAINT['CK2_HairFade'] = 'skin'          # clipped fade on curly crops: skin x its vertex-colour shadow gradient
 PAINT['CK2_CgRib'] = 'outer'               # cardigan knit bands take the outer colour
 PAINT['CK2_HairGrey'] = 'hair_grey'        # grey streak bands (bob)
 PAINT['CK2_AgeLine'] = 'skin*0.8'         # smile lines on older faces

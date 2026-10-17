@@ -38,6 +38,8 @@ const CLOSE := [         # --close: prop/set detail shots (name, eye, yaw, pitch
 	['key shelf', Vector3(-3.65, 1.4, 1.15), 25.0, -22.0],
 	['floor path', Vector3(0.1, 2.5, 1.3), 0.0, -58.0],
 	['clock', Vector3(1.55, 1.8, 0.3), -75.0, 3.0],
+	['punchline cam (game fov 35 = centre half)', Vector3(-4.6, 1.45, 1.0), -85.0, 0.0],
+	['hall print', Vector3(-3.3, 1.5, 0.7), 60.0, 0.0],
 ]
 
 var cam: Camera3D

@@ -61,7 +61,7 @@ static func build(base: String, over: Dictionary = {}) -> Node3D:
 			if i >= 0:
 				m.set_blend_shape_value(i, shapes[s])
 		for i in m.mesh.get_surface_count():
-			var mat: Material = m.mesh.surface_get_material(i)
+			var mat: Material = m.get_active_material(i)       # override-aware, like the game's paint
 			if mat and cj.paint.has(mat.resource_name) and mat is StandardMaterial3D:
 				var slot: PackedStringArray = cj.paint[mat.resource_name].split('*')   # "hair*0.82": shaded slot
 				var d: StandardMaterial3D = mat.duplicate()
