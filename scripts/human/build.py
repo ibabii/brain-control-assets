@@ -1192,7 +1192,7 @@ def rig_json(path, hidden):
             'first_person': ['HandL', 'HandR', 'NailsL', 'NailsR', 'CuffL', 'CuffR'],   # meshes the player's own camera sees
             'look': {'neck': 'Neck', 'head': 'Head', 'share': [0.35, 0.65], 'yaw': 70, 'pitch': [-40, 30],
                      'eyes': ['LookL', 'LookR'], 'eye_yaw': 7 if LOOK_B else 10, 'eye_pitch': 4 if LOOK_B else 6,
-                     'eye_up': {'brow': [0.004, 0.0]}, 'eye_down': {'lid': 12.0, 'brow': [-0.002, -4.0]}},   # eye limits: pupils stay whole
+                     'eye_up': {'brow': [0.004, 0.0]}, 'eye_down': {'lid': 12.0, 'brow': [0.0015, 2.0]}},   # eye limits: pupils stay whole
             'render_layer': 2, 'ragdoll_layer': 2, 'ragdoll_mask': 1,
             'ik': {side: {'arm': [side + 'UpperArm', side + 'LowerArm', side + 'Hand'],
                           'leg': [side + 'UpperLeg', side + 'LowerLeg', side + 'Foot'],

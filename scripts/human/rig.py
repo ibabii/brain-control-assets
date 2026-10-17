@@ -500,17 +500,18 @@ def markers(L):
                     'basis': [[1, 0, 0], [0, 1, 0], [0, 0, 1]]})
     out.append({'name': 'EyeCam', 'bone': 'Head', 'pos': [0, L['EYE_Y'], -0.10], 'basis': [[1, 0, 0], [0, 1, 0], [0, 0, 1]]})
     out.append({'name': 'Foam', 'bone': 'Head', 'pos': [0, 1.525, -0.118], 'basis': [[1, 0, 0], [0, 1, 0], [0, 0, 1]]})
-    # Bite: a slice clamped by a corner in the teeth (expression bite), hanging face-on; the basis tilts it 35 deg
-    # forward off the chin and turns it 10 deg (props/toast_bitten: origin at the clamped corner)
+    # Bite: a slice clamped by a corner in the teeth (expression bite), sticking out forward ~25 deg below the
+    # horizontal and a little to his right, toasted top up toward the camera (props/toast_bitten: origin at the corner)
     from mathutils import Euler
-    m = Euler((math.radians(35), math.radians(-10), 0), 'YXZ').to_matrix()
+    m = Euler((math.radians(65), math.radians(-22), 0), 'YXZ').to_matrix()
     out.append({'name': 'Bite', 'bone': 'Head', 'pos': [0.004, 1.5225, -0.112],
                 'basis': [list(m.col[0]), list(m.col[1]), list(m.col[2])]})
     # PhoneEar: the phone (props/phone, centre pivot, long axis X, screen +Y) flat against the right ear, screen to
     # the ear, centred on it front-back, pinned by the raised shoulder (phone_wedge)
-    x = Vector((0, -0.2, -1)).normalized()                        # long axis front-back, mic end a little down
-    y = Vector((-1, 0, 0))
-    out.append({'name': 'PhoneEar', 'bone': 'Head', 'pos': [0.162, 1.602, 0.0], 'basis': [list(x), list(y), list(x.cross(y))]})
+    x = Vector((0.17, -0.2, -1)).normalized()                     # long axis front-back, mic end a little down, front
+    y = Vector((-1, 0, 0.17))                                     # end out ~10 deg: the case face turns to the camera
+    y = (y - x * y.dot(x)).normalized()
+    out.append({'name': 'PhoneEar', 'bone': 'Head', 'pos': [0.17, 1.628, 0.0], 'basis': [list(x), list(y), list(x.cross(y))]})
     return out
 
 

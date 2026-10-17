@@ -405,7 +405,7 @@ def hair_bob(skin, surf):
     for c, r, g in spheres:
         out = (c - hb.CRANIUM).normalized()
         if g:
-            p = (c + out * r * 0.6, r * 0.42)
+            p = (c + out * r * 0.5, r * 0.6)
             if prev and (prev[0] - p[0]).length < 0.03:         # dense along the lock: a smooth streak, not beads
                 for t in (0.25, 0.5, 0.75):
                     streaks.append((prev[0].lerp(p[0], t), prev[1] + (p[1] - prev[1]) * t, True))
@@ -418,7 +418,7 @@ def hair_bob(skin, surf):
                 streaks.append((c + out * r * 0.93, 0.0045, True))
     spheres = [(c, r, False) for c, r, g in spheres] + streaks
     for name, grey, mat in (('HairBob', False, lib.mat('Hair', hb.HAIR, 0.9)),
-                            ('HairBobGrey', True, lib.mat('HairGrey', '#A39C94', 0.9))):
+                            ('HairBobGrey', True, lib.mat('HairGrey', '#8C867F', 0.9))):
         bm = bmesh.new()
         for c, r, g in spheres:
             if g == grey:
@@ -439,7 +439,7 @@ def hair_bob(skin, surf):
     bpy.ops.object.voxel_remesh()
     bm = bmesh.new()                                        # soften the streak edges
     bm.from_mesh(gr.data)
-    for _ in range(4):
+    for _ in range(6):
         bmesh.ops.smooth_vert(bm, verts=bm.verts, factor=0.5, use_axis_x=True, use_axis_y=True, use_axis_z=True)
     bm.to_mesh(gr.data)
     bm.free()

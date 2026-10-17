@@ -449,6 +449,22 @@ def facepalm():
     return [(0, _t()), (8, k(0)), (16, k(-6)), (24, k(6)), (32, k(-4)), (40, k(0)), (52, _t())]
 
 
+def wipe_face():
+    """Spat on (E00 -> E01 callback): the back of the right hand / forearm wipes across the cheek and mouth twice,
+    head turning away from it, then a small disgusted shake of the hand; 2.5 s, starts and ends at rest (loops)."""
+    pole = (0.45, 1.2, 0.1)
+
+    def at(x, yaw, pitch=-4):
+        return _t({'Head': (pitch, yaw, 0), 'Neck': (-2, yaw / 2, 0), 'UpperChest': (-3, 0, 0)},
+                  {'RightArm': (_head((x, 1.5, -0.2)), pole)}, _fingers(kind_r='relaxed'))
+
+    def shake(a):
+        return _t({'RightHand': (0, 0, 28 * a), 'Head': (-6, 8, 0), 'UpperChest': (-2, 0, 0)},
+                  {'RightArm': (_body((0.3, 1.1, -0.3)), (0.6, 0.9, 0.2))}, _fingers(kind_r='spread'))
+    return [(0, _t()), (10, at(0.1, -6)), (18, at(-0.05, 6)), (26, at(0.1, -6)), (34, at(-0.05, 6)),
+            (42, at(0.08, -2)), (50, shake(1)), (54, shake(-1)), (58, shake(1)), (62, shake(-0.5)), (75, _t())]
+
+
 def concerned():
     """Worried: hands clasped at the chest, head tilted and a little forward, a small lean in; holds, settles."""
     c = _t({'Head': (-6, 0, 9), 'UpperChest': (-4, 0, 0)},
@@ -488,8 +504,8 @@ def sit_table():
 
 
 TORSO = {'wave': wave, 'point': point, 'throw': throw, 'laugh': laugh, 'facepalm': facepalm,
-         'concerned': concerned, 'talk': talk}
-LOOPS.append('talk')
+         'concerned': concerned, 'talk': talk, 'wipe_face': wipe_face}
+LOOPS.extend(['talk', 'wipe_face'])
 
 MOCK = {'squat': squat}                 # character-system mock only (not in the shipped Human)
 
