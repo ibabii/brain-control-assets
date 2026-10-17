@@ -4,10 +4,10 @@ ceb6c99afba42459ae62a33f5195c897ac93f4753aecdc43a8457bfb52bc3485  ./female_base/
 b6ada8beb349bd8a5f2a36ef16691ded4b4dedb2d90dbe95162c87bd87562940  ./female_base/art/female_base.tscn
 9fdd40b27b966c5dd605e869370ab6b5423b56a6e055820d92cf03842adc9184  ./female_base/art/female_base_rig.json
 15509f6158abbd99e8d1ce1d161d060ca648febc7135eaef7863e78246db975f  ./male_base/art/character.json
-012aa00f8fb5b0bc449db7582813adfb658fe2120bdd009ead3c2f1b0de36e88  ./male_base/art/male_base.glb
+0ea65b9fc88176b1e2a891d76036dfee7860b6891380994115ff4d3b9488ac95  ./male_base/art/male_base.glb
 b64a7946b2f0f1c25980fe7c5dfb7b823001a3744964742e124a98ecf162cb85  ./male_base/art/male_base.glb.import
 7f4fa5be18464b315a82cf2662555a3a9d475ee4c0dad9402adb8bca08608ab9  ./male_base/art/male_base.tscn
-a112cbcacc51801dd66c8251015fe5e6dd078fb72f9fb8e5681150f14febce4f  ./male_base/art/male_base_rig.json
+016005489e4f476514cbdc2ca63e40f82e069b21c5fdfd0c2b8807acd9f41edd  ./male_base/art/male_base_rig.json
 a7441cdde9730217cec6fa10699bdd71f88d4960e9c2d5d403a091514747e242  ./parts/beard_full_f/art/beard_full_f.glb
 7b24e99b0431c322eb7f2fe88768cf1e0c9c1f1e2607d8177a868c0107e41bbe  ./parts/beard_full_f/art/beard_full_f.glb.import
 9c7ff98a4661e773421c35612752bd5835d51ac7f42f80a44a90061d4b7b1ae2  ./parts/beard_full_f/art/beard_full_f.tscn
@@ -56,7 +56,7 @@ da4104a0666df70da426fc915bc48edc27fbc0f1664df0b71707ca724f636eab  ./parts/hair_c
 4297f41699d4226849662b4c692455b3a81718911f2b5597c50676d79bcc2a18  ./parts/hair_curly_m/art/hair_curly_m.glb.import
 ca3f4d3046f911969cccf223476fb893c362a6ffa4ad540a668b3a707333e0d8  ./parts/hair_curly_m/art/hair_curly_m.tscn
 2fa40469b9fa48b7fc2dfd7c66de4feb0d51ad7543a7726549ef7d81e5014283  ./parts/hair_curly_m/art/part.json
-7b260a01a7b31562d3da4de830e73a15d1d4af9b19a3f320f4d417b479296e88  ./parts/head_bernard/art/head_bernard.glb
+ad7b04263e57a358d85bc71ecd51cabdc770ee0685b4797956b468615ea0fde4  ./parts/head_bernard/art/head_bernard.glb
 ae762330ebfdfd43542c616dcae0424da1099df757460ee2e30966b7e151abe3  ./parts/head_bernard/art/head_bernard.glb.import
 58d0384f4b3672baa860782e99c76eced259a8e3be132d2573ab50c0e4507219  ./parts/head_bernard/art/head_bernard.tscn
 380aa2a91a241ff2cfb0ef0b27025076d288ad2eec4fb8736e45cf6936ad422f  ./parts/head_bernard/art/head_bernard_BlushFade.png
@@ -80,7 +80,7 @@ e643c59f4c96050cd957b598076467bdade0bd6288cd1e7d5313708c6a3ee6e9  ./parts/hoodie
 7865a65138e3ac4ef274534c2f90b783e7a78fd7792ff72912252defad2f6846  ./parts/hoodie_f/art/hoodie_f_RibFFFFFFN.png
 ffe33b3cba9450518f46d17d71062b485b29e97c4da12abcb280950083b68f94  ./parts/hoodie_f/art/hoodie_f_RibFFFFFFN.png.import
 f522427b16c67bf33ccc9c1392fc4d6c2a0eab7304876fd20bb1efe1d842f44f  ./parts/hoodie_f/art/part.json
-2acdef19f2a65b20632230482d526a6e10d9a707f15f36e89291de97dd45e965  ./parts/hoodie_m/art/hoodie_m.glb
+93462092865786f9d2d4b0ae132f38143a66736011e05bb56887f3aa91ffff09  ./parts/hoodie_m/art/hoodie_m.glb
 97db5fe60ff0e8532e70f37c3d253281e8e376d893856ca3e54489087604afca  ./parts/hoodie_m/art/hoodie_m.glb.import
 ceaf3dea32aa3f29a358c03a68cddcc9614cf3137c82cacc355b51c7a321a2a7  ./parts/hoodie_m/art/hoodie_m.tscn
 e643c59f4c96050cd957b598076467bdade0bd6288cd1e7d5313708c6a3ee6e9  ./parts/hoodie_m/art/hoodie_m_RibFFFFFF.png
@@ -92,11 +92,11 @@ f522427b16c67bf33ccc9c1392fc4d6c2a0eab7304876fd20bb1efe1d842f44f  ./parts/hoodie
 15cdc3da6e93bac31868868e50b06470403b96165b17435343bfaf5f9f73682c  ./parts/joggers_f/art/joggers_f.glb.import
 2120e03d64e5ff320f0774d722bd9038c724b9924e8a570ec097d9566d1f2a26  ./parts/joggers_f/art/joggers_f.tscn
 64f21feab8f8c8499a76abcfb2494b7add00716f7e6b22476e487be4a289f8b2  ./parts/joggers_f/art/part.json
-62245c0c6724a66c68290c1d17dfd333f399a0bf6c41fdd2376d8e83e6fa8392  ./parts/joggers_m/art/joggers_m.glb
+aa8f04ac13584a1eccd92331487b0c77f7191ca2476ba8a460356488557440fa  ./parts/joggers_m/art/joggers_m.glb
 5f23a289caf2b828b8740f9b232fd41ce42521142740d5ee44e40b2bc86e6afa  ./parts/joggers_m/art/joggers_m.glb.import
 a3cb2a43e585660a7dc9bfc918e51be914b858a03ba1a2e6a3a4bdde25cc55e3  ./parts/joggers_m/art/joggers_m.tscn
 64f21feab8f8c8499a76abcfb2494b7add00716f7e6b22476e487be4a289f8b2  ./parts/joggers_m/art/part.json
-28e54d49491bdcbbf553c0140f34a8626d682bd3ee1025cb919126e09ba9628f  ./parts/overshirt_m/art/overshirt_m.glb
+7fe9ae627c42b69c5975307cca315497740bae4a295795950585858e94687c6e  ./parts/overshirt_m/art/overshirt_m.glb
 5c5858b389e189f3c45edf9588a050ad891b8ee2932ae3c7c0a81dbb4a1874d1  ./parts/overshirt_m/art/overshirt_m.glb.import
 54af67d5c286299f8b966e2112a941b97639cbb56f700de911e466a08cc8d069  ./parts/overshirt_m/art/overshirt_m.tscn
 b78cd09bc7c4d9dad25149e62f2fe13deba8355c1d5abebe7b3a84c2d778f046  ./parts/overshirt_m/art/part.json
@@ -105,7 +105,7 @@ fc94fe8a3e27992db9e70d9390e5447a4c99663eb9293d50ba7cfd36a7ffd644  ./parts/sneake
 b6264065244add729487fee16de82bf18199ba594590bcdf62ebe0a8f1d39b47  ./parts/sneakers_f/art/sneakers_f.glb.import
 a50acf865d5154429f48e0734509f98479f0f6f0276740a6efd4ad03f197eaf5  ./parts/sneakers_f/art/sneakers_f.tscn
 7f2e471f3803d0f5e0f38147a3f2018ef193963bb4b938be4a71f90e8b85db7b  ./parts/sneakers_m/art/part.json
-b32fb112f5720958923cd2b4017d2aa472b950ee673f6f692e2252fce0896fc7  ./parts/sneakers_m/art/sneakers_m.glb
+7df85e55904ef1cceba738ee20e048a6c91f6a51c3981e95a33ad13e2578e7e2  ./parts/sneakers_m/art/sneakers_m.glb
 7a512a875757a2f89e22e6608dd414c7deb9490b954f6d36a09c6c7b20058d7e  ./parts/sneakers_m/art/sneakers_m.glb.import
 60138192707361eacf1ff5dcc4f0c117241a8cd509c2f94e31e8b3aa16889f86  ./parts/sneakers_m/art/sneakers_m.tscn
 138c75efc83a3115fe93bf88b4ccd124c54cd6f99369a7e4589a7e17927f2fa4  ./parts/tshirt_f/art/part.json
@@ -117,7 +117,7 @@ c41e1fbd38db34f5f67ef35c2e48c9487e18fc38e4cbf4150940decce4d4ac6f  ./parts/tshirt
 7865a65138e3ac4ef274534c2f90b783e7a78fd7792ff72912252defad2f6846  ./parts/tshirt_f/art/tshirt_f_RibFFFFFFN.png
 630bf185e46ffa0a72a5de21bad23157a1355de2da83f02b3988cf6d462242ec  ./parts/tshirt_f/art/tshirt_f_RibFFFFFFN.png.import
 138c75efc83a3115fe93bf88b4ccd124c54cd6f99369a7e4589a7e17927f2fa4  ./parts/tshirt_m/art/part.json
-c07e9bd78fa360c0a9c07de236e6a76931479779f01ccbe61b7f99ec1c0c7638  ./parts/tshirt_m/art/tshirt_m.glb
+4f77c73d2bf621dce982beb97a9ec0347ae73854c98b71768be64b4f41dacc2e  ./parts/tshirt_m/art/tshirt_m.glb
 8060e4245c3842ac92352cec059ebe0b8ff3d2115ffeb2033169eabd6e06e44b  ./parts/tshirt_m/art/tshirt_m.glb.import
 3b44351ebb1a89ee7a2155520e951cfaa37c6895d5c4fee8dd2537b865e91d5d  ./parts/tshirt_m/art/tshirt_m.tscn
 e643c59f4c96050cd957b598076467bdade0bd6288cd1e7d5313708c6a3ee6e9  ./parts/tshirt_m/art/tshirt_m_RibFFFFFF.png
