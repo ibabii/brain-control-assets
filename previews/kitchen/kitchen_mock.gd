@@ -333,6 +333,15 @@ func _capture() -> void:
 			n.visible = not String(s[0]).begins_with('overview')
 		for n in 4:
 			await RenderingServer.frame_post_draw
+		if String(s[0]).begins_with('beat 2') and '--art' in OS.get_cmdline_user_args():
+			# MOM cap height on the phone screen, in px at 1080p (screen v runs toward -Z)
+			var man: Dictionary = JSON.parse_string(FileAccess.get_file_as_string('res://breakfast/art/manifest.json'))
+			var ph: Dictionary = man.props.phone
+			var c := Vector3(ph.node_position[0], ph.node_position[1] + 0.0046, ph.node_position[2])
+			var zc: float = c.z - (float(ph.mom_centre_v) - 0.5) * 0.07
+			var half: float = float(ph.mom_cap_fraction_of_screen_height) * 0.07 / 2
+			var px := absf(cam.unproject_position(Vector3(c.x, c.y, zc - half)).y - cam.unproject_position(Vector3(c.x, c.y, zc + half)).y)
+			print('PROBE MOM cap %.1f px at 1080p (width fraction %.2f)' % [px * 1080.0 / size.y, float(ph.mom_width_fraction)])
 		if String(s[0]).begins_with('beat 7') and roommate:
 			var sk: Skeleton3D = roommate.find_children('*', 'Skeleton3D', true, false)[0]
 			var hd := (sk.global_transform * sk.get_bone_global_pose(sk.find_bone('Head'))).origin

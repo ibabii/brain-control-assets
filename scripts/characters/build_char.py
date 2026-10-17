@@ -236,15 +236,15 @@ def slippers(parent):
     """E01 punchline slippers: fuzzy peach (boucle bumps), porcelain cuff, tiny ears, a cartoon face. Same
     footprint as the sneakers (they replace them in the shoes slot)."""
     fuzz = lib.mat('SlipperFuzz', '#EFA58C', 0.95)                  # peach, a touch pinker than the floor terracotta
-    cuff = lib.mat('SlipperCuff', '#F8F4EA', 0.95)
-    sole = lib.mat('SlipperSole', '#C98778', 0.9)
+    cuff = lib.mat('SlipperCuff', '#A85E4E', 0.95)                  # darker clay inner/cuff + sole: reads on any floor
+    sole = lib.mat('SlipperSole', '#8E4F42', 0.9)
     ink_m = lib.mat('SlipperInk', '#2E2624', 0.7)
     blush = lib.mat('SlipperBlush', '#D97F6E', 0.9)
     rng = __import__('random').Random(7)
     for s, side in ((-1, 'L'), (1, 'R')):
         x = hb.ANKLE.x * s
         f = hb.Frame((x, 0.0, -0.05), (-90, s * -6, 0))            # local y = toward the toe, z = up
-        lib.slab('SlipperSole' + side, lib.rrect(0.13, 0.3, 0.06, 6), 0.022, 0.009, sole, f, parent)
+        lib.slab('SlipperSole' + side, lib.rrect(0.142, 0.312, 0.065, 6), 0.026, 0.009, sole, f, parent)
         toe, toe_s = (0, 0.07, 0.06), (0.068, 0.056, 0.105)          # world semis (x, up, length)
         heel, heel_s = (0, -0.06, 0.06), (0.064, 0.056, 0.075)
         mb = meta('SlipperMeta' + side, 0.0045)
@@ -272,7 +272,7 @@ def slippers(parent):
         surf = Surface(up)
         back = f.dir((0, -1, -0.3)).normalized()                     # look back (and a bit down) at the toe front
         for name, off, r, m in (('EyeL', (-0.021, 0.1), 0.0105, ink_m), ('EyeR', (0.021, 0.1), 0.0105, ink_m),
-                                ('Nose', (0.0, 0.085), 0.006, sole), ('BlushL', (-0.037, 0.08), 0.009, blush),
+                                ('Nose', (0.0, 0.085), 0.006, cuff), ('BlushL', (-0.037, 0.08), 0.009, blush),
                                 ('BlushR', (0.037, 0.08), 0.009, blush)):
             start = f.at((off[0], 0.4, off[1] + 0.07))
             loc, n = surf.hit(start, back)

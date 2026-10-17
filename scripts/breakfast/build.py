@@ -55,6 +55,7 @@ SEAT_YAW = 130.0
 TABLE = Vector((1.41, 0.0, -0.60))             # round table centre; top r 0.38 at 0.755
 TABLE_R, TABLE_TOP = 0.38, 0.755
 NOOK_Y = 0.47                                  # seat cushion top
+CLOCK = (7, 30)                                # wall clock time (hours, minutes)
 HINGE = (-4.975, 0.0, 1.25)                    # front door: hinge on the hall-side face of the end wall
 PROPS = {   # id: node position (game); base pivots on the worktop (0.92) unless noted
     'coffee_machine': (-0.3, 0.92, -0.85), 'mug': (-0.3, 0.92, -0.66), 'phone': (0.08, 0.9245, -0.64),
@@ -121,6 +122,31 @@ def rug_tex(name, px=256):
             lib.image_from_array(name + 'N', _normal_from(hgt, 1.5), non_color=True))
 
 
+def window_glow(px=256):
+    """Warm morning glow, brighter at the top, soft frost mottling (no blown white)."""
+    c = ink.Canvas(px, px, '#E3C79A')
+    rng = np.random.default_rng(12)
+    mott = ink.blur(rng.normal(0, 1, (px, px)), 6)
+    v = np.linspace(1.04, 0.9, px)[:, None]
+    c.multiply(v * (1 + 0.035 * mott / (mott.std() + 1e-6)))
+    for k in range(5):                                       # faint tree-shadow blobs through the frost
+        c.ellipse((rng.uniform(0.1, 0.9), rng.uniform(0.55, 0.9)), rng.uniform(0.08, 0.14), rng.uniform(0.06, 0.1),
+                  '#C9AE84', opacity=0.35, soft=20)
+    return c
+
+
+def amber_pane(px=128):
+    """Front-door pane: amber frosted glass (~70% value) with a diamond lattice."""
+    c = ink.Canvas(px, int(px * 0.42 / 0.36), '#B98D52')
+    rng = np.random.default_rng(13)
+    c.multiply(1 + 0.05 * ink.blur(rng.normal(0, 1, (c.h, c.w)), 3))
+    for k in range(-4, 9):
+        u = k / 4
+        c.stroke([(u, 0), (u + 1, 1)], 3, '#D9B477', 0.8)
+        c.stroke([(u, 1), (u + 1, 0)], 3, '#D9B477', 0.8)
+    return c
+
+
 def canvas_mat(name, c, rough=0.9, emit=0.0):
     img = lib.image_from_array(name + 'Tex', c.image())
     if emit:
@@ -136,6 +162,21 @@ def uv_quad(name, frame, w, h, mat, parent, u=(0, 1), v=(0, 1)):
     f = bm.faces.new(vs)
     for l, (uu, vv) in zip(f.loops, ((u[0], v[0]), (u[1], v[0]), (u[1], v[1]), (u[0], v[1]))):
         l[uvl].uv = (uu, vv)
+    return lib.from_bmesh(name, bm, mat, parent, smooth=False)
+
+
+def uv_disc(name, frame, r, mat, parent, n=48):
+    """Round face in frame XY facing +Z, UV mapped from the unit square (a round canvas shows whole)."""
+    bm = bmesh.new()
+    uvl = bm.loops.layers.uv.new('UVMap')
+    c = bm.verts.new(frame.at((0, 0, 0)))
+    ring = [bm.verts.new(frame.at((math.cos(2 * math.pi * k / n) * r, math.sin(2 * math.pi * k / n) * r, 0)))
+            for k in range(n)]
+    for k in range(n):
+        f = bm.faces.new((c, ring[k], ring[(k + 1) % n]))
+        for l, v in zip(f.loops, (None, k, (k + 1) % n)):
+            a = 2 * math.pi * v / n if v is not None else 0
+            l[uvl].uv = (0.5, 0.5) if v is None else (0.5 + 0.5 * math.cos(a), 0.5 + 0.5 * math.sin(a))
     return lib.from_bmesh(name, bm, mat, parent, smooth=False)
 
 
@@ -204,8 +245,8 @@ def window(p):
         if bm.faces[0].normal.dot(cen - bm.faces[0].calc_center_median()) < 0:
             bmesh.ops.reverse_faces(bm, faces=bm.faces)
         lib.from_bmesh('Reveal' + name, bm, paint, p, smooth=False)
-    sky = lib.mat('Sky', BH.SKY, 0.9, emit=BH.SKY, strength=0.9)                # open/frosted, not glass
-    quad_grid('WindowSky', f.child((0, 0, -0.09)), x0, x1, y0, y1, sky, p)
+    sky = canvas_mat('WindowGlow', window_glow(), rough=0.9, emit=0.75)         # warm frosted pane, ~85% value
+    uv_quad('WindowSky', f.child(((x0 + x1) / 2, (y0 + y1) / 2, -0.09)), x1 - x0, y1 - y0, sky, p)
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     ring = [(x + cx, y + cy) for x, y in lib.rrect(x1 - x0 + 0.1, y1 - y0 + 0.1, 0.015, 2)]
     hole = [(x + cx, y + cy) for x, y in lib.rrect(x1 - x0 - 0.04, y1 - y0 - 0.04, 0.004, 1)][::-1]
@@ -294,7 +335,7 @@ def counter(root):
 
 def fridge(p):
     x0, x1, z0, z1, h = -1.99, -1.47, -1.08, -0.42, 1.85
-    body = M('Fridge', 'porcelain', 'painted')
+    body = M('Fridge', 'cream', 'painted')
     cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
     rbox('FridgeBody', (x1 - x0, h, z1 - z0 - 0.03), body, Frame((cx, h / 2, cz - 0.015)), p, 0.04)
     for name, y0, y1 in (('Freezer', 1.27, h - 0.01), ('Main', 0.03, 1.25)):
@@ -430,12 +471,14 @@ def wall_bits(root):
         a = 2 * math.pi * k / 12
         u, v = 0.5 + 0.4 * math.sin(a), 0.5 + 0.4 * math.cos(a)
         c.ellipse((u, v), 0.025 if k % 3 == 0 else 0.013, 0.025 if k % 3 == 0 else 0.013, PAL['graphite'])
-    uv_quad('ClockFace', fc.child((0, 0, 0.0405)), 0.25, 0.25, canvas_mat('ClockFace', c), p)
+    uv_disc('ClockFace', fc.child((0, 0, 0.0405)), 0.128, canvas_mat('ClockFace', c), p)
     hands = M('ClockHands', 'graphite', 'rubber')
-    for name, ang, ln, w in (('ClockHour', 7 * 30 + 20, 0.07, 0.012), ('ClockMinute', 240, 0.105, 0.008)):
-        a = math.radians(ang)
-        tip = fc.at((math.sin(a) * ln, math.cos(a) * ln, 0.046))
-        tube(name, [fc.at((0, 0, 0.046)), tip], w / 2, hands, p, res=1)
+    for name, ang, ln, w, dz in (('ClockHour', CLOCK[0] * 30 + CLOCK[1] * 0.5, 0.07, 0.013, 0.046),
+                                 ('ClockMinute', CLOCK[1] * 6, 0.105, 0.008, 0.05)):
+        # built pointing at 12, pivot on the clock centre; node rotation.x = clockwise angle (gameplay can drive it)
+        o = lib.box(name, (w, ln + 0.02, 0.003), hands, fc.child((0, ln / 2 - 0.01, dz)), p, bevel=0.001,
+                    pivot=fc.at((0, 0, dz)))
+        o.rotation_euler = (math.radians(ang), 0, 0)
     lib.sphere('ClockPin', 0.01, M('Knob', 'clay', 'ceramic'), fc.child((0, 0, 0.047)), p)
     # framed print above the nook (sunny-side-up egg on peach)
     fp = Frame((1.05, 1.5, ZB + 0.002))
@@ -506,34 +549,54 @@ def coat_hooks(p):
     sweep('Scarf', [(-4.25, 1.72, z + 0.09), (-4.27, 1.5, z + 0.1), (-4.24, 1.25, z + 0.09)], lambda t: 0.035, scarf, p)
 
 
-def shoe(name, frame, upper, parent):
-    """Chunky sneaker: white sole slab, rounded upper, lace bumps."""
-    sole = M('Sole', 'porcelain', 'rubber')
-    lib.slab(name + 'Sole', lib.rrect(0.1, 0.27, 0.045, 4), 0.025, 0.01, sole, frame.child((0, 0, 0), (-90, 0, 0)),
-             parent)
-    mb = meta(name + 'Meta', 0.006)
-    ell(mb, frame.at((0, 0.05, -0.05)), (0.045, 0.04, 0.085))
-    ell(mb, frame.at((0, 0.06, 0.06)), (0.042, 0.05, 0.06))
-    lib.set_parent(solid(name + 'Upper', [mb], 0.005, 1500, M('Upper' + upper, upper, 'fabric')), parent)
-    lace = M('Lace', 'porcelain', 'fabric')
-    for k in range(3):
-        rbox(name + 'Lace%d' % k, (0.045, 0.008, 0.01), lace, frame.child((0, 0.095 - k * 0.01, -0.01 - k * 0.03),
-                                                                         (-25, 0, 0)), parent, 0.003)
+SHOES = {   # kind: upper, sole, lace (None = loafer, no laces), accent
+    'sneaker': ('#F4EFE4', '#FFFFFF', '#454C48', '#C98778'),
+    'trainer': ('#2D7A73', '#FFFFFF', '#F8F4EA', '#F8F4EA'),
+    'loafer': ('#7A4A2E', '#D9C3A0', None, '#5C3520'),
+}
+
+
+def shoe(name, frame, kind, parent):
+    """Chunky shoe, toe toward frame -Z (out of the rack): sole slab, rounded upper, criss-cross laces or a loafer
+    strap. Big enough to read from the hallway camera."""
+    upper_c, sole_c, lace_c, acc_c = SHOES[kind]
+    sole = M('Sole' + kind, sole_c, 'rubber')
+    low = kind == 'loafer'
+    lib.slab(name + 'Sole', lib.rrect(0.105, 0.28, 0.045, 4), 0.026, 0.01, sole, frame.child((0, 0, 0), UPF), parent)
+    mb = meta(name + 'Meta', 0.005)
+    ell(mb, frame.at((0, 0.045, -0.06)), (0.048, 0.034 if low else 0.042, 0.085))      # toe box
+    ell(mb, frame.at((0, 0.05 if low else 0.065, 0.06)), (0.046, 0.04 if low else 0.055, 0.065))   # heel + collar
+    lib.set_parent(solid(name + 'Upper', [mb], 0.0045, 1800, M('Upper' + kind, upper_c, 'fabric')), parent)
+    acc = M('Accent' + kind, acc_c, 'fabric')
+    if lace_c is None:
+        rbox(name + 'Strap', (0.075, 0.012, 0.022), acc, frame.child((0, 0.072, -0.03), (-12, 0, 0)), parent, 0.005)
+        return
+    lace = M('Lace' + kind, lace_c, 'fabric')
+    for k in range(4):                                     # criss-cross laces over the tongue
+        z = -0.075 + k * 0.024
+        y = 0.075 + k * 0.009
+        for sgn in (-1, 1):
+            tube(name + 'Lace%d%d' % (k, sgn > 0), [frame.at((-0.026 * sgn, y - 0.004, z - 0.008)),
+                                                     frame.at((0.026 * sgn, y + 0.004, z + 0.008))], 0.0045, lace,
+                 parent, res=1)
+    rbox(name + 'Stripe', (0.004, 0.022, 0.09), acc, frame.child((0.047, 0.04, 0.0)), parent, 0.002)
+    rbox(name + 'Stripe2', (0.004, 0.022, 0.09), acc, frame.child((-0.047, 0.04, 0.0)), parent, 0.002)
 
 
 def shoe_rack(p):
-    """Two-tier honey rack against the north wall: three pairs of shoes (no slippers)."""
+    """Two-tier honey rack against the north wall: white sneakers + teal trainers on top, brown loafers below
+    (no slippers: the punchline plant)."""
     z = HALL[2]
     wood = M('RackWood', HONEY_WOOD, 'wood')
-    x0, x1 = -4.2, -3.55
-    for y in (0.05, 0.3):
-        rbox('RackShelf%.0f' % (y * 100), (x1 - x0, 0.02, 0.3), wood, Frame(((x0 + x1) / 2, y, z + 0.16)), p, 0.005)
+    x0, x1 = -4.25, -3.5
+    for y in (0.05, 0.32):
+        rbox('RackShelf%.0f' % (y * 100), (x1 - x0, 0.02, 0.32), wood, Frame(((x0 + x1) / 2, y, z + 0.17)), p, 0.005)
     for x in (x0, x1):
-        rbox('RackSide%.0f' % (-x * 100), (0.02, 0.5, 0.3), wood, Frame((x, 0.25, z + 0.16)), p, 0.005)
-    pairs = [(0.31, -4.07, 'teal'), (0.31, -3.75, 'graphite'), (0.06, -3.92, 'clay')]
-    for i, (y, x, c) in enumerate(pairs):
-        for s in (-1, 1):
-            shoe('Shoe%d%s' % (i, 'LR'[s > 0]), Frame((x + s * 0.06, y + 0.012, z + 0.17), (0, 0, 0)), c, p)
+        rbox('RackSide%.0f' % (-x * 100), (0.02, 0.52, 0.32), wood, Frame((x, 0.26, z + 0.17)), p, 0.005)
+    pairs = [(0.33, -4.06, 'sneaker'), (0.33, -3.7, 'trainer'), (0.06, -3.88, 'loafer')]
+    for i, (y, x, kind) in enumerate(pairs):
+        for s_ in (-1, 1):
+            shoe('Shoe%d%s' % (i, 'LR'[s_ > 0]), Frame((x + s_ * 0.06, y + 0.012, z + 0.17), (0, 180, 0)), kind, p)
 
 
 # --- props -----------------------------------------------------------------------------------------------------
@@ -624,37 +687,58 @@ def mug():
         'Splats/Splat0..3': 'coffee drops on the worktop around the mug (hidden by default)'}}
 
 
+PHONE = (0.162, 0.08, 0.152, 0.07)              # case length (x) x width (z), screen; lies landscape
+
+
 def phone_screen_mat():
-    c = ink.Canvas(160, 320, '#22302F')                               # MOM caps >= 18 px at 1080p from his eye
-    c.ellipse((0.5, 0.84), 0.075, 0.075, PAL['peach'])                # portrait: Mom
-    c.ellipse((0.5, 0.89), 0.07, 0.035, '#B9B2A8')                    # grey curls
-    c.ellipse((0.47, 0.835), 0.008, 0.008, PAL['graphite'])
-    c.ellipse((0.53, 0.835), 0.008, 0.008, PAL['graphite'])
-    ink.text(c, 'MOM', (0.5, 0.56), 0.2, PAL['porcelain'], weight=4)
-    ink.heart(c, (0.5, 0.36), 0.045, PAL['clay'], fill=PAL['clay'])
-    c.ellipse((0.27, 0.12), 0.075, 0.075, '#5FAE6E')
-    c.ellipse((0.73, 0.12), 0.075, 0.075, '#D2574A')
+    """Landscape ringing face read from Bernard: portrait + heart on top, MOM across ~70% of the width below."""
+    w, h = 300, int(300 * PHONE[3] / PHONE[2])
+    c = ink.Canvas(w, h, '#22302F')
+    c.ellipse((0.44, 0.82), 0.12, 0.12, PAL['peach'])                 # portrait: Mom (grey curls)
+    c.ellipse((0.44, 0.9), 0.11, 0.05, '#B9B2A8')
+    c.ellipse((0.425, 0.81), 0.013, 0.013, PAL['graphite'])
+    c.ellipse((0.455, 0.81), 0.013, 0.013, PAL['graphite'])
+    ink.heart(c, (0.58, 0.8), 0.13, PAL['clay'], fill=PAL['clay'])
+    w2 = int(w / 1.38)                                                # bold, stretched 1.38x wide: ~70% of the width
+    probe = ink.Canvas(w2, h, '#000000')
+    ink.text(probe, 'MOM', (0.5, 0.33), 0.86, '#ffffff', weight=4)
+    m = probe.rgb[..., 0]
+    xs = np.linspace(0, w2 - 1, w)
+    mask = np.stack([np.interp(xs, np.arange(w2), row) for row in m])
+    rows = np.where(mask.max(1) > 0.5)[0]
+    cols = np.where(mask.max(0) > 0.5)[0]
+    PHONE_TEXT.update(cap=(rows.max() - rows.min()) / h, width=(cols.max() - cols.min()) / w,
+                      v=1 - (rows.max() + rows.min()) / 2 / h)
+    c.paint(mask, PAL['porcelain'])
+    c.ellipse((0.05, 0.33), 0.09, 0.09, '#5FAE6E')                   # answer / decline at the ends
+    c.ellipse((0.95, 0.33), 0.09, 0.09, '#D2574A')
     return canvas_mat('PhoneScreen', c, rough=0.8, emit=0.9)
+
+
+PHONE_TEXT = {}
 
 
 def phone_body(parent, frame, with_screen=True):
     case = M('PhoneCase', 'graphite', 'rubber')
-    lib.slab('Case', lib.rrect(0.072, 0.145, 0.012, 4), 0.009, 0.0035, case, frame.child((0, -0.0045, 0), UPF),
-             parent)
+    L, W, sl, sw = PHONE
+    lib.slab('Case', lib.rrect(L, W, 0.013, 4), 0.009, 0.0035, case, frame.child((0, -0.0045, 0), UPF), parent)
     if with_screen:
-        uv_quad('Screen', frame.child((0, 0.0046, 0), (-90, 0, 0)), 0.064, 0.135, phone_screen_mat(), parent)
+        uv_quad('Screen', frame.child((0, 0.0046, 0), (-90, 0, 0)), sl, sw, phone_screen_mat(), parent)
     else:
-        rbox('ScreenDark', (0.064, 0.0008, 0.135), M('ScreenDark', '#1E2423', 'rubber'), frame.child((0, 0.0046, 0)),
+        rbox('ScreenDark', (sl, 0.0008, sw), M('ScreenDark', '#1E2423', 'rubber'), frame.child((0, 0.0046, 0)),
              parent, 0.0003)
 
 
 def phone():
     r = prop_root('phone')
     phone_body(r, Frame((0, 0, 0)))
-    return r, {'pivot': 'phone centre (lying flat; top edge toward -Z so MOM reads from Bernard)',
+    return r, {'pivot': 'phone centre, lying flat in landscape (long axis local X; screen up = -Z, so MOM reads '
+                        'from Bernard with its baseline toward the counter front)',
+               'mom_cap_fraction_of_screen_height': round(PHONE_TEXT['cap'], 3),
+               'mom_width_fraction': round(PHONE_TEXT['width'], 3), 'mom_centre_v': round(PHONE_TEXT['v'], 3),
                'parts': {'Case': 'graphite rounded case',
-                         'Screen': 'quad, UV 0..1 (u right, v toward the top edge): MOM + heart + portrait + call '
-                                   'buttons baked; swap its material for a SubViewport texture if wanted. Hidden = off'}}
+                         'Screen': 'quad %.3f x %.3f, UV 0..1 (u along X, v toward -Z): portrait + heart above, MOM; '
+                                   'swap its material for a SubViewport texture if wanted. Hidden = off' % PHONE[2:]}}
 
 
 def toaster():
@@ -747,8 +831,8 @@ def front_door():
     for i, (y0, y1) in enumerate(((0.12, 0.92), (1.0, 1.35))):
         rbox('Field%d' % i, (w - 0.22, y1 - y0, 0.008), dark, Frame((0.002, (y0 + y1) / 2, -w / 2), (0, 90, 0)), leaf,
              0.01)
-    frost = lib.mat('Frosted', '#DDE6E2', 0.9, emit='#F6F2E6', strength=0.15)
-    rbox('Pane', (0.36, 0.42, 0.006), frost, Frame((0.003, 1.65, -w / 2), (0, 90, 0)), leaf, 0.02)
+    uv_quad('Pane', Frame((0.0045, 1.65, -w / 2), (0, 90, 0)), 0.36, 0.42, canvas_mat('AmberPane', amber_pane(),
+            rough=0.9, emit=0.35), leaf)
     rbox('PaneBead', (0.4, 0.46, 0.004), M('Casing', 'porcelain', 'painted'), Frame((0.0015, 1.65, -w / 2), (0, 90, 0)),
          leaf, 0.02)
     brass = M('DoorKnob', 'honey', 'ceramic')
@@ -788,7 +872,7 @@ def colliders():
              ('NookRun', (1.85, 0.235, -0.29), (0.3, NOOK_Y, 0.78)),
              ('TableTop', (TABLE.x, TABLE_TOP - 0.018, TABLE.z), (0.6, 0.036, 0.6)),
              ('TablePedestal', (TABLE.x, (TABLE_TOP - 0.036) / 2, TABLE.z), (0.08, TABLE_TOP - 0.036, 0.08)),
-             ('ShoeRack', (-3.875, 0.25, hz0 + 0.16), (0.65, 0.5, 0.3))]
+             ('ShoeRack', (-3.875, 0.26, hz0 + 0.17), (0.75, 0.52, 0.32))]
     return [{'name': n, 'centre': [round(x, 4) for x in c], 'size': [round(x, 4) for x in sz]} for n, c, sz in boxes]
 
 

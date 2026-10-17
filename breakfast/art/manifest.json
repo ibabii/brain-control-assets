@@ -18,7 +18,7 @@
   "sill plant Kenney Furniture Kit plantSmall1 (CC0)"
  ],
  "room": {
-  "tris": 63542,
+  "tris": 64332,
   "file": "breakfast_room.glb"
  },
  "props": {
@@ -54,10 +54,13 @@
    "file": "props/mug.glb"
   },
   "phone": {
-   "pivot": "phone centre (lying flat; top edge toward -Z so MOM reads from Bernard)",
+   "pivot": "phone centre, lying flat in landscape (long axis local X; screen up = -Z, so MOM reads from Bernard with its baseline toward the counter front)",
+   "mom_cap_fraction_of_screen_height": 0.478,
+   "mom_width_fraction": 0.703,
+   "mom_centre_v": 0.333,
    "parts": {
     "Case": "graphite rounded case",
-    "Screen": "quad, UV 0..1 (u right, v toward the top edge): MOM + heart + portrait + call buttons baked; swap its material for a SubViewport texture if wanted. Hidden = off"
+    "Screen": "quad 0.152 x 0.070, UV 0..1 (u along X, v toward -Z): portrait + heart above, MOM; swap its material for a SubViewport texture if wanted. Hidden = off"
    },
    "node_position": [
     0.08,
@@ -131,7 +134,7 @@
     0.0,
     1.25
    ],
-   "tris": 2740,
+   "tris": 2426,
    "file": "props/front_door.glb"
   }
  }
