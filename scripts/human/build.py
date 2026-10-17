@@ -92,6 +92,10 @@ def head_skin():
         for s in (-1, 1):
             ell(mb, (s * 0.066, 1.534, -0.014), (0.046, 0.042, 0.066))
         ell(mb, (0, 1.508, -0.066), (0.058, 0.03, 0.05))
+    if FACE.get('jaw') == 'round':                                   # soft, round, older face: fuller lower cheeks
+        for s in (-1, 1):
+            ell(mb, (s * 0.066, 1.54, -0.045), (0.056, 0.05, 0.056))
+        ell(mb, (0, 1.505, -0.06), (0.06, 0.032, 0.05))
     # Neck into the collar. Look B's bigger head reaches lower: a short neck stays under the hood when leaning.
     cap(mb, (0, 1.43 if LOOK_B else 1.36, 0.012), (0, 1.50, 0.0), 0.05 if LOOK_B else 0.054)
     ears = meta('Ears', 0.004)                                       # own family: a crease, not a cheek lump
@@ -789,6 +793,15 @@ def face(head_node, skin_obj):
     flat = on_curve(surf, [(-0.024, 1.523), (0, 1.522), (0.024, 1.523)], front, 0.0024)
     fl = lib.tube('Flat', flat, 0.0038, ink, mouth, res=6, bevel_res=2)     # neutral, no smile
     fl['hidden'] = True
+    if FACE.get('lines'):                                           # age: smile lines + crow's feet (always shown)
+        age = lib.mat('AgeLine', SKIN, 0.6)                          # painted skin*0.72 (characters PAINT)
+        for s in (-1, 1):
+            pts = on_curve(surf, [(s * 0.044, 1.562), (s * 0.049, 1.548), (s * 0.047, 1.537)], front, 0.0008)
+            lib.tube('AgeSmile%d' % (s + 1), pts, 0.0013, age, head_node, res=4, bevel_res=1)
+            ex = s * (0.052 + 0.038)
+            for k, (dx, dy) in enumerate(((0.013, 0.008), (0.014, -0.004))):
+                pts = on_curve(surf, [(ex, EYE_Y + 0.002 * (1 - 2 * k)), (ex + s * dx, EYE_Y + dy)], front, 0.0012)
+                lib.tube('AgeCrow%d%d' % (s + 1, k), pts, 0.0011, age, head_node, res=4, bevel_res=1)
     # Furrow: a small worried crease between the brows (panic)
     fy = 1.672 if FEMALE else 1.668
     for k, x0 in enumerate((-0.006, 0.006)):

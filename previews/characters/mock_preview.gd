@@ -6,7 +6,7 @@ extends Node3D
 ##   [--tones "#hex,.."]   skin tone per model (one model + several tones = that model repeated)
 ##   [--chest "0,0.5,1"]   Chest_Size per model (one model + several values = repeated)
 ##   [--shapes "Key:v,Key:v|Key:v"]   blend shapes per model ('|' between models; one model + several = repeated)
-##   [--stage grey|flat|kitchen|bathroom] [--spacing M] [--ragdoll --t S [--follow]] [--size WxH] [--cols N]
+##   [--stage grey|flat|portrait|kitchen|bathroom] (portrait: plain --bg colour, soft key; scripts/tools/portrait.gd) [--spacing M] [--ragdoll --t S [--follow]] [--size WxH] [--cols N]
 ##   [--shots "name@eye@look[@fov];..."]   (contact sheet in screenshots/NAME.png)
 ##   [--bend "Bone:deg,.."]   swing bones about their X (spring chain test)
 ##   [--labels]   shot name on each tile
@@ -30,6 +30,8 @@ func _ready() -> void:
 			_bathroom()
 		'flat':
 			_flat()
+		'portrait':
+			_portrait()
 		_:
 			_grey()
 	var ids := _arg('--models', 'bernard_b').split(',')
@@ -87,7 +89,7 @@ func _load(id: String) -> Node3D:
 		var kv := b.split('=')
 		if kv[0].begins_with('c.'):
 			over.colors[kv[0].substr(2)] = '#' + kv[1]
-		elif kv[0] in ['head', 'hair', 'hat', 'glasses', 'beard', 'top', 'outer', 'bottom', 'shoes', 'accessory', 'stain']:
+		elif kv[0] in ['head', 'hair', 'hat', 'glasses', 'beard', 'top', 'outer', 'bottom', 'shoes', 'accessory', 'stain', 'earrings']:
 			over.parts[kv[0]] = kv[1]
 		else:
 			over.shapes[kv[0]] = float(kv[1])
@@ -210,6 +212,19 @@ func _flat() -> void:
 		back.light_energy = float(_arg('--back-light', '0.6'))
 		back.rotation_degrees = Vector3(-40, 20, 0)
 		add_child(back)
+
+
+func _portrait() -> void:
+	_env(Color(_arg('--bg', '#BAC6B2')), Color(1, 0.97, 0.93), 0.5)
+	var key := DirectionalLight3D.new()
+	key.light_color = Color(1, 0.94, 0.86)
+	key.light_energy = 1.3
+	key.rotation_degrees = Vector3(-25, 222, 0)
+	add_child(key)
+	var fill := DirectionalLight3D.new()
+	fill.light_energy = 0.45
+	fill.rotation_degrees = Vector3(-10, 140, 0)
+	add_child(fill)
 
 
 func _grey() -> void:

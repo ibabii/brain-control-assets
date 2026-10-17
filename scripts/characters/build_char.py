@@ -39,6 +39,7 @@ PARTS = {  # part id -> (slot, mesh name prefixes, hides)
     'tshirt': ('top', ('Shirt',), ['Body_Torso']),
     'sneakers': ('shoes', ('Sole', 'Upper', 'Lace', 'Stripe'), ['Body_FootL', 'Body_FootR']),
     'overshirt': ('outer', ('Overshirt', 'Os'), ['Body_UpperArmL', 'Body_UpperArmR']),   # rolled: forearms show
+    'cardigan': ('outer', ('Cardigan', 'Cg'), ['Body_UpperArmL', 'Body_UpperArmR', 'Body_LowerArmL', 'Body_LowerArmR']),
     'slippers': ('shoes', ('Slipper',), ['Body_FootL', 'Body_FootR']),
     'stain_coffee': ('stain', ('Stain',), []),
 }
@@ -236,6 +237,87 @@ def overshirt(parent):
         lr = 0.053 * v['limb']
         hb.band('OsRoll' + side, hb.frame_along(end - d * 0.012, d), lr, lr, 0.03, 0.12, trim, parent)
         hb.band('OsRoll2' + side, hb.frame_along(end - d * 0.036, d), lr * 1.02, lr * 1.02, 0.022, 0.1, trim, parent)
+    return shirt
+
+
+def cardigan(parent):
+    """Knit cardigan over a top (Mom, female base, slot `outer`): hip length, V-neck, a knit front band round the
+    neck with buttons below the V, patch pockets, knit hem and cuffs. Material CK2_Overshirt / CK2_CgRib -> `outer`."""
+    import bmesh
+    v = hb.TOP_VOL
+    m = lambda s, x: hb.mirror(x, s)
+    c, bl, fl = v['chest'], v['belly'], v['flare']
+    b = meta('CgBody', 0.008)
+    ell(b, (0, 1.22, 0.0), (c[0] + 0.012, c[1] + 0.01, c[2] + 0.018))   # roomy over the female tee's loft
+    ell(b, (0, 1.04, v['belly_z'] * 0.6), (bl[0] + 0.01, bl[1], bl[2] + 0.01))
+    ell(b, (0, 0.92, 0.0), (fl[0] - 0.004, 0.08, fl[2]))
+    cap(b, (-0.14, 1.345, 0.008), (0.14, 1.345, 0.008), v['shoulder'] + 0.01)
+    ell(b, (0, 1.39, 0.04), (0.095, 0.06, 0.08))
+    fams = [b]
+    for s_ in (-1, 1):
+        sl = meta('CgSleeve%d' % s_, 0.008)
+        sh, el, wr = m(s_, hb.SHOULDER), m(s_, hb.ELBOW), m(s_, hb.WRIST)
+        ball(sl, sh + Vector((-s_ * 0.006, -0.01, 0)), 0.068 * v['limb'])
+        cap(sl, sh, sh + (el - sh) * 0.6, 0.066 * v['limb'])
+        cap(sl, sh + (el - sh) * 0.6, el, 0.059 * v['limb'])
+        cap(sl, el, wr - m(s_, hb.FORE) * 0.08, 0.05 * v['limb'])      # ends inside the knit cuff
+        fams.append(sl)
+    mat = lib.mat('Overshirt', OVERSHIRT, 0.9)
+    o = solid('Cardigan', fams, 0.006, 9000, mat)
+    width = lambda y: 0.022 + 0.012 * hb._ss((1.0 - y) / 0.12) + 0.075 * hb._ss((y - 1.13) / 0.25)   # the V
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    cut = [f for f in bm.faces if (lambda q: q.y < 0.865 or (q.z < -0.03 and abs(q.x) < width(q.y) and q.y < 1.47))(
+        G(f.calc_center_median()))]
+    bmesh.ops.delete(bm, geom=cut, context='FACES')
+    for vt in bm.verts:                                               # clean edges: snap the cut onto its curves
+        if not vt.is_boundary:
+            continue
+        q = G(vt.co)
+        if q.y < 0.885:
+            q.y = 0.865
+        elif q.z < 0.0 and q.y < 1.47:
+            q.x = math.copysign(width(q.y), q.x)
+        vt.co = B(q)
+    bm.to_mesh(o.data)
+    bm.free()
+    sol = o.modifiers.new('Cloth', 'SOLIDIFY')
+    sol.thickness, sol.offset = 0.005, -1.0
+    for x in bpy.data.objects:
+        x.select_set(x == o)
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.object.modifier_apply(modifier='Cloth')
+    shirt = adopt(o, parent, (0, 1.1, 0))
+    surf = Surface(shirt)
+    img, nrm = hb.rib_texture('#FFFFFF')
+    rib = lib.mat('CgRib', '#FFFFFF', 0.9, image=img, normal=nrm)     # knit bands tinted by the `outer` paint
+    edge = []                                                         # front band: hem -> up the V -> round the neck
+    for s_ in (-1, 1):
+        pts = []
+        for i in range(26):
+            y = 0.87 + (1.37 - 0.87) * i / 25
+            loc, nrm_ = surf.hit((s_ * (width(y) + 0.004), y, -0.4), (0, 0, 1))
+            pts.append(loc + nrm_ * 0.002)
+        edge.append(pts)
+    band_pts = edge[0] + [Vector((-0.08, 1.4, -0.02)), Vector((-0.06, 1.425, 0.04)), Vector((0, 1.435, 0.07)),
+                          Vector((0.06, 1.425, 0.04)), Vector((0.08, 1.4, -0.02))] + edge[1][::-1]
+    lib.tube('CgBand', band_pts, 0.009, rib, parent, res=8, bevel_res=2)
+    btn = lib.mat('CgButton', '#E9E1D2', 0.6)
+    for k in range(4):                                                # buttons on the wearer's right band, below the V
+        y = 0.93 + 0.06 * k
+        loc, nrm_ = surf.hit((width(y) + 0.008, y, -0.4), (0, 0, 1))
+        lib.tube('CgButton%d' % k, [loc + nrm_ * 0.006, loc + nrm_ * 0.011], 0.0062, btn, parent, res=3, bevel_res=1)
+    for s_ in (-1, 1):                                                # patch pockets at the hips
+        x0 = s_ * 0.075
+        decal('CgPocket%d' % (s_ + 1), surf, [(x0 - 0.04, 0.9), (x0 + 0.04, 0.9), (x0 + 0.042, 0.98),
+                                              (x0 - 0.042, 0.98)], hb.Frame(), mat, parent, offset=0.002, rings=3,
+              depth=0.004)
+    fl_ = v['flare']
+    hb.band('CgHem', hb.Frame((0, 0.875, 0.0)), fl_[0] - 0.006, fl_[2] - 0.004, 0.035, 0.05, rib, parent)
+    for s_, side in ((-1, 'L'), (1, 'R')):
+        wr, d = m(s_, hb.WRIST), m(s_, hb.FORE)
+        lr = 0.05 * v['limb']
+        hb.band('CgCuff' + side, hb.frame_along(wr - d * 0.05, d), lr, lr, 0.05, 0.08, rib, parent)
     return shirt
 
 
@@ -886,6 +968,8 @@ def main():
     if not FEMALE:
         overshirt(body)
         coffee_stain(body)
+    else:
+        cardigan(body)
     slippers(body)
     if FEMALE:
         female_lower(body)
@@ -906,7 +990,7 @@ def main():
             wts[o.name] = R.smooth(o, [body_weights(p) for p in canon[o.name]], 4)
         elif o.name == 'Pants' and FEMALE:   # loft: lower butt follows the thighs (no hanging skirt in a squat)
             wts[o.name] = R.smooth(o, [pants_weights(p) for p in canon[o.name]], 6)
-        elif o.name == 'Overshirt':                               # loose like the hoodie: the top weights
+        elif o.name in ('Overshirt', 'Cardigan'):                               # loose like the hoodie: the top weights
             wts[o.name] = R.smooth(o, R.weights_for(o, 'top', hb.LANDMARKS), 4)
         elif o.name in ('Top', 'Pants'):
             kind = hb.SKIN_KIND[0 if o.name == 'Top' else 1]
@@ -934,7 +1018,7 @@ def main():
             mixed.append(top4(m_))
         wts['Top'] = R.smooth(top, mixed, 2)
     trees = {}
-    for n in [x for x in ('Top', 'Pants', 'Overshirt') if x in canon]:
+    for n in [x for x in ('Top', 'Pants', 'Overshirt', 'Cardigan') if x in canon]:
         t = KDTree(len(canon[n]))
         for i, p in enumerate(canon[n]):
             t.insert(p, i)
@@ -952,6 +1036,8 @@ def main():
             wts[o.name] = [top4(w) for w in transfer(o, canon['Pants'], wts['Pants'], trees['Pants'])]
         elif o.name.startswith('Os'):                                 # overshirt trims ride the overshirt
             wts[o.name] = [top4(w) for w in transfer(o, canon['Overshirt'], wts['Overshirt'], trees['Overshirt'])]
+        elif o.name.startswith('Cg'):                                 # cardigan bands, buttons, pockets
+            wts[o.name] = [top4(w) for w in transfer(o, canon['Cardigan'], wts['Cardigan'], trees['Cardigan'])]
     for n in ('BodySkin',):
         t = KDTree(len(canon[n]))
         for i, p in enumerate(canon[n]):
@@ -976,7 +1062,7 @@ def main():
         for _k in hb.CHEST_MOTION:
             fields[_k] = lambda c, _k=_k: hb.chest_motion(c, _k)
     own = {}
-    for n in [x for x in ('BodySkin', 'Top', 'Pants', 'Shirt', 'Overshirt') if x in canon]:   # smooth fields
+    for n in [x for x in ('BodySkin', 'Top', 'Pants', 'Shirt', 'Overshirt', 'Cardigan') if x in canon]:   # smooth fields
         fs = fields
         if n == 'BodySkin' and 'Chest_Size' in fields:                 # bare body: round underside (no bridge)
             fs = dict(fields, Chest_Size=lambda c: hb.bust(c, False)[1],
@@ -1009,6 +1095,8 @@ def main():
             return 'Shirt'
         if name.startswith('Os'):
             return 'Overshirt'
+        if name.startswith('Cg'):
+            return 'Cardigan'
         if name.startswith('Stain'):
             return 'Top'
         return 'Pants' if name.startswith('PantCuff') else 'Top' if name.startswith(LAYERS) else None
@@ -1100,11 +1188,12 @@ def main():
             if slot == 'hair':
                 hat_keys(o, check=False)
     export_all(rig, head, hair, regions, hair_skinned)
-    for pid, variant in ([] if FEMALE else HEAD_VARIANTS):
+    for pid, variant in HEAD_VARIANTS['female' if FEMALE else 'male']:
         head = variant_head(rig, head, pid, variant)
 
 
-HEAD_VARIANTS = [('head_roommate', {'jaw': 'square', 'brow': 'straight', 'eye': 0.9, 'smile': 'half'})]
+HEAD_VARIANTS = {'male': [('head_roommate', {'jaw': 'square', 'brow': 'straight', 'eye': 0.9, 'smile': 'half'})],
+                 'female': [('head_mom', {'jaw': 'round', 'eye': 0.92, 'lines': True})]}
 
 
 def variant_head(rig, head, pid, variant):
@@ -1424,6 +1513,9 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
 PAINT = {'CK2_Print': 'print', 'CK2_PrintInk': 'print_ink', 'CK2_Shirt' + SHIRT[0][1:]: 'top', 'CK2_Rib': 'rib', 'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush', 'CK2_BlushHot': 'blush*0.88'}
 PAINT['CK2_Overshirt'] = 'outer'
 PAINT['CK2_HairFade'] = 'skin*0.62'      # clipped fade on curly crops: a skin shadow, any skin tone
+PAINT['CK2_CgRib'] = 'outer'               # cardigan knit bands take the outer colour
+PAINT['CK2_HairShade'] = 'hair*0.72'       # streak curls (perm): a darker shade of the hair colour
+PAINT['CK2_AgeLine'] = 'skin*0.8'         # smile lines / crow's feet on older faces
 COLORS = {'skin': hb.SKIN, 'hair': hb.HAIR, 'eyes': '#2E2624', 'blush': 'auto', 'outer': OVERSHIRT}
 for _m, _slot in (('Top', 'top'), ('Pants', 'bottom'), ('PantCuff', 'bottom'), ('Shoe', 'shoes')):
     _key = {'Top': 'top', 'Pants': 'pants', 'PantCuff': 'pants', 'Shoe': 'shoe'}[_m]

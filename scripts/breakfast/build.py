@@ -694,10 +694,7 @@ def phone_screen_mat():
     """Landscape ringing face read from Bernard: portrait + heart on top, MOM across ~70% of the width below."""
     w, h = 300, int(300 * PHONE[3] / PHONE[2])
     c = ink.Canvas(w, h, '#22302F')
-    c.ellipse((0.44, 0.82), 0.12, 0.12, PAL['peach'])                 # portrait: Mom (grey curls)
-    c.ellipse((0.44, 0.9), 0.11, 0.05, '#B9B2A8')
-    c.ellipse((0.425, 0.81), 0.013, 0.013, PAL['graphite'])
-    c.ellipse((0.455, 0.81), 0.013, 0.013, PAL['graphite'])
+    paste_portrait(c, os.path.join(lib.ROOT, 'portraits', 'art', 'mom.png'), (0.44, 0.82), 0.15)   # Mom
     ink.heart(c, (0.58, 0.8), 0.13, PAL['clay'], fill=PAL['clay'])
     w2 = int(w / 1.38)                                                # bold, stretched 1.38x wide: ~70% of the width
     probe = ink.Canvas(w2, h, '#000000')                             # plain sans block caps: an M with a deep V
@@ -726,6 +723,20 @@ def phone_screen_mat():
 
 
 PHONE_TEXT = {}
+
+
+def paste_portrait(c, path, centre, r):
+    """Composite a round portrait PNG (alpha outside the ring) onto canvas c, centred, radius r (canvas heights)."""
+    img = bpy.data.images.load(path)
+    w, h = img.size
+    px = np.array(img.pixels[:]).reshape(h, w, 4)[::-1]
+    d = max(2, int(2 * r * c.h))
+    ys, xs = (np.arange(d) * h / d).astype(int), (np.arange(d) * w / d).astype(int)
+    sm = px[ys][:, xs]
+    cx, cy = c.px(*centre)
+    x0, y0 = int(cx - d / 2), int(cy - d / 2)
+    a = sm[..., 3:4]
+    c.rgb[y0:y0 + d, x0:x0 + d] = c.rgb[y0:y0 + d, x0:x0 + d] * (1 - a) + sm[..., :3] * a
 
 
 def phone_body(parent, frame, with_screen=True):
