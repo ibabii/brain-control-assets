@@ -354,6 +354,9 @@ def clip_bones(rig, layer, side=None, wrist=False):
         return names
     if layer == 'full':
         return [b for b in names if not is_finger(b) and b != 'Root']
+    if layer == 'torso':                                     # gestures over any lower body (standing, seated)
+        return [b for b in names if b in ('Spine', 'Chest', 'UpperChest', 'Neck', 'Head') or 'Shoulder' in b
+                or 'Arm' in b or 'Hand' in b or is_finger(b)]
     n = side_name(side)
     if layer == 'upper':
         return [b for b in names if b.startswith(n) and ('Shoulder' in b or 'Arm' in b or 'Hand' in b or is_finger(b))]
@@ -400,6 +403,8 @@ def clips(rig, arm_up, landmarks, full=True, mock=False):
         names.append(body_clip(rig, name, fn(), boxes=body_clips.BOXES.get(name)))
     for name, (fn, side) in (body_clips.UPPER.items() if full else ()):
         names.append(body_clip(rig, name, fn(rig), layer='upper', side=side))
+    for name, fn in (body_clips.TORSO.items() if full else ()):
+        names.append(body_clip(rig, name, fn(), layer='torso'))
     LOOPS.extend(n for n in body_clips.LOOPS if n not in LOOPS)
     for s in (-1, 1):
         for kind in ('grip', 'relaxed', 'spread'):

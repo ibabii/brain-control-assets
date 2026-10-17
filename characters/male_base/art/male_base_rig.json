@@ -977,7 +977,8 @@
  "loops": [
   "idle",
   "brush_loop",
-  "walk_loop"
+  "walk_loop",
+  "talk"
  ],
  "clips": {
   "RESET": {
@@ -1294,6 +1295,52 @@
     "yaw": 0.0
    },
    "length": 2.467
+  },
+  "sit_chair": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.53,
+     0.04
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.53,
+     0.04
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.0
   },
   "stumble": {
    "layer": "full",
@@ -1753,6 +1800,433 @@
     "yaw": 0.0
    },
    "length": 0.5
+  },
+  "wave": {
+   "layer": "torso",
+   "bones": [
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.667
+  },
+  "point": {
+   "layer": "torso",
+   "bones": [
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.6
+  },
+  "throw": {
+   "layer": "torso",
+   "bones": [
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.2
+  },
+  "laugh": {
+   "layer": "torso",
+   "bones": [
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 2.133
+  },
+  "facepalm": {
+   "layer": "torso",
+   "bones": [
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.733
+  },
+  "concerned": {
+   "layer": "torso",
+   "bones": [
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.933
+  },
+  "talk": {
+   "layer": "torso",
+   "bones": [
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "LeftThumbMetacarpal",
+    "LeftThumbProximal",
+    "LeftThumbDistal",
+    "LeftIndexProximal",
+    "LeftIndexIntermediate",
+    "LeftIndexDistal",
+    "LeftMiddleProximal",
+    "LeftMiddleIntermediate",
+    "LeftMiddleDistal",
+    "LeftRingProximal",
+    "LeftRingIntermediate",
+    "LeftRingDistal",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "RightThumbMetacarpal",
+    "RightThumbProximal",
+    "RightThumbDistal",
+    "RightIndexProximal",
+    "RightIndexIntermediate",
+    "RightIndexDistal",
+    "RightMiddleProximal",
+    "RightMiddleIntermediate",
+    "RightMiddleDistal",
+    "RightRingProximal",
+    "RightRingIntermediate",
+    "RightRingDistal"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.819,
+     -0.0
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 2.0
   },
   "hand_grip_L": {
    "layer": "hand",

@@ -375,9 +375,110 @@ def squat():
             (22, k(0.42, 0.12, 28, arms(75, 12, 75, 12, 20), 0.25)), (34, k(0.42, 0.12, 28, arms(75, 12, 75, 12, 20), 0.25))]
 
 
+
+# --- NPC gestures (E00/E01 cast; Character.anim plays them by name). Torso layer: spine, neck, head, both arms and
+# fingers only, so they play over a standing or a seated (sit_chair) body. Character space, -Z forward, +X = right.
+
+def _fingers(kind_l='relaxed', kind_r='relaxed', point=False):
+    f = merge(R.finger_pose(-1, kind_l), R.finger_pose(1, kind_r))
+    if point:                                                       # index straight out of a fist
+        for sg in ('Proximal', 'Intermediate', 'Distal'):
+            f['RightIndex' + sg] = (0.0, 0.0, 0.0)
+    return f
+
+
+REST_ARMS = arms(3, 6, 3, 6, 8)
+
+
+def _t(rot=None, ik=None, local=None):
+    return {'rot': merge(REST_ARMS, rot or {}), 'ik': ik or {}, 'local': local or _fingers()}
+
+
+def wave():
+    """Friendly wave with the right hand: up beside the head, forearm swinging side to side 3 times, then down."""
+    def up(dx, head=0):
+        return _t({'Head': (0, 0, head), 'UpperChest': (0, 0, -2)},
+                  {'RightArm': ((0.36 + dx, 1.6, -0.1), (0.62, 1.2, 0.25))}, _fingers(kind_r='spread'))
+    return [(0, _t()), (8, up(0.0, 3)), (13, up(0.07, 4)), (18, up(-0.05, 4)), (23, up(0.07, 4)), (28, up(-0.05, 4)),
+            (33, up(0.04, 3)), (40, up(0.0, 2)), (50, _t())]
+
+
+def point():
+    """Points ahead with the right index finger (arm straight out, a little to the right), holds, drops."""
+    p = _t({'RightUpperArm': (82, 0, 14), 'RightLowerArm': (4, 0, 0), 'Head': (-4, 0, 0), 'UpperChest': (-3, 0, 0)},
+           local=_fingers(kind_r='grip', point=True))
+    return [(0, _t()), (8, p), (38, p), (48, _t())]
+
+
+def throw():
+    """Overhand throw with the right arm (the toast): wind back, whip forward and release, follow through."""
+    return [(0, _t()),
+            (9, _t({'RightUpperArm': (-35, 0, 85), 'RightLowerArm': (100, 0, 0), 'Spine': (4, 18, 0),
+                    'UpperChest': (2, 10, 0), 'LeftUpperArm': (40, 0, -25), 'Head': (0, -10, 0)},
+                   local=_fingers(kind_r='grip'))),
+            (14, _t({'RightUpperArm': (115, 0, 25), 'RightLowerArm': (15, 0, 0), 'Spine': (-8, -16, 0),
+                     'UpperChest': (-4, -8, 0), 'LeftUpperArm': (-10, 0, -20), 'Head': (-4, 6, 0)},
+                    local=_fingers(kind_r='spread'))),
+            (21, _t({'RightUpperArm': (70, 0, 10), 'RightLowerArm': (25, 0, 0), 'Spine': (-10, -12, 0),
+                     'UpperChest': (-4, -6, 0), 'Head': (-4, 4, 0)})),
+            (36, _t())]
+
+
+def laugh():
+    """Belly laugh: head thrown back, hands to the belly, shoulders bouncing; 2 s."""
+    keys = [(0, _t())]
+    hands = {'LeftArm': ((-0.1, 1.0, -0.21), (-0.4, 1.1, 0.2)), 'RightArm': ((0.1, 1.0, -0.21), (0.4, 1.1, 0.2))}
+    for i, f in enumerate(range(6, 55, 4)):
+        b = 1 if i % 2 else -1
+        keys.append((f, _t({'Head': (14 + 3 * b, 0, 2 * b), 'UpperChest': (5 + 3 * b, 0, 0), 'Spine': (3, 0, 0),
+                            'LeftShoulder': (0, 0, 2 * b), 'RightShoulder': (0, 0, -2 * b)}, hands)))
+    keys.append((64, _t()))
+    return keys
+
+
+def facepalm():
+    """Right palm to the forehead, head drops into it, a slow shake; then the hand comes down."""
+    def k(shake):
+        return _t({'Head': (-14, shake, 0), 'Neck': (-6, 0, 0), 'UpperChest': (-4, 0, 0)},
+                  {'RightArm': ((0.04, 1.6, -0.25), (0.42, 1.15, -0.05))})
+    return [(0, _t()), (8, k(0)), (16, k(-6)), (24, k(6)), (32, k(-4)), (40, k(0)), (52, _t())]
+
+
+def concerned():
+    """Worried: hands clasped at the chest, head tilted and a little forward, a small lean in; holds, settles."""
+    c = _t({'Head': (-6, 0, 9), 'UpperChest': (-4, 0, 0)},
+           {'LeftArm': ((-0.04, 1.13, -0.21), (-0.4, 1.0, 0.15)), 'RightArm': ((0.04, 1.13, -0.21), (0.4, 1.0, 0.15))},
+           _fingers('grip', 'grip'))
+    c2 = dict(c, rot=merge(c['rot'], {'Head': (-8, 0, 12)}))
+    return [(0, _t()), (10, c), (30, c2), (46, c), (58, _t())]
+
+
+def talk():
+    """Talking hands: forearms up, palms opening and closing in alternation with a little head nod; 2 s (loops)."""
+    def k(a):
+        return _t({'LeftUpperArm': (28 + 10 * a, 0, -14), 'LeftLowerArm': (70 - 15 * a, 0, 0),
+                   'RightUpperArm': (28 - 10 * a, 0, 14), 'RightLowerArm': (70 + 15 * a, 0, 0),
+                   'Head': (3 * a, 2 * a, 0)}, local=_fingers('spread' if a > 0 else 'relaxed',
+                                                         'relaxed' if a > 0 else 'spread'))
+    return [(0, k(0)), (12, k(1)), (24, k(-1)), (36, k(1)), (48, k(-1)), (60, k(0))]
+
+
+def sit_chair():
+    """Sits on a chair (seat 0.45 m, the Hips over its middle): thighs level, shins down, feet flat a little ahead,
+    hands on the thighs. A held pose; gestures play over it."""
+    legs = {'LeftLeg': ((-0.13, ANK, -0.4), (-0.13, 0.6, -1.0)), 'RightLeg': ((0.13, ANK, -0.4), (0.13, 0.6, -1.0))}
+    k = {'hips': ((0, 0.53, 0.04), (0, 0, 0)), 'ik': legs, 'world': FLAT,
+         'rot': merge(arms(30, 10, 30, 10, 45), {'Spine': (-3, 0, 0)})}
+    return [(0, k), (30, k)]
+
+
+TORSO = {'wave': wave, 'point': point, 'throw': throw, 'laugh': laugh, 'facepalm': facepalm,
+         'concerned': concerned, 'talk': talk}
+LOOPS.append('talk')
+
 MOCK = {'squat': squat}                 # character-system mock only (not in the shipped Human)
 
 
 FULL = {'faceplant': faceplant, 'sit_tub': sit_tub, 'get_up_back': get_up_back, 'get_up_front': get_up_front,
-        **FULL_EXTRA}
+        'sit_chair': sit_chair, **FULL_EXTRA}
 BOXES = {'sit_tub': TUB, 'climb_out_tub': TUB}

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bhf3oss34niq0"
-path="res://.godot/imported/kitchen_mock.png-2c3c8f360e59412f1994879fc43c66d3.ctex"
+uid="uid://vfwxaqiu3x16"
+path="res://.godot/imported/kitchen_mock_1280x800.png-70ce9108259bab915994bdf6393ec864.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://previews/kitchen/screenshots/kitchen_mock.png"
-dest_files=["res://.godot/imported/kitchen_mock.png-2c3c8f360e59412f1994879fc43c66d3.ctex"]
+source_file="res://previews/kitchen/screenshots/kitchen_mock_1280x800.png"
+dest_files=["res://.godot/imported/kitchen_mock_1280x800.png-70ce9108259bab915994bdf6393ec864.ctex"]
 
 [params]
 

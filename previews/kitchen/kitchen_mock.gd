@@ -19,14 +19,17 @@ const TERRACOTTA := '#C87F5E'
 # shots: name, eye position, yaw (deg, + = left), pitch (deg)
 const SHOTS := [
 	['beat 2: at the machine', Vector3(-0.3, 1.62, -0.05), 0.0, -30.0],
-	['beat 7: toast pops, roommate in frame', Vector3(0.0, 1.62, 0.0), -50.0, -30.0],
+	['beat 7: toast pops, roommate in frame', Vector3(0.0, 1.62, 0.0), -40.0, -30.0],
+	['oblique: table + toast arc', Vector3(-0.6, 2.2, 1.6), -38.0, -28.0],
 	['beat 11: to the front door', Vector3(-1.7, 1.62, 0.8), 90.0, -30.0],
 	['overview (ceiling + front wall off)', Vector3(-0.9, 5.4, 5.6), 0.0, -48.0],
 ]
 
 var cam: Camera3D
-var SIT_THIGH := float(_a('--thigh', '90'))
-var SIT_KNEE := float(_a('--knee', '-90'))
+var roommate: Node3D
+const TABLE := Vector3(1.6, 0, 0.2)
+const SEAT := Vector3(1.83, 0, -0.87)          # a backless stool fits the corner: eye distance >= 2 m, clear of both walls
+const SEAT_YAW := 118.0
 
 
 func _a(k: String, d: String) -> String:
@@ -129,19 +132,21 @@ func _room() -> void:
 	box(Vector3(-2.1, h / 2, -0.45), Vector3(0.1, h, 1.5), CREAM)
 	box(Vector3(-2.1, h / 2, 1.95), Vector3(0.1, h, 1.3), CREAM)
 	box(Vector3(-2.1, 2.35, 0.8), Vector3(0.1, 0.5, 1.0), CREAM)
-	box(Vector3(-2.05, 1.05, 0.28), Vector3(0.16, 2.1, 0.05), CLAY)              # door frame
-	box(Vector3(-2.05, 1.05, 1.32), Vector3(0.16, 2.1, 0.05), CLAY)
+	box(Vector3(-2.05, 1.05, 0.28), Vector3(0.16, 2.1, 0.05), PORCELAIN)         # door frame trim
+	box(Vector3(-2.05, 1.05, 1.32), Vector3(0.16, 2.1, 0.05), PORCELAIN)
 
 
 func _counter() -> void:
 	box(Vector3(-0.2, 0.43, -0.85), Vector3(2.6, 0.86, 0.6), TEAL)                # deep teal lower cabinets
 	for x in [-1.05, -0.2, 0.65]:                                                 # door gaps read as panels
 		box(Vector3(x, 0.45, -0.545), Vector3(0.012, 0.7, 0.01), '#244A49')
-	box(Vector3(-0.2, 0.9, -0.83), Vector3(2.66, 0.04, 0.66), PORCELAIN, 0.7)     # worktop (brightest group)
+	box(Vector3(-0.2, 0.9, -0.83), Vector3(2.66, 0.04, 0.66), '#F3E7D0', 0.7)     # warm cream worktop (brightest group)
 	for i in 13:                                                                  # peach tile backsplash
-		for j in 4:
+		for j in 3:
 			box(Vector3(-1.4 + i * 0.2, 1.0 + j * 0.15, -1.145), Vector3(0.19, 0.14, 0.01), PEACH, 0.75)
-	box(Vector3(-0.2, 1.88, -0.97), Vector3(2.6, 0.7, 0.35), CREAM)              # cream uppers
+	box(Vector3(-0.2, 1.8, -0.97), Vector3(2.6, 0.7, 0.35), CREAM)               # cream uppers right above the tiles
+	for x in [-1.05, -0.2, 0.65]:
+		box(Vector3(x, 1.8, -0.794), Vector3(0.012, 0.6, 0.01), '#D9CBB2')
 	box(Vector3(-1.75, 0.95, -0.8), Vector3(0.6, 1.9, 0.7), PORCELAIN, 0.7)       # fridge (counter's left end)
 	box(Vector3(-1.52, 1.35, -0.444), Vector3(0.04, 0.4, 0.02), GRAPHITE)
 	for p in [Vector3(-1.9, 1.55, -0.44), Vector3(-1.65, 1.62, -0.44), Vector3(-1.8, 1.2, -0.44)]:
@@ -161,16 +166,19 @@ func _counter() -> void:
 
 
 func _table() -> void:
-	var c := Vector3(1.35, 0, -0.35)                                              # right-back corner, past the counter
-	box(c + Vector3(0, 0.74, 0), Vector3(0.8, 0.05, 0.8), HONEY)
-	for dx in [-0.34, 0.34]:
-		for dz in [-0.34, 0.34]:
+	var c := TABLE                                                                # along the right wall, past the counter
+	box(c + Vector3(0, 0.74, 0), Vector3(0.75, 0.05, 1.0), HONEY)
+	for dx in [-0.32, 0.32]:
+		for dz in [-0.44, 0.44]:
 			box(c + Vector3(dx, 0.36, dz), Vector3(0.06, 0.72, 0.06), HONEY)
 	cyl(c + Vector3(-0.1, 0.8, 0.15), 0.12, 0.07, CREAM)                            # fruit bowl
 	for p in [Vector3(-0.14, 0.86, 0.17), Vector3(-0.06, 0.86, 0.13)]:
 		cyl(c + p, 0.035, 0.06, CLAY)
-	_chair(Vector3(1.85, 0, -0.3), -76.0)                                          # the roommate's: faces Bernard
-	_chair(Vector3(1.35, 0, 0.3), 180.0)
+	cyl(SEAT + Vector3(0, 0.445, 0), 0.17, 0.05, HONEY)                            # the roommate's stool: faces Bernard
+	for a in 4:
+		var d := Vector3(cos(a * PI / 2 + 0.6), 0, sin(a * PI / 2 + 0.6)) * 0.12
+		cyl(SEAT + d + Vector3(0, 0.21, 0), 0.02, 0.42, HONEY)
+	_chair(TABLE + Vector3(0, 0, 0.72), 180.0)                                     # the other at the far (front) end
 
 
 func _chair(p: Vector3, yaw: float) -> void:
@@ -189,22 +197,32 @@ func _chair(p: Vector3, yaw: float) -> void:
 
 
 func _hall() -> void:
-	# hallway LEFT (x -2.1 .. -5.1, z 0.25 .. 1.35), front door at the end, coat hook + shoe rack
+	# hallway LEFT (x -2.1 .. -5.1, z 0.25 .. 1.35): cream walls with a peach dado, a teal front door with a chunky
+	# knob and a small frosted pane, a coat on a hook, a shoe rack full of shoe pairs (no slippers)
 	box(Vector3(-3.6, -0.01, 0.8), Vector3(3.0, 0.02, 1.1), '#B98A62', 0.85)      # wood floor
-	box(Vector3(-3.6, 1.3, 0.2), Vector3(3.0, 2.6, 0.1), CREAM)
-	box(Vector3(-3.6, 1.3, 1.4), Vector3(3.0, 2.6, 0.1), CREAM)
+	for z in [0.2, 1.4]:
+		box(Vector3(-3.6, 1.3, z), Vector3(3.0, 2.6, 0.1), CREAM)
+		box(Vector3(-3.6, 0.45, z + (0.055 if z < 1 else -0.055)), Vector3(3.0, 0.9, 0.01), PEACH)    # dado
+		box(Vector3(-3.6, 0.92, z + (0.06 if z < 1 else -0.06)), Vector3(3.0, 0.04, 0.02), PORCELAIN)
 	box(Vector3(-3.6, 2.65, 0.8), Vector3(3.0, 0.1, 1.3), PORCELAIN).add_to_group('roof')
 	box(Vector3(-5.15, 1.3, 0.8), Vector3(0.1, 2.6, 1.3), CREAM)
-	box(Vector3(-5.09, 1.02, 0.8), Vector3(0.04, 2.04, 0.9), CLAY)               # front door
-	box(Vector3(-5.05, 1.0, 0.48), Vector3(0.05, 0.05, 0.1), GRAPHITE)          # handle
-	box(Vector3(-4.6, 1.75, 1.33), Vector3(0.3, 0.04, 0.04), HONEY)              # coat hook rail
-	box(Vector3(-4.6, 1.35, 1.25), Vector3(0.32, 0.75, 0.14), '#6B7C8C')         # coat
+	box(Vector3(-5.09, 1.02, 0.8), Vector3(0.05, 2.04, 0.9), TEAL)                # front door
+	box(Vector3(-5.06, 1.62, 0.8), Vector3(0.02, 0.32, 0.28), '#FFF6E6', 0.9, 0.5) # small frosted pane
+	var knob := cyl(Vector3(-5.03, 1.0, 0.5), 0.035, 0.07, '#C9A24A')            # chunky knob
+	knob.rotation_degrees.z = 90.0
+	box(Vector3(-4.55, 1.75, 1.33), Vector3(0.3, 0.04, 0.04), HONEY)             # coat hook rail
+	box(Vector3(-4.55, 1.35, 1.25), Vector3(0.34, 0.75, 0.14), '#6B7C8C')        # coat
 	box(Vector3(-3.6, 0.25, 1.2), Vector3(0.9, 0.04, 0.3), HONEY)                # shoe rack: 2 shelves
-	box(Vector3(-3.6, 0.5, 1.2), Vector3(0.9, 0.04, 0.3), HONEY)
-	for i in 4:                                                                   # full of shoes (no slippers)
+	box(Vector3(-3.6, 0.52, 1.2), Vector3(0.9, 0.04, 0.3), HONEY)
+	for i in 3:                                                                   # pairs: white soles, laces
 		for k in 2:
-			var col: String = [GRAPHITE, '#6B4E3A', PORCELAIN, '#3D5560'][(i + k) % 4]
-			box(Vector3(-3.93 + i * 0.22, 0.31 + k * 0.25, 1.2), Vector3(0.1, 0.08, 0.24), col)
+			var col: String = [GRAPHITE, '#6B4E3A', '#3D5560', '#9C4E3A'][(i + 2 * k) % 4]
+			for d in [-0.045, 0.045]:
+				var x: float = -3.9 + i * 0.29 + d
+				var y := 0.27 + k * 0.27
+				box(Vector3(x, y + 0.012, 1.2), Vector3(0.075, 0.025, 0.24), PORCELAIN)      # sole
+				box(Vector3(x, y + 0.05, 1.21), Vector3(0.07, 0.055, 0.2), col)               # upper
+				box(Vector3(x, y + 0.08, 1.17), Vector3(0.04, 0.01, 0.07), PORCELAIN)          # laces
 
 
 func _roommate() -> void:
@@ -213,19 +231,16 @@ func _roommate() -> void:
 			'skin': '#C98B66'}}
 	var r: Node3D = CharacterAssembler.build('male_base', over)
 	add_child(r)
-	r.rotation_degrees.y = 104.0                      # faces Bernard (toward -X, a little +Z)
+	r.rotation_degrees.y = SEAT_YAW                  # faces Bernard
 	var ap: AnimationPlayer = r.get_node('Anim')
-	ap.play('rest')                                   # arms down; legs bent for a chair (stand-in until a sit clip)
-	ap.seek(0.0, true)
+	ap.play('sit_chair')                              # full-body chair sit; feet on the floor
+	ap.seek(0.5, true)
 	ap.pause()
 	var sk: Skeleton3D = r.find_children('*', 'Skeleton3D', true, false)[0]
-	for side in ['Left', 'Right']:
-		for b in [[side + 'UpperLeg', SIT_THIGH], [side + 'LowerLeg', SIT_KNEE]]:
-			var i := sk.find_bone(b[0])
-			sk.set_bone_pose_rotation(i, sk.get_bone_pose_rotation(i) * Quaternion(Vector3.RIGHT, deg_to_rad(b[1])))
 	await get_tree().process_frame
 	var hips := (sk.global_transform * sk.get_bone_global_pose(sk.find_bone('Hips'))).origin
-	r.global_position += Vector3(1.85, 0, -0.3) - Vector3(hips.x, 0, hips.z) + Vector3(0, 0.56 - hips.y, 0)
+	r.global_position += SEAT - Vector3(hips.x, 0, hips.z)
+	roommate = r
 
 
 func _capture() -> void:
@@ -254,10 +269,28 @@ func _capture() -> void:
 			n.visible = not String(s[0]).begins_with('overview')
 		for n in 4:
 			await RenderingServer.frame_post_draw
+		if String(s[0]).begins_with('beat 7') and roommate:
+			var sk: Skeleton3D = roommate.find_children('*', 'Skeleton3D', true, false)[0]
+			var hd := (sk.global_transform * sk.get_bone_global_pose(sk.find_bone('Head'))).origin
+			var eye := hd + Vector3(0, 0.12, 0)
+			var top := hd + Vector3(0, 0.36, 0)
+			var chin := hd - Vector3(0, 0.02, 0)
+			print('PROBE eye_dist %.2f m  head top %.0f%% from frame top  face %.0f%% of frame height  eye x %.0f%%' % [
+				eye.distance_to(cam.global_position), 100.0 * cam.unproject_position(top).y / size.y,
+				100.0 * (cam.unproject_position(chin).y - cam.unproject_position(top).y) / size.y,
+				100.0 * cam.unproject_position(eye).x / size.x])
+		if String(s[0]).begins_with('oblique') and roommate:
+			# 3D clearance: knees/feet/hands vs the counter run (x <= 1.1, z <= -0.55) and the table box
+			var sk: Skeleton3D = roommate.find_children('*', 'Skeleton3D', true, false)[0]
+			for b in ['LeftLowerLeg', 'RightLowerLeg', 'LeftFoot', 'RightFoot', 'LeftToes', 'RightToes', 'LeftHand', 'RightHand']:
+				var q := (sk.global_transform * sk.get_bone_global_pose(sk.find_bone(b))).origin
+				var dc := maxf(q.x - 1.1, q.z + 0.55)
+				var dt := maxf(maxf(1.225 - q.x, q.x - 1.975), maxf(TABLE.z - 0.5 - q.z, q.z - TABLE.z - 0.5))
+				print('CLEAR %s (%.2f, %.2f, %.2f) counter %.2f table %.2f walls %.2f' % [b, q.x, q.y, q.z, dc, dt, minf(2.0 - q.x, q.z + 1.15)])
 		tiles.append(get_viewport().get_texture().get_image())
 	var w := tiles[0].get_width()
 	var h := tiles[0].get_height()
-	var sheet := Image.create(w * 2, h * 2, false, tiles[0].get_format())
+	var sheet := Image.create(w * 2, h * ceili(tiles.size() / 2.0), false, tiles[0].get_format())
 	for i in tiles.size():
 		sheet.blit_rect(tiles[i], Rect2i(0, 0, w, h), Vector2i((i % 2) * w, (i / 2) * h))
 	var dir := 'res://previews/kitchen/screenshots/'
