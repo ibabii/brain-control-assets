@@ -835,10 +835,10 @@ def toast_bitten():
         return (s * (p[0] * math.cos(th) - p[1] * math.sin(th)), s * (p[0] * math.sin(th) + p[1] * math.cos(th)))
     raw = [turn((math.cos(t) * 0.05, math.sin(t) * 0.055 + (0.012 * abs(math.sin(2 * t)) if math.sin(t) * 0.055 > 0.02
                  else 0))) for t in [2 * math.pi * k / 96 for k in range(96)]]
-    top = max(raw, key=lambda q: q[1] - 0.9 * q[0])    # clamped by the top-left corner (1.5 cm in the teeth): hangs
+    top = max(raw, key=lambda q: q[1] - 0.9 * q[0])    # clamped by the top-left corner (in front of the lips, under the top teeth): hangs
                                                        # down to his right (+X)
-    move = lambda p: (lambda q: (q[0] - top[0], q[1] - top[1] + 0.015))(turn(p))
-    toast_slab('Slice', Frame((0, 0, 0)), r, bite=True, face_col='#EDD5A3', crust_col='#B5773D', xf=move,
+    move = lambda p: (lambda q: (q[0] - top[0] - 0.012, q[1] - top[1] + 0.008))(turn(p))   # corner in the opening
+    toast_slab('Slice', Frame((0, 0, -0.018)), r, bite=True, face_col='#EDD5A3', crust_col='#B5773D', xf=move,
                th=0.024)
     return r, {'pivot': 'the clamped top-left corner on the teeth line; the slice hangs down to his right (+X, -Y), face to -Z',
                'attach': 'parent at the Bite marker (Head bone) with its basis (tilts the hanging slice forward, '
