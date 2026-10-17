@@ -133,8 +133,8 @@ def stomach():
     lib.set_parent(bub, pivot)
     m0 = mw + Vector((0.008, 0.006, -0.01)) - c + Vector((0, 0.1, 0))   # one bubble a loop: out of the mouth, up,
     bl = [(0, m0), (36, m0), (48, m0 + Vector((0.01, 0.04, -0.01))), (52, m0 + Vector((0.012, 0.05, -0.012))), (72, m0)]
-    bs = [(0, (0,) * 3), (36, (0,) * 3), (40, (0.6,) * 3), (49, (1.0,) * 3), (51, (1.35,) * 3), (52, (0,) * 3),
-          (72, (0,) * 3)]
+    z = (0.001,) * 3                                                # hidden: tiny, not 0 (a 0 scale won't import as a quaternion)
+    bs = [(0, z), (36, z), (40, (0.6,) * 3), (49, (1.0,) * 3), (51, (1.35,) * 3), (52, z), (72, z)]
     track(bub, 'gurgle', location=bl, scale=bs)                     # pop (pivot space)
     return root
 

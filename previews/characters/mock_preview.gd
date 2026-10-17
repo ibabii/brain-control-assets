@@ -11,7 +11,8 @@ extends Node3D
 ##   [--bend "Bone:deg,.."]   swing bones about their X (spring chain test)
 ##   [--labels]   shot name on each tile
 ##   [--faces "rest,wink,.."]  expression per model (head part.json `expressions`, applied like the game)
-##   [--attach "Marker=res://prop.tscn[@x,y,z@rx,ry,rz]"]  prop on a rig marker (<base>_rig.json), its basis, riding the marker's bone; optional offset (m) / rotation (deg) in the marker frame
+##   [--attach "Marker=res://prop.tscn[#Grips/Right][!Hide,Parts][@x,y,z@rx,ry,rz];.."]  props on rig markers (<base>_rig.json), riding the
+##     marker's bone; #node = the prop node to put on the marker (Grip · node⁻¹); optional offset (m) / rotation (deg)
 ## T-pose = the bind pose (no clip). Everything here is preview-only.
 
 const MOCK := 'res://previews/characters/mock/'
@@ -62,8 +63,9 @@ func _ready() -> void:
 		if faces.size():
 			_face(h, id.split(':')[0], faces[mini(i, faces.size() - 1)])
 		if '--attach' in args:
-			var at := _arg('--attach', '').split('=')
-			_attach(h, id.split(':')[0], at[0], at[1])
+			for spec in _arg('--attach', '').split(';', false):
+				var at := spec.split('=')
+				_attach(h, id.split(':')[0], at[0], at[1])
 	if '--clip' in args:
 		_share(_arg('--from', ''))
 	else:
@@ -367,7 +369,10 @@ func _capture(name: String) -> void:
 ## LidHalf off unless shown; brow [raise, tilt], pupil, look, mouth scale, lid (deg, or [L, R]).
 func _attach(h: Node3D, base: String, marker: String, spec: String) -> void:
 	var bits := spec.split('@')
-	var scene := bits[0]
+	var hide := bits[0].split('!')[1].split(',') if '!' in bits[0] else PackedStringArray()   # default-hidden prop parts
+	bits[0] = bits[0].split('!')[0]
+	var scene := bits[0].split('#')[0]
+	var node := bits[0].split('#')[1] if '#' in bits[0] else ''
 	var off := Transform3D.IDENTITY
 	if bits.size() > 2:
 		var o := bits[1].split_floats(',')
@@ -385,8 +390,18 @@ func _attach(h: Node3D, base: String, marker: String, spec: String) -> void:
 		var xf := Transform3D(Basis(Vector3(b[0][0], b[0][1], b[0][2]), Vector3(b[1][0], b[1][1], b[1][2]),
 				Vector3(b[2][0], b[2][1], b[2][2])), Vector3(m.pos[0], m.pos[1], m.pos[2]))
 		var prop: Node3D = load(scene).instantiate()
+		if node != '':
+			var g := prop.get_node(node) as Node3D
+			var t := Transform3D.IDENTITY
+			while g != prop:
+				t = g.transform * t
+				g = g.get_parent() as Node3D
+			off = off * t.affine_inverse()
 		prop.transform = sk.get_bone_global_rest(sk.find_bone(m.bone)).affine_inverse() * xf * off
 		ba.add_child(prop)
+		for n in hide:
+			if prop.find_child(n, true, false):
+				prop.find_child(n, true, false).visible = false
 
 
 func _face(h: Node3D, base: String, name: String) -> void:

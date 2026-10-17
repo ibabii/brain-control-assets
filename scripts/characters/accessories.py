@@ -263,11 +263,26 @@ def hair_curly(skin, surf):
     return [hb.union_shell(hair, shell, 0.0025, 16000, smooth=2), fade]
 
 
+def head_to_world(p):
+    """Canonical head space -> the built base (head scale about the eye + the neck warp)."""
+    return hb.HEAD_PIVOT + (Vector(p) - hb.HEAD_PIVOT) * hb.SPEC['head'] + (hb.warp(hb.NECK) - hb.NECK)
+
+
+def world_to_head(p):
+    return hb.HEAD_PIVOT + (Vector(p) - (hb.warp(hb.NECK) - hb.NECK) - hb.HEAD_PIVOT) / hb.SPEC['head']
+
+
+# female base + head_mom + cardigan_f (world, probed): where the head's neck column meets the cardigan, back -> side
+COLLAR_LINE = [(0.0, 1.36, 0.122), (0.044, 1.366, 0.106), (0.074, 1.375, 0.073), (0.097, 1.378, 0.03)]
+
+
 def glasses_halfmoon(surf):
     """Half-moon reading glasses low on the nose (Mom): a flat top across the lower eye, a round bottom rim, thin
-    bronze frame, temples into the hair and a beaded cord looping behind the neck."""
+    bronze frame, temples back over the ears and a cord from the temple tips round the back of the neck, resting on
+    the cardigan collar (COLLAR_BACK)."""
     fams = []
     eyes = [_pos('WhiteL'), _pos('WhiteR')]
+    tips = []
     for s, e in zip((-1, 1), eyes):
         mb = meta('MoonRim%d' % (s + 1), 0.0018)
         c = e + Vector((0.0, -0.012, -0.03))
@@ -276,61 +291,122 @@ def glasses_halfmoon(surf):
         fams.append(mb)
         tm = meta('MoonArm%d' % (s + 1), 0.0018)
         a = c + Vector((s * 0.034, 0.0, 0.004))
-        chain(tm, [a, a + Vector((-s * 0.006, 0.012, 0.115))], 0.0028, 0.0028, step=0.003)
+        arm = [a]
+        for z in (0.03, 0.07, 0.1, 0.125):                                 # along the side of the head, over the ear
+            loc, n = surf.hit((s * 0.3, 1.648 - 0.25 * max(0.0, z - 0.1), a.z + z), (-s, 0, 0))
+            arm.append(loc + n * 0.005)
+        chain(tm, arm, 0.0028, 0.0028, step=0.003)
+        tips.append(arm[-1])
         fams.append(tm)
     br = meta('MoonBridge', 0.0018)
     l, r = eyes[0] + Vector((0.034, -0.012, -0.03)), eyes[1] + Vector((-0.034, -0.012, -0.03))
     chain(br, [l, (l + r) / 2 + Vector((0, 0.005, -0.004)), r], 0.003, 0.003, step=0.0018)
     fams.append(br)
     frame = solid('GlassesMoon', fams, 0.001, 4000, lib.mat('GlassesBronze', '#8E5B3E', 0.6))
-    ends = [e + Vector((s * 0.028, 0.0, 0.085)) for s, e in zip((-1, 1), eyes)]   # behind the ears
-    cord = [ends[0], ends[0] + Vector((-0.02, -0.09, 0.04)), Vector((0, 1.43, 0.11)),
-            ends[1] + Vector((0.02, -0.09, 0.04)), ends[1]]
-    c = lib.tube('GlassesCord', cord, 0.0016, lib.mat('GlassesCord', '#6E4B3A', 0.7), None, res=4, bevel_res=1)
+    cord = []                                                # in world: down behind the ear, round the neck on the collar
+    for s, t in zip((-1, 1), tips):
+        w = head_to_world(t)
+        line = []
+        for x, y, z in reversed(COLLAR_LINE[1:]):           # side -> back, 5 mm out from the neck, 3 mm up
+            out = Vector((x, 0, z - 0.03)).normalized()
+            line.append(Vector((s * x, y + 0.003, z)) + Vector((s * out.x, 0, out.z)) * 0.005)
+        side = [w, w + Vector((s * 0.004, -0.08, 0.004)), Vector((s * 0.165, 1.47, 0.05))] + line
+        cord.append(side if s < 0 else list(reversed(side)))
+    back = Vector(COLLAR_LINE[0]) + Vector((0, 0.003, 0.005))
+    pts = [world_to_head(q) for q in cord[0] + [back] + cord[1]]
+    c = lib.tube('GlassesCord', pts, 0.002, lib.mat('GlassesCord', '#6E4B3A', 0.7), None, res=6, bevel_res=1)
     return [frame, c]
 
 
 def earrings_pearl(surf):
-    """Small pearl studs at the earlobes (Mom)."""
+    """Small pearl studs seated on the earlobes (Mom): the lowest point of each ear, a little to the front."""
     out = []
     pearl = lib.mat('Pearl', '#F3EEE3', 0.6)
-    for s in (-1, 1):
-        loc, n = surf.hit((s * 0.25, 1.568, 0.006), (-s, 0, 0))              # the lobe's outer face
-        out.append(lib.sphere('Pearl%d' % (s + 1), 0.0075, pearl, lib.Frame(tuple(loc - n * 0.002)), None, seg=16,
-                              rings=10))
+    for s in (-1, 1):                                        # on the lobe: the bottom of the ear ellipsoid (hb.head_skin)
+        c = Vector((s * 0.149, 1.566, 0.01))
+        out.append(lib.sphere('Pearl%d' % (s + 1), 0.0062, pearl, lib.Frame(tuple(c)), None, seg=16, rings=10))
     return out
 
 
-def hair_perm(skin, surf):
-    """Short soft perm (Mom): round curls all over, fuller on top, short at the nape; about a third of them in a
-    darker shade (CK2_HairShade = hair*0.72) so the grey reads streaked."""
+def hair_bob(skin, surf):
+    """Soft wavy bob (Mom, AD FIX): chunky clay locks from the crown down to chin length, waving in and out, tips
+    curled under; a side-swept fringe above the brows. Broad grey bands (CK2_HairGrey -> slot hair_grey) on the
+    temple locks and the fringe lock at the part: same mesh, a second material."""
     import bmesh
     from mathutils import Matrix
-    edge = lambda phi: hb.hairline(phi) + 0.004 + 0.02 * hb._ss((abs(phi) - 2.0) / 0.7)
-    shell = hb.scalp_shell(skin, edge, lift=0.003, thick=0.008)
-    el0 = lambda phi: math.asin(max(-0.95, min(0.95, (edge(phi) + 0.008 - hb.CRANIUM.y) / 0.15)))
-    main, shade = [], []
-    rows = 8
-    for j in range(rows + 1):
-        e_mid = el0(0.0) + (math.pi / 2 - el0(0.0)) * j / rows
-        ring = max(1, int(32 * math.cos(e_mid)))
-        for i in range(ring):
-            phi = -math.pi + 2 * math.pi * (i + 0.5 * (j % 2)) / ring
-            e0 = el0(phi)
-            el = e0 + (math.pi / 2 - e0) * j / rows
-            d = Vector((math.cos(el) * math.sin(phi), math.sin(el), -math.cos(el) * math.cos(phi)))
-            loc, nrm = surf.hit(hb.CRANIUM + d * 0.4, -d)
-            top = hb._ss((el - 0.4) / 0.8)
-            r = 0.019 + 0.006 * top + 0.002 * math.sin(i * 7.1 + j * 3.3)        # big, overlapping: soft, not beady
-            c = loc + nrm * (0.004 + 0.01 * top)
-            streak = (phi * 5 / math.pi + 0.3 * math.sin(el * 3)) % 2 < 0.55     # streaks run front to back
-            (shade if streak else main).append((c, r))
+    edge = lambda phi: hb.hairline(phi) + 0.004
+    shell = hb.scalp_shell(skin, edge, lift=0.004, thick=0.01)
+    spheres = []                                            # (centre, radius, grey)
+
+    def skin_r(phi, y):                                     # skin distance from the head axis at azimuth phi
+        d = Vector((math.sin(phi), 0, -math.cos(phi)))
+        try:
+            loc, _ = surf.hit(Vector((0, y, 0)) + d * 0.4, -d)
+        except ValueError:
+            return 0.0
+        return Vector((loc.x, 0, loc.z)).length
+    part = -0.35                                            # side part on the Human's right
+    n = 26
+    for i in range(n):
+        phi = -math.pi + 2 * math.pi * (i + 0.5) / n
+        if abs(phi) < 0.8:
+            continue
+        grey = 0.8 <= abs(phi) < 1.05                       # temple bands, both sides
+        d = Vector((math.sin(phi), 0, -math.cos(phi)))
+        y_end = 1.478 + 0.022 * hb._ss((abs(phi) - 2.2) / 0.8)   # chin length, a touch shorter at the nape
+        ph = i * 1.9
+        pts = []
+        top = math.radians(78)                              # over the scalp from the crown to the widest point
+        e0 = math.asin(max(-0.95, min(0.95, (edge(phi) - hb.CRANIUM.y) / 0.15))) if abs(phi) < 1.3 else 0.0
+        e0 = max(e0, 0.0)
+        for k in range(12):
+            el = top + (e0 - top) * k / 11
+            dd = Vector((math.cos(el) * math.sin(phi), math.sin(el), -math.cos(el) * math.cos(phi)))
+            loc, nrm = surf.hit(hb.CRANIUM + dd * 0.4, -dd)
+            pts.append(loc + nrm * (0.012 + 0.008 * k / 11))
+        y0 = pts[-1].y
+        reach = Vector((pts[-1].x, 0, pts[-1].z)).length
+        y = y0
+        tuck = 1.2 < abs(phi) < 1.9                          # over the ear (azimuth ~1.64): parted round it, lobe shows
+        while y > y_end:                                    # hang: never back in past the skin (cheek, ear, jaw)
+            y -= 0.006
+            if tuck:
+                to = 1.3 if abs(phi) < 1.45 else 1.95               # part round the lobe: front lock forward, back ones back
+                ph_ = math.copysign(abs(phi) + (to - abs(phi)) * hb._ss((1.7 - y) / 0.06), phi)
+                d = Vector((math.sin(ph_), 0, -math.cos(ph_)))
+                reach = skin_r(ph_, y) + 0.014 if y > 1.6 else max(reach, skin_r(ph_, y) + 0.014)
+            else:
+                reach = max(reach, skin_r(phi, y) + 0.014)
+            t = (y0 - y) / (y0 - y_end)
+            wave = 0.007 * math.sin(2 * math.pi * (y0 - y) / 0.075 + ph) * hb._ss(t / 0.3)
+            curl = -0.016 * hb._ss((t - 0.78) / 0.22)       # tips turn under
+            pts.append(d * (reach + 0.004 * t + wave + curl) + Vector((0, y, 0)))
+        pts.append(d * (reach - 0.012) + Vector((0, y_end + 0.012, 0)))
+        L = len(pts)
+        for k, c in enumerate(pts):
+            t = k / (L - 1)
+            r = 0.024 + 0.008 * math.sin(math.pi * min(1.0, t * 1.3)) - 0.006 * hb._ss((t - 0.85) / 0.15)
+            spheres.append((c, r, grey))
+    # side-swept fringe from the part: three long locks to the Human's left temple, two short ones to the right
+    for k, (p1, y1, r0, grey) in enumerate(((1.05, 1.695, 0.028, True), (0.8, 1.70, 0.028, False),
+                                            (0.5, 1.703, 0.027, False), (0.2, 1.708, 0.025, False),
+                                            (-0.75, 1.70, 0.025, False), (-1.0, 1.69, 0.024, False))):
+        p0 = part + 0.1 * (k % 4) if k < 4 else part - 0.05
+        for j in range(17):
+            t = j / 16
+            phi = p0 + (p1 - p0) * t
+            yy = 1.80 - (1.80 - y1) * t ** 0.7
+            dd = hb.scalp_dir(phi, yy)
+            loc, nrm = surf.hit(hb.CRANIUM + dd * 0.4, -dd)
+            lift = 0.014 + 0.008 * math.sin(math.pi * t) + 0.003 * math.sin(t * 9 + k)
+            spheres.append((loc + nrm * lift, r0 * (1 - 0.3 * t), grey))
     objs = []
-    for name, spheres, mat in (('HairPerm', main, lib.mat('Hair', hb.HAIR, 0.9)),
-                               ('HairPermShade', shade, lib.mat('HairShade', hb.HAIR, 0.9))):
+    for name, grey, mat in (('HairBob', False, lib.mat('Hair', hb.HAIR, 0.9)),
+                            ('HairBobGrey', True, lib.mat('HairGrey', '#A8A39C', 0.9))):
         bm = bmesh.new()
-        for c, r in spheres:
-            bmesh.ops.create_uvsphere(bm, u_segments=14, v_segments=9, radius=r, matrix=Matrix.Translation(B(c)))
+        for c, r, g in spheres:
+            if g == grey:
+                bmesh.ops.create_uvsphere(bm, u_segments=14, v_segments=9, radius=r, matrix=Matrix.Translation(B(c)))
         me = bpy.data.meshes.new(name)
         bm.to_mesh(me)
         bm.free()
@@ -338,14 +414,16 @@ def hair_perm(skin, surf):
         bpy.context.scene.collection.objects.link(o)
         o.data.materials.append(mat)
         objs.append(o)
-    hair = hb.union_shell(objs[0], shell, 0.0025, 16000, smooth=2)
-    sh = objs[1]
-    sh.data.remesh_voxel_size = 0.0025                                   # the shade curls: their own union
+    hair = hb.union_shell(objs[0], shell, 0.0025, 18000, smooth=2)
+    gr = objs[1]                                            # grey locks: their own clay union, a clean band edge
+    gr.data.remesh_voxel_size = 0.0025
     for x in bpy.data.objects:
-        x.select_set(x == sh)
-    bpy.context.view_layer.objects.active = sh
+        x.select_set(x == gr)
+    bpy.context.view_layer.objects.active = gr
     bpy.ops.object.voxel_remesh()
-    return [hair, sh]
+    for f in gr.data.polygons:
+        f.use_smooth = True
+    return [hair, gr]
 
 
 def build(head, skin):
@@ -355,7 +433,7 @@ def build(head, skin):
                              ('beret', 'hat', beret(surf)), ('cap_driver', 'hat', cap(surf)),
                              ('hair_curly', 'hair', hair_curly(skin, surf)),
                              ('glasses_halfmoon', 'glasses', glasses_halfmoon(surf)),
-                             ('earrings_pearl', 'earrings', earrings_pearl(surf)), ('hair_perm', 'hair', hair_perm(skin, surf))):
+                             ('earrings_pearl', 'earrings', earrings_pearl(surf)), ('hair_bob', 'hair', hair_bob(skin, surf))):
         for o in objs:
             o.name = 'Acc_' + stem + '_' + o.name
             if o.name in bpy.context.scene.collection.objects:      # sculpted at the origin

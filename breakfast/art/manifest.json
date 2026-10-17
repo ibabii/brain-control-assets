@@ -43,7 +43,8 @@
    "parts": {
     "Coffee": "surface disc, y 0.02 (empty) -> 0.055 (half) -> 0.09 (full)",
     "Phone": "the phone plopped in, top sticking out (hidden by default)",
-    "Splats/Splat0..3": "coffee drops on the worktop around the mug (hidden by default)"
+    "Splats/Splat0..3": "coffee drops on the worktop around the mug (hidden by default)",
+    "Grips/Right": "hold_mug: the right hand round the mug, thumb up"
    },
    "node_position": [
     -0.3,
@@ -91,6 +92,7 @@
     "toast_2"
    ],
    "parts": {
+    "Grips/Right": "grab_toast: the top edge in the right fist",
     "Slice": "crust + golden faces",
     "Crumbs": "crumb burst for the splat on the roommate (hidden by default; place at the hit point)"
    },
@@ -118,7 +120,8 @@
    ],
    "rotation_y": -80.0,
    "parts": {
-    "FragileFront/Back": "FRAGILE tape (white caps + glass icons) on both long sides"
+    "FragileFront/Back": "FRAGILE tape (white caps + glass icons) on both long sides",
+    "Grips/Left": "take_parcel: the left palm up under the box, length back along the forearm"
    },
    "node_position": [
     1.86,

@@ -14,7 +14,7 @@ import sys
 import bmesh
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 HERE = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(HERE, '..', 'cockpit_v2'))
@@ -651,6 +651,18 @@ def coffee_machine():
         'Lever': 'grind lever, rotate about +X (0 up, ~+40 pulled)', 'HopperLid': 'rotate about +X at the back edge'}}
 
 
+def grip_node(parent, side, pos, x, y):
+    """`Grips/<side>` (Character rig v1): where Grip_L/R holds the prop; +X = x (thumb side), +Y = y (back of the
+    hand), Godot prop space."""
+    g = next((c for c in parent.children if c.name.startswith('Grips')), None) or lib.empty('Grips', (0, 0, 0), parent)
+    e = lib.empty(side, tuple(pos), g)
+    x, y = Vector(x).normalized(), Vector(y).normalized()
+    R = Matrix(((1, 0, 0), (0, 0, -1), (0, 1, 0)))                 # Godot -> Blender
+    rb = R @ Matrix((x, y, x.cross(y))).transposed() @ R.inverted()
+    e.matrix_world = Matrix.Translation(e.matrix_world.to_translation()) @ rb.to_4x4()
+    return e
+
+
 def mug_body(name, frame, parent, body_mat, band_mat):
     prof = [(0, 0.0), (0.04, 0.0), (0.045, 0.004), (0.046, 0.096), (0.044, 0.1), (0.04, 0.1), (0.038, 0.094),
             (0.038, 0.014), (0.0, 0.014)]
@@ -672,6 +684,7 @@ def mug():
               seg=32, pivot=(0, 0.02, 0))
     ph = lib.empty('Phone', (0, 0.1, 0), r)
     phone_body(ph, Frame((0.0, 0.1, 0.0), (0, 30, 72)), with_screen=False)
+    grip_node(r, 'Right', (0.04, 0.05, 0), (0, 1, 0), (1, 0, 0))       # hand round the right side, thumb up
     splats = lib.empty('Splats', (0, 0, 0), r)
     rng = np.random.default_rng(9)
     for i in range(4):
@@ -684,7 +697,8 @@ def mug():
     return r, {'pivot': 'base centre', 'parts': {
         'Coffee': 'surface disc, y 0.02 (empty) -> 0.055 (half) -> 0.09 (full)',
         'Phone': 'the phone plopped in, top sticking out (hidden by default)',
-        'Splats/Splat0..3': 'coffee drops on the worktop around the mug (hidden by default)'}}
+        'Splats/Splat0..3': 'coffee drops on the worktop around the mug (hidden by default)',
+        'Grips/Right': 'hold_mug: the right hand round the mug, thumb up'}}
 
 
 PHONE = (0.162, 0.08, 0.152, 0.07)              # case length (x) x width (z), screen; lies landscape
@@ -815,6 +829,7 @@ def toast_slab(name, frame, parent, bite=False, face_col=None, crust_col=None, x
 def toast():
     r = prop_root('toast')
     toast_slab('Slice', Frame((0, 0, 0)), r)
+    grip_node(r, 'Right', (0, 0.045, 0), (1, 0, 0), (0, 1, 0))         # pinched by the top edge (grab_toast)
     crumbs = lib.empty('Crumbs', (0, 0, 0), r)
     rng = np.random.default_rng(3)
     crumb = M('Crust', 'honey', 'wood')
@@ -822,7 +837,7 @@ def toast():
         lib.sphere('Crumb%d' % i, 0.004 + 0.003 * rng.random(), crumb,
                    Frame((rng.uniform(-0.05, 0.05), rng.uniform(-0.05, 0.05), 0.012)), crumbs, seg=8, rings=5)
     return r, {'pivot': 'slice centre; faces along +-Z (stands in a slot)', 'used_by': ['toast', 'toast_2'],
-               'parts': {'Slice': 'crust + golden faces', 'Crumbs': 'crumb burst for the splat on the roommate '
+               'parts': {'Grips/Right': 'grab_toast: the top edge in the right fist', 'Slice': 'crust + golden faces', 'Crumbs': 'crumb burst for the splat on the roommate '
                                                                    '(hidden by default; place at the hit point)'}}
 
 
@@ -871,8 +886,10 @@ def parcel():
     for k, v in enumerate((0.72, 0.52, 0.34)):
         c.stroke([(0.1, v), (0.5 + 0.12 * (k % 2), v + 0.03), (0.8 - 0.1 * k, v)], 3, '#3A4A5A')
     uv_quad('Label', Frame((0.07, h + 0.0018, 0.04), (-90, 0, 0)), 0.1, 0.065, canvas_mat('ParcelLabel', c), r)
+    grip_node(r, 'Left', (0, 0, 0), (0, 0, 1), (0, -1, 0))             # palm up under the box (take_parcel)
     return r, {'pivot': 'base centre', 'size': [w, h, d], 'rotation_y': PROP_YAW['parcel'],
-               'parts': {'FragileFront/Back': 'FRAGILE tape (white caps + glass icons) on both long sides'}}
+               'parts': {'FragileFront/Back': 'FRAGILE tape (white caps + glass icons) on both long sides',
+                         'Grips/Left': 'take_parcel: the left palm up under the box, length back along the forearm'}}
 
 
 def front_door():

@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://ckgyp1jpts100"
-path="res://.godot/imported/hair_perm_f.glb-d1af43d21628f6bd5ca4b1c8ea2aeb78.scn"
+uid="uid://tkqrt0texpix"
+path="res://.godot/imported/hair_bob_f.glb-0106f3293bf528c1e8d285cc705176bc.scn"
 
 [deps]
 
-source_file="res://characters/parts/hair_perm_f/art/hair_perm_f.glb"
-dest_files=["res://.godot/imported/hair_perm_f.glb-d1af43d21628f6bd5ca4b1c8ea2aeb78.scn"]
+source_file="res://characters/parts/hair_bob_f/art/hair_bob_f.glb"
+dest_files=["res://.godot/imported/hair_bob_f.glb-0106f3293bf528c1e8d285cc705176bc.scn"]
 
 [params]
 
