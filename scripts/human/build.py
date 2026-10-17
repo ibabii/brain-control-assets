@@ -206,9 +206,10 @@ def lock(mb, surf, pts, r0, r1):
     chain(mb, path, r0, r1, step=0.004)
 
 
-def scalp_shell(head, edge, lift=0.003, thick=0.01, cols=128, rows=40):
+def scalp_shell(head, edge, lift=0.003, thick=0.01, cols=128, rows=40, edge_el=None):
     """Smooth hair cap: a grid laid on the scalp from the hairline edge(phi) up to the crown (the edge follows the
-    curve exactly, no saw-tooth from the head's triangles), lifted and solidified."""
+    curve exactly, no saw-tooth from the head's triangles), lifted and solidified. edge_el(phi) gives the edge as
+    an elevation (rad) instead, for edges below the y-mapped range (a nape)."""
     surf = Surface(head)
     bm = bmesh.new()
     grid = []
@@ -216,7 +217,8 @@ def scalp_shell(head, edge, lift=0.003, thick=0.01, cols=128, rows=40):
         row = []
         for i in range(cols):
             phi = -math.pi + 2 * math.pi * i / cols
-            el0 = math.asin(max(-0.95, min(0.95, (edge(phi) - CRANIUM.y) / 0.15)))
+            el0 = (edge_el(phi) if edge_el else
+                   math.asin(max(-0.95, min(0.95, (edge(phi) - CRANIUM.y) / 0.15))))
             el = el0 + (math.radians(88) - el0) * (j / rows) ** 0.9
             d = Vector((math.cos(el) * math.sin(phi), math.sin(el), -math.cos(el) * math.cos(phi)))
             p = scalp(surf, d, lift)

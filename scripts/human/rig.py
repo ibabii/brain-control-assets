@@ -2,6 +2,8 @@
 (contract: coordination/interfaces.md "Human rig"). Godot coords in (lib convention), Blender bones out.
 """
 import math
+import os
+import sys
 
 import bmesh
 import bpy
@@ -500,10 +502,22 @@ def markers(L):
                     'basis': [[1, 0, 0], [0, 1, 0], [0, 0, 1]]})
     out.append({'name': 'EyeCam', 'bone': 'Head', 'pos': [0, L['EYE_Y'], -0.10], 'basis': [[1, 0, 0], [0, 1, 0], [0, 0, 1]]})
     out.append({'name': 'Foam', 'bone': 'Head', 'pos': [0, 1.525, -0.118], 'basis': [[1, 0, 0], [0, 1, 0], [0, 0, 1]]})
-    # Bite: a slice clamped by a corner in the teeth (expression bite), sticking out forward ~25 deg below the
-    # horizontal and a little to his right, toasted top up toward the camera (props/toast_bitten: origin at the corner)
-    from mathutils import Euler
-    m = Euler((math.radians(65), math.radians(-22), 0), 'YXZ').to_matrix()
+    # Bite: a slice clamped by a corner in the teeth (expression bite), its long axis (corner -> centre) ~30 deg to
+    # his right and ~35 deg below the horizontal, rolled ~45 deg about it so the broad face shows to the front
+    # (props/toast_bitten: origin at the corner, slice in its XY plane, face -Z)
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'breakfast'))
+    import toast_geom as TG
+    pts = [TG.bitten(q) for q in TG.outline(96)]
+    ll = Vector((sum(q[0] for q in pts), sum(q[1] for q in pts), 0)).normalized()          # local long axis
+    yaw, pitch = math.radians(30), math.radians(35)
+    d = Vector((math.sin(yaw) * math.cos(pitch), -math.sin(pitch), -math.cos(yaw) * math.cos(pitch)))
+    up = (Vector((0, 1, 0)) - d * d.y).normalized()
+    side = d.cross(up)
+    side = -side if side.z > 0 else side                                                   # toward the camera (-Z)
+    n = (up + side).normalized()                                                           # 45 deg roll
+    loc = Matrix((ll, Vector((0, 0, 1)).cross(ll), Vector((0, 0, 1)))).transposed()
+    wld = Matrix((d, (-n).cross(d), -n)).transposed()
+    m = wld @ loc.transposed()
     out.append({'name': 'Bite', 'bone': 'Head', 'pos': [0.004, 1.5225, -0.112],
                 'basis': [list(m.col[0]), list(m.col[1]), list(m.col[2])]})
     # PhoneEar: the phone (props/phone, centre pivot, long axis X, screen +Y) flat against the right ear, screen to

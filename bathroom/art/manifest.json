@@ -11,7 +11,7 @@
   "toothpaste mint #A9D9C6"
  ],
  "room": {
-  "tris": 40185,
+  "tris": 44273,
   "file": "bathroom_room.glb"
  },
  "props": {
@@ -72,7 +72,7 @@
     0.95,
     -0.64
    ],
-   "tris": 3040,
+   "tris": 5400,
    "file": "props/faucet.glb"
   },
   "tub": {

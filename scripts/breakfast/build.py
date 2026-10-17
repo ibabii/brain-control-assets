@@ -149,6 +149,89 @@ def amber_pane(px=128):
     return c
 
 
+def pnoise(shape, scale, seed):
+    """Periodic (tileable) smooth noise, unit std: white noise low-passed in the Fourier domain."""
+    rng = np.random.default_rng(seed)
+    f = np.fft.fft2(rng.normal(0, 1, shape))
+    ky, kx = np.meshgrid(np.fft.fftfreq(shape[0]), np.fft.fftfreq(shape[1]), indexing='ij')
+    n = np.real(np.fft.ifft2(f * np.exp(-(kx ** 2 + ky ** 2) * (scale ** 2))))
+    return n / (n.std() + 1e-9)
+
+
+def plaster_tex(name, base, px=512):
+    """Soft plaster: faint mottling (tileable along U) and a gentle vertical gradient (V = wall height, 0 at the
+    floor): a touch darker low down, lightest under the ceiling. Matte, subtle."""
+    mott = pnoise((px, px), 40, 21) * 0.012 + pnoise((px, px), 8, 22) * 0.006
+    v = np.linspace(1.0, 0.0, px)[:, None]                      # image row 0 = top = V 1
+    grad = 0.965 + 0.045 * v ** 0.7
+    col = _rgb(base)[None, None] * (grad + mott)[..., None]
+    hgt = pnoise((px, px), 3, 23) * 0.5 + pnoise((px, px), 12, 24)
+    return (lib.image_from_array(name, np.clip(col, 0, 1)),
+            lib.image_from_array(name + 'N', _normal_from(hgt * 0.04, 0.6), non_color=True))
+
+
+def splash_tex(name, base, grout, nx, ny, px_per=48, gw=0.06, seed=3):
+    """The whole backsplash, every tile its own shade (value + a little warmth), warm grout, pillowed edges."""
+    px, py = nx * px_per, ny * px_per
+    y, x = np.mgrid[0:py, 0:px].astype(float) / px_per
+    fx, fy = x % 1, y % 1
+    d = np.minimum(np.minimum(fx, 1 - fx), np.minimum(fy, 1 - fy))
+    inside = np.clip((d - gw / 2) / 0.04, 0, 1)
+    rng = np.random.default_rng(seed)
+    ix, iy = x.astype(int), y.astype(int)
+    val = rng.normal(0, 0.035, (ny + 1, nx + 1))[iy, ix]
+    warm = rng.normal(0, 0.02, (ny + 1, nx + 1))[iy, ix]
+    tile = _rgb(base)[None, None] * (1 + val[..., None]) + np.array([1, 0.2, -0.6]) * warm[..., None] * 0.5
+    tile = tile * (1 + 0.012 * pnoise((py, px), 6, seed + 1))[..., None]          # faint glaze unevenness
+    col = tile * inside[..., None] + _rgb(grout)[None, None] * (1 - inside[..., None])
+    return (lib.image_from_array(name, np.clip(col, 0, 1)),
+            lib.image_from_array(name + 'N', _normal_from(np.sqrt(inside), 1.5), non_color=True))
+
+
+def wear_tex(name, base, size, spots, rings=(), px_per_m=600, seed=31):
+    """Worktop top face (size x, z metres; image row 0 = back edge): soft darker wear where things get used
+    (spots: (x, z, rx, rz, strength) in worktop-local metres from the left-back corner), mug rings, faint mottling."""
+    w, h = int(size[0] * px_per_m), int(size[1] * px_per_m)
+    y, x = np.mgrid[0:h, 0:w].astype(float) / px_per_m
+    m = np.zeros((h, w))
+    for cx, cz, rx, rz, k in spots:
+        m += k * np.exp(-(((x - cx) / rx) ** 2 + ((y - cz) / rz) ** 2))
+    rng = np.random.default_rng(seed)
+    grain = pnoise((h, w), 10, seed) * 0.5 + pnoise((h, w), 2.5, seed + 1) * 0.5
+    m = m * (0.75 + 0.25 * grain)
+    for cx, cz, r in rings:                                                # faint coffee rings
+        rr = np.sqrt((x - cx) ** 2 + (y - cz) ** 2)
+        m += 0.03 * np.exp(-((rr - r) / 0.003) ** 2)
+    col = _rgb(base)[None, None] * (1 - m[..., None]) * (1 + 0.008 * pnoise((h, w), 30, seed + 2))[..., None]
+    col = col + np.array([-0.01, 0.0, 0.012]) * m[..., None]               # wear reads a touch cooler, not dirty brown
+    return lib.image_from_array(name, np.clip(col, 0, 1))
+
+
+def floor_tex(name, a, b, size, path, px_per_m=320, sq=0.4, gw=0.012):
+    """The kitchen floor as one image (size x, z metres; image x from the left wall, rows from the back wall): the
+    checker plus a faint scuffed path (polyline in those coords) where feet go."""
+    w, h = int(size[0] * px_per_m), int(size[1] * px_per_m)
+    y, x = np.mgrid[0:h, 0:w].astype(float) / px_per_m
+    fx, fy = (x / sq) % 1, (y / sq) % 1
+    d = np.minimum(np.minimum(fx, 1 - fx), np.minimum(fy, 1 - fy)) * sq
+    inside = np.clip((d - gw / 2) / 0.01, 0, 1)
+    which = ((np.floor(x / sq) + np.floor(y / sq)) % 2)[..., None]
+    n = 1 + 0.03 * pnoise((h, w), 3, 41)[..., None]
+    col = (_rgb(a) * (1 - which) + _rgb(b) * which) * n
+    col = col * inside[..., None] + _rgb('#CDBFA6') * (1 - inside[..., None])
+    dist = np.full((h, w), 9.0)
+    for (x0, z0), (x1, z1) in zip(path, path[1:]):                   # distance to the path polyline
+        vx, vz = x1 - x0, z1 - z0
+        t = np.clip(((x - x0) * vx + (y - z0) * vz) / (vx * vx + vz * vz), 0, 1)
+        dist = np.minimum(dist, np.hypot(x - (x0 + t * vx), y - (z0 + t * vz)))
+    scuff = np.exp(-(dist / 0.28) ** 2) * (0.6 + 0.4 * np.clip(pnoise((h, w), 6, 42) * 0.5 + 0.5, 0, 1))
+    scuff = scuff * (0.85 + 0.15 * pnoise((h, w), 1.2, 43))                 # fine grit, not a smear
+    col = col * (1 - 0.13 * scuff[..., None])                               # darker, a bit less saturated where worn
+    col = col * (1 - 0.3 * scuff[..., None]) + col.mean(-1, keepdims=True) * 0.3 * scuff[..., None]
+    return (lib.image_from_array(name, np.clip(col, 0, 1)),
+            lib.image_from_array(name + 'N', _normal_from(np.sqrt(inside), 1.2), non_color=True))
+
+
 def canvas_mat(name, c, rough=0.9, emit=0.0):
     img = lib.image_from_array(name + 'Tex', c.image())
     if emit:
@@ -194,23 +277,31 @@ WALLS = {   # name: (frame at the inner face's left-bottom corner, width, holes 
 
 def shell(root):
     p = lib.empty('Shell', (0, 0, 0), root)
-    floor = tex_mat('FloorChecker', PAL['cream'], checker_tex('FloorCheckerTex', PAL['cream'], TERRACOTTA), 0.7)
+    # one floor image (image x = world x - XL, rows = z - ZB): the checker + a faint scuffed path where feet go,
+    # machine <-> Bernard's spot <-> toaster, and on toward the table; clear of the doorway (the punchline frame)
+    path = [(x - XL, z - ZB) for x, z in ((-0.3, -0.4), (0.0, 0.05), (0.42, -0.4), (0.0, 0.05), (0.85, -0.2))]
+    floor = tex_mat('FloorChecker', PAL['cream'], floor_tex('FloorCheckerTex', PAL['cream'], TERRACOTTA,
+                                                            (XR - XL, ZF - ZB), path), 0.7)
     paint = M('WallPaint', 'cream', 0.85)
+    plaster = tex_mat('WallPlaster', PAL['cream'], plaster_tex('WallPlasterTex', PAL['cream']), 0.85)
     skirt = M('Skirting', 'porcelain', 'painted')
-    quad_grid('Floor', Frame((XL, 0, ZF), (-90, 0, 0)), 0, XR - XL, 0, ZF - ZB, floor, p, tile=0.8, nx=5, ny=5)
+    quad_grid('Floor', Frame((XL, 0, ZF), (-90, 0, 0)), 0, XR - XL, 0, ZF - ZB, floor, p, nx=5, ny=5)
     quad_grid('Ceiling', Frame((XL, H, ZB), (90, 0, 0)), 0, XR - XL, 0, ZF - ZB, paint, p, nx=2, ny=2)
     for name, (f, w, holes) in WALLS.items():
         for i, (a, b, y0, y1) in enumerate(wall_rects(w, 0, H, holes)):
-            quad_grid('%sPaint%d' % (name, i), f, a, b, y0, y1, paint, p)
+            quad_grid('%sPaint%d' % (name, i), f, a, b, y0, y1, plaster, p, tile=H)
         spans = [(0.0, w)]
         if name == 'Left':
             spans = [(0.0, holes[0][0]), (holes[0][1], w)]
         for k, (a, b) in enumerate(spans):
             rbox('%sSkirt%d' % (name, k), (b - a, 0.08, 0.016), skirt, f.child(((a + b) / 2, 0.04, 0.008)), p, 0.004)
     # backsplash: square peach tiles between the worktop and the uppers
-    tiles = tex_mat('Splash', PAL['peach'], tile_tex('SplashTex', PAL['peach'], '#F3E2D2', n=4, gw=0.06, seed=3), 0.7)
     x0, x1, top = COUNTER
-    quad_grid('Backsplash', Frame((x0, top, ZB + 0.004)), 0, x1 - x0, 0, UPPER[0] - top, tiles, p, tile=0.6)
+    nx, ny = int(round((x1 - x0) / 0.15)), int(math.ceil((UPPER[0] - top) / 0.15))    # 15 cm tiles, each its own
+    tiles = tex_mat('Splash', PAL['peach'], splash_tex('SplashTex', PAL['peach'], '#EBCFB6', nx, ny), 0.7)
+    sp = quad_grid('Backsplash', Frame((x0, top, ZB + 0.004)), 0, x1 - x0, 0, UPPER[0] - top, tiles, p)
+    for l in sp.data.uv_layers[0].data:                                            # V spans whole tiles, not 0..1
+        l.uv[1] *= (UPPER[0] - top) / (ny * 0.15)
     doorway(p)
     window(p)
     lamps(p)
@@ -314,6 +405,16 @@ def counter(root):
         lib.sphere('Knob%d' % i, 0.016, knob, Frame((kx, top - 0.2, ZB + 0.6)), p, scale=(1, 1, 0.8), seg=16, rings=8)
     lib.slab('Worktop', lib.rrect(x1 - x0 + 0.04, 0.62, 0.012, 3), 0.04, 0.012, M('Worktop', '#F3E7D0', 0.7),
              Frame(((x0 + x1) / 2, top - 0.04, ZB + 0.3), UPF), p)
+    # its top face again as one image with use wear (x from the left end, rows from the back): soft darker patches
+    # in front of the machine and the toaster, a worn front edge where hands lean, two faint mug rings
+    ww, wd = x1 - x0 + 0.04 - 0.016, 0.62 - 0.016
+    lx = lambda x: x - (x0 - 0.02 + 0.008)
+    wear = wear_tex('WorktopWearTex', '#F3E7D0', (ww, wd),
+                    [(lx(PROPS['mug'][0]), 0.44, 0.2, 0.11, 0.1), (lx(-0.3), 0.3, 0.13, 0.07, 0.06),
+                     (lx(PROPS['toaster'][0]), 0.4, 0.13, 0.09, 0.055), (lx(0.05), 0.56, 0.5, 0.05, 0.05)],
+                    rings=[(lx(-0.2), 0.47, 0.04), (lx(-0.47), 0.52, 0.042)])
+    uv_quad('WorktopWear', Frame(((x0 + x1) / 2, top + 0.0004, ZB + 0.3), (-90, 0, 0)), ww, wd,
+            lib.mat('WorktopWear', '#F3E7D0', 0.7, image=wear), p)
     cream = M('UpperCream', 'cream', 'painted')
     u0, u1 = UPPER
     rbox('Uppers', (x1 - x0, u1 - u0, 0.33), cream, Frame(((x0 + x1) / 2, (u0 + u1) / 2, ZB + 0.165)), p, 0.01)
@@ -347,8 +448,8 @@ def fridge(p):
     for y0, y1 in ((1.33, 1.55), (0.85, 1.2)):
         rbox('FridgeHandle%.0f' % (y0 * 100), (0.025, y1 - y0, 0.03), hand, Frame((x1 - 0.05, (y0 + y1) / 2, z1 + 0.02)),
              p, 0.01)
-    for i, (x, y, c) in enumerate(((-1.9, 1.62, 'clay'), (-1.66, 1.7, 'teal'), (-1.82, 1.06, 'peach'),
-                                   (-1.6, 0.95, 'honey'))):
+    for i, (x, y, c) in enumerate(((-1.9, 1.62, 'clay'), (-1.66, 1.645, 'teal'), (-1.82, 1.015, 'peach'),
+                                   (-1.6, 0.895, 'honey'))):
         lib.sphere('Magnet%d' % i, 0.022, M('Magnet' + c, c, 'ceramic'), Frame((x, y, z1 + 0.003)), p,
                    scale=(1, 1, 0.45), seg=16, rings=8)
     c = ink.paper(120, 168, PAL['porcelain'], seed=11)
@@ -358,25 +459,28 @@ def fridge(p):
     ink.text(c, 'call mom', (0.46, 0.5), 0.1, '#3A4A5A')
     ink.tick(c, (0.8, 0.62), 0.07, '#3A4A5A')
     uv_quad('Notepad', Frame((-1.76, 1.3, z1 + 0.004)), 0.12, 0.168, canvas_mat('Notepad', c), p)
+    fridge_papers(p, z1)
 
 
 def clutter(p):
     top = COUNTER[2]
     clay = M('KettleClay', 'clay', 'ceramic')
+    kx, fx = -1.2, -0.99                                    # kettle, fruit bowl (left end; the dish rack by the machine)
     lathe('Kettle', [(0, 0), (0.075, 0), (0.085, 0.02), (0.088, 0.1), (0.07, 0.17), (0.035, 0.19), (0.0, 0.19)],
-          clay, Frame((-1.15, top, -0.86)), p)
-    lib.sphere('KettleKnob', 0.016, M('Knob', 'clay', 'ceramic'), Frame((-1.15, top + 0.2, -0.86)), p)
-    sweep('KettleHandle', [(-1.15, top + 0.2, -0.93), (-1.15, top + 0.24, -0.86), (-1.15, top + 0.2, -0.79)],
+          clay, Frame((kx, top, -0.86)), p)
+    lib.sphere('KettleKnob', 0.016, M('Knob', 'clay', 'ceramic'), Frame((kx, top + 0.2, -0.86)), p)
+    sweep('KettleHandle', [(kx, top + 0.2, -0.93), (kx, top + 0.24, -0.86), (kx, top + 0.2, -0.79)],
           lambda t: 0.011, M('Cord', 'graphite'), p)
-    sweep('KettleSpout', [(-1.07, top + 0.08, -0.86), (-1.04, top + 0.13, -0.86), (-1.02, top + 0.16, -0.86)],
+    sweep('KettleSpout', [(kx + 0.08, top + 0.08, -0.86), (kx + 0.11, top + 0.13, -0.86), (kx + 0.13, top + 0.16, -0.86)],
           lambda t: 0.016 - 0.007 * t, clay, p)
     bowl = M('BowlCream', 'cream', 'ceramic')
     lathe('FruitBowl', [(0, top), (0.06, top), (0.1, top + 0.03), (0.13, top + 0.07), (0.125, top + 0.072),
-                        (0.095, top + 0.03), (0.0, top + 0.02)], bowl, Frame((-0.78, 0, -0.84)), p)
+                        (0.095, top + 0.03), (0.0, top + 0.02)], bowl, Frame((fx, 0, -0.8)), p)
     for i, (dx, dz, c, r) in enumerate(((-0.04, 0.0, '#E9965A', 0.04), (0.035, -0.02, '#E9965A', 0.04),
                                         (0.0, 0.04, '#C9564A', 0.038), (0.01, -0.01, '#E9965A', 0.036))):
         lib.sphere('Fruit%d' % i, r, M('Fruit%d' % i, c, 'ceramic'),
-                   Frame((-0.78 + dx, top + 0.055 + (0.035 if i == 3 else 0), -0.84 + dz)), p)
+                   Frame((fx + dx, top + 0.055 + (0.035 if i == 3 else 0), -0.8 + dz)), p)
+    dish_rack(p, (-0.66, top, -0.93))
     crock = lathe('Crock', [(0, 0), (0.05, 0), (0.055, 0.14), (0.05, 0.145), (0.0, 0.13)], M('Crock', 'teal', 'ceramic'),
                   Frame((-1.36, top, -0.98)), p)
     wood = M('Spoon', 'honey', 'wood')
@@ -386,6 +490,95 @@ def clutter(p):
         b1 = b0 + Vector((math.sin(a) * 0.2, 0.2, 0))
         tube('SpoonStem%d' % i, [b0, b1], 0.006, wood, p, res=1)
         lib.sphere('SpoonBowl%d' % i, 0.022, wood, Frame(tuple(b1 + Vector((0, 0.02, 0)))), p, scale=(1, 1.3, 0.5))
+
+
+def dish_rack(p, at):
+    """Teal drying rack against the backsplash: a drip tray, two rows of upright tines, two plates standing in it
+    leaning a little, a mug upside down on the tray's end."""
+    x, y, z = at
+    teal = M('RackTeal', 'teal', 'rubber')
+    rbox('RackTray', (0.3, 0.022, 0.2), teal, Frame((x, y + 0.011, z)), p, 0.008)
+    for row in (-0.05, 0.05):
+        for k in range(7):
+            tx = x - 0.12 + k * 0.03
+            tube('RackTine%d%d' % (row > 0, k), [(tx, y + 0.02, z + row), (tx, y + 0.11, z + row * 1.15)], 0.0035,
+                 teal, p, res=1)
+    rim = M('Plate', 'porcelain', 'ceramic')
+    band = M('PlateBand', 'peach', 'ceramic')
+    for i, (dx, lean) in enumerate(((-0.075, 9), (-0.015, -6))):
+        fr = Frame((x + dx, y + 0.125, z), (0, 90, lean))       # upright, face along X, leaning in the tines
+        lathe('RackPlate%d' % i, [(0, -0.004), (0.07, -0.004), (0.1, 0.008), (0.11, 0.012), (0.105, 0.013),
+                                  (0.07, 0.0), (0, 0.0)], rim, fr.child((0, 0, 0), (90, 0, 0)), p, seg=32)
+        lathe('RackPlateBand%d' % i, [(0.095, 0.0085), (0.1045, 0.0125)], band, fr.child((0, 0, 0), (90, 0, 0)), p,
+              seg=32)
+    mug_body('RackMug', Frame((x + 0.11, y + 0.022 + 0.1, z), (180, 30, 0)), p, M('RmMug', 'clay', 'ceramic'), None)
+
+
+def calendar(p):
+    """Wall calendar on the left wall between the fridge and the doorway: a sunny picture, OCTOBER, a date grid
+    with today (the 17th) circled in clay red; hangs off a little nail."""
+    c = ink.paper(240, 340, PAL['porcelain'], seed=17)
+    rect = lambda u0, v0, u1, v1, col: c.paint(((c.x >= u0 * c.w) & (c.x <= u1 * c.w) & (c.y >= (1 - v1) * c.h) &
+                                                (c.y <= (1 - v0) * c.h)).astype(float), col)
+    rect(0.06, 0.55, 0.94, 0.95, PAL['peach'])                                   # the picture: a sun over hills
+    c.ellipse((0.66, 0.82), 0.06, 0.06, '#F2B33D')
+    c.ellipse((0.3, 0.52), 0.3, 0.12, '#6E8F5E')
+    c.ellipse((0.78, 0.5), 0.26, 0.1, '#86A374')
+    rect(0.0, 0.0, 1.0, 0.555, PAL['porcelain'])
+    ink.text(c, 'OCTOBER', (0.5, 0.49), 0.055, PAL['clay'], weight=1)
+    for k in range(31):
+        col, row = (k + 2) % 7, (k + 2) // 7                                     # the 1st on a Wednesday
+        u, v = 0.12 + col * 0.127, 0.4 - row * 0.075
+        ink.text(c, str(k + 1), (u, v), 0.034, '#3A4A5A')
+        if k + 1 == 17:
+            pts = [(u + 0.06 * math.cos(a), v + 0.004 + 0.042 * math.sin(a)) for a in
+                   [2 * math.pi * i / 24 + 0.4 for i in range(27)]]
+            c.stroke(pts, 4, FRAGILE_RED)
+    fr = Frame((XL + 0.003, 1.45, -0.02), (0, 90, 0))
+    uv_quad('Calendar', fr, 0.24, 0.34, canvas_mat('Calendar', c), p)
+    tube('CalendarNail', [fr.at((0, 0.18, -0.002)), fr.at((0, 0.18, 0.012))], 0.003, M('Cord', 'graphite'), p, res=1)
+
+
+def fridge_papers(p, z1):
+    """More on the fridge: a polaroid (two friends), a takeaway menu and a kid's crayon drawing, each under a
+    magnet (fridge() places the magnets)."""
+    c = ink.Canvas(110, 130, PAL['porcelain'])
+    c.paint(((c.x > 8) & (c.x < 102) & (c.y > 8) & (c.y < 98)).astype(float), '#9FB7C9')
+    c.ellipse((0.36, 0.42), 0.13, 0.17, '#2D5C5B')
+    c.ellipse((0.36, 0.62), 0.08, 0.08, '#E3AE93')
+    c.ellipse((0.64, 0.4), 0.13, 0.17, '#F2C14E')
+    c.ellipse((0.64, 0.6), 0.08, 0.08, '#C98B66')
+    uv_quad('FridgePolaroid', Frame((-1.66, 1.6, z1 + 0.0025), (0, 0, -6)), 0.085, 0.1, canvas_mat('Polaroid', c), p)
+    c = ink.paper(120, 170, '#F3E3C3', seed=19)
+    ink.text(c, 'PIZZA', (0.5, 0.86), 0.12, FRAGILE_RED, weight=1)
+    ink.ruled(c, 0.1, color='#C9A97F', top=0.72, bottom=0.1)
+    uv_quad('FridgeMenu', Frame((-1.6, 0.84, z1 + 0.0025), (0, 0, 4)), 0.11, 0.155, canvas_mat('Menu', c), p)
+    c = ink.paper(160, 120, '#FFFFFF', seed=23)
+    c.ellipse((0.3, 0.7), 0.12, 0.12, '#F2B33D')
+    c.stroke([(0.05, 0.25), (0.35, 0.4), (0.6, 0.22), (0.95, 0.35)], 5, '#6E8F5E')
+    c.stroke([(0.62, 0.3), (0.62, 0.6), (0.8, 0.6), (0.8, 0.3)], 4, '#C0583F')
+    c.stroke([(0.6, 0.6), (0.71, 0.75), (0.82, 0.6)], 4, '#C0583F')
+    uv_quad('FridgeDrawing', Frame((-1.82, 0.98, z1 + 0.0025), (0, 0, -3)), 0.14, 0.105, canvas_mat('Drawing', c), p)
+
+
+def key_shelf(p):
+    """Little honey shelf by the coat hooks with a clay bowl and a set of keys (out of the punchline frame)."""
+    z = HALL[2]
+    wood = M('HookWood', HONEY_WOOD, 'wood')
+    rbox('KeyShelf', (0.3, 0.025, 0.13), wood, Frame((-3.95, 1.1, z + 0.065)), p, 0.006)
+    lathe('KeyBowl', [(0, 0), (0.045, 0), (0.07, 0.025), (0.075, 0.035), (0.07, 0.036), (0.05, 0.012), (0, 0.01)],
+          M('KeyBowl', 'clay', 'ceramic'), Frame((-3.95, 1.1125, z + 0.07)), p)
+    brass = M('KeyBrass', '#C9A45A', 0.6)
+    ring = [(-3.95 + 0.016 * math.cos(a), 1.13, z + 0.07 + 0.016 * math.sin(a)) for a in
+            [2 * math.pi * k / 16 for k in range(17)]]
+    tube('KeyRing', ring, 0.002, brass, p, res=1)
+    for i, (a, ln) in enumerate(((0.3, 0.05), (1.4, 0.045))):
+        b = Vector((-3.95 + 0.016 * math.cos(a), 1.13, z + 0.07 + 0.016 * math.sin(a)))
+        d = Vector((math.cos(a), -0.15, math.sin(a))).normalized()
+        rbox('Key%d' % i, (0.018, 0.004, 0.02), brass, Frame(tuple(b + d * 0.012)), p, 0.002)
+        tube('KeyBlade%d' % i, [b + d * 0.02, b + d * ln], 0.0035, brass, p, res=1)
+    lib.sphere('KeyFob', 0.012, M('Magnetteal', 'teal', 'ceramic'), Frame((-3.95 - 0.01, 1.125, z + 0.05)), p,
+               scale=(1, 0.6, 1))
 
 
 def nook(root):
@@ -446,10 +639,12 @@ def rug(root):
 
 
 def snake_plant(base, parent, height=0.95):
-    """Floor plant: clay pot, chunky upright pointed leaves (sansevieria)."""
+    """Floor plant: clay pot, chunky upright pointed leaves (sansevieria). The leaves hang under `PlantSway` (pivot
+    at the soil): gameplay can rock it a few degrees."""
     pot = lathe('FloorPot', [(0, 0), (0.12, 0), (0.13, 0.01), (0.15, 0.28), (0.16, 0.29), (0.16, 0.31), (0.145, 0.31),
                              (0.14, 0.28), (0, 0.28)], M('PotClay', 'clay', 'ceramic'), Frame(base), parent, seg=32)
     leaf = lib.mat('Leaf', LEAF, 0.7)
+    sway = lib.empty('PlantSway', tuple(Vector(base) + Vector((0, 0.28, 0))), parent)
     rng = np.random.default_rng(5)
     for i in range(9):
         a = 2 * math.pi * i / 9 + rng.random() * 0.4
@@ -459,7 +654,7 @@ def snake_plant(base, parent, height=0.95):
         b = Vector(base) + Vector((math.cos(a) * r, 0.28, math.sin(a) * r))
         outline = [(-0.035, 0.0), (0.035, 0.0), (0.03, h * 0.6), (0.0, h), (-0.03, h * 0.6)]
         fr = Frame(tuple(b), (lean * 57 * math.sin(a), math.degrees(-a) + 90, lean * 57 * math.cos(a)))
-        lib.slab('Leaf%d' % i, outline, 0.012, 0.005, leaf, fr.child((0, 0, -0.006)), parent)
+        lib.slab('Leaf%d' % i, outline, 0.012, 0.005, leaf, fr.child((0, 0, -0.006)), sway)
 
 
 def wall_bits(root):
@@ -481,7 +676,11 @@ def wall_bits(root):
         o = lib.box(name, (w, ln + 0.02, 0.003), hands, fc.child((0, ln / 2 - 0.01, dz)), p, bevel=0.001,
                     pivot=fc.at((0, 0, dz)))
         o.rotation_euler = (math.radians(ang), 0, 0)
-    lib.sphere('ClockPin', 0.01, M('Knob', 'clay', 'ceramic'), fc.child((0, 0, 0.047)), p)
+    # thin terracotta second hand with a short tail, same pivot rule (built at 12, i.e. :00)
+    lib.box('ClockSecond', (0.004, 0.14, 0.002), M('ClockSecond', TERRACOTTA, 'rubber'), fc.child((0, 0.04, 0.054)), p,
+            bevel=0.0008, pivot=fc.at((0, 0, 0.054)))
+    lib.sphere('ClockPin', 0.01, M('Knob', 'clay', 'ceramic'), fc.child((0, 0, 0.051)), p)
+    calendar(p)
     # framed print above the nook (sunny-side-up egg on peach)
     fp = Frame((1.05, 1.5, ZB + 0.002))
     ring = lib.rrect(0.36, 0.28, 0.01, 2)
@@ -526,6 +725,7 @@ def hall(root):
     lib.sphere('HallLamp', 0.14, lamp_glow, Frame((-3.5, hh, 0.8)), p, scale=(1, 0.45, 1), seg=24, rings=10)
     coat_hooks(p)
     shoe_rack(p)
+    key_shelf(p)
     lib.slab('Doormat', lib.rrect(0.55, 0.8, 0.03, 3), 0.012, 0.004, tex_mat('Coir', '#C9A26A',
              weave_tex('CoirTex', '#C9A26A', n=14), 0.95), Frame((x0 + 0.38, 0.0, 0.8), UPF), p)
 

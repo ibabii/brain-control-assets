@@ -33,6 +33,11 @@ const CLOSE := [         # --close: prop/set detail shots (name, eye, yaw, pitch
 	['parcel', Vector3(1.6, 0.95, 0.05), -20.0, -40.0],
 	['fridge', Vector3(-1.0, 1.4, 0.6), 40.0, -14.0],
 	['front door from the hall', Vector3(-2.6, 1.5, 0.8), 90.0, -12.0],
+	['dish rack + worktop wear', Vector3(-0.45, 1.35, -0.3), 18.0, -40.0],
+	['calendar', Vector3(-1.0, 1.5, 0.15), 90.0, -5.0],
+	['key shelf', Vector3(-3.65, 1.4, 1.15), 25.0, -22.0],
+	['floor path', Vector3(0.1, 2.5, 1.3), 0.0, -58.0],
+	['clock', Vector3(1.55, 1.8, 0.3), -75.0, 3.0],
 ]
 
 var cam: Camera3D

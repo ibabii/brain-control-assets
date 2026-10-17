@@ -664,10 +664,69 @@ def toilet(parent):
     rbox('BinPedal', (0.07, 0.015, 0.05), M('Honey', 'honey'), Frame((1.36, 0.02, 0.18)), p, 0.005)
 
 
+def mat_lift(x, z):
+    """Bath mat crumple above its flat top (m): a diagonal ruck across the far half and the front-right corner kicked
+    up, as if stepped out of the tub onto it. Shared by the mat and the faucet's Puddle drape."""
+    x0, x1, z0, z1 = MAT_RECT
+    u, v = (x - (x0 + x1) / 2) / (x1 - x0), (z - (z0 + z1) / 2) / (z1 - z0)        # -0.5 .. 0.5
+    ruck = 0.032 * math.exp(-((0.8 * u - 0.6 * v - 0.12) / 0.07) ** 2) * (1 - (2 * max(abs(u), abs(v))) ** 6)
+    ruck2 = 0.015 * math.exp(-((0.6 * u - 0.8 * v + 0.2) / 0.05) ** 2) * (1 - (2 * max(abs(u), abs(v))) ** 6)
+    d = math.hypot(x - x1, z - z1)
+    corner = 0.05 * max(0.0, 1 - d / 0.15) ** 1.6
+    return ruck + ruck2 + corner
+
+
 def bath_mat(parent):
+    """Honey bobble mat, crumpled (mat_lift): top 1.4 cm over the floor plus the crumple; the cloth lifts off the
+    floor under the rucks. Rounded corners, closed sides."""
     m = tex_mat('BathMat', PAL['honey'], bobble_tex('BobbleHoney', PAL['honey']), 0.95)
-    o = lib.slab('BathMat', lib.rrect(0.7, 0.45, 0.06, 4), 0.014, 0.006, m, Frame((0, 0.0, 0.2), UPF), parent)
+    x0, x1, z0, z1 = MAT_RECT
+    nx, nz, rc, th = 36, 24, 0.06, 0.014
+
+    def xz(i, j):                                                  # grid point pulled onto the rounded rect
+        x, z = x0 + (x1 - x0) * i / nx, z0 + (z1 - z0) * j / nz
+        cx, cz = min(max(x, x0 + rc), x1 - rc), min(max(z, z0 + rc), z1 - rc)
+        dx, dz = x - cx, z - cz
+        dl = math.hypot(dx, dz)
+        if dl > rc:
+            x, z = cx + dx / dl * rc, cz + dz / dl * rc
+        return x, z
+    bm = bmesh.new()
+    top, bot = {}, {}
+    for i in range(nx + 1):
+        for j in range(nz + 1):
+            x, z = xz(i, j)
+            h = mat_lift(x, z)
+            top[i, j] = bm.verts.new(Vector((x, th + h, z)))
+            bot[i, j] = bm.verts.new(Vector((x, max(0.0, h - 0.004), z)))
+    for i in range(nx):
+        for j in range(nz):
+            bm.faces.new((top[i, j], top[i, j + 1], top[i + 1, j + 1], top[i + 1, j]))
+            bm.faces.new((bot[i, j], bot[i + 1, j], bot[i + 1, j + 1], bot[i, j + 1]))
+    ring = ([(i, 0) for i in range(nx)] + [(nx, j) for j in range(nz)] + [(i, nz) for i in range(nx, 0, -1)] +
+            [(0, j) for j in range(nz, 0, -1)])
+    for a, b in zip(ring, ring[1:] + ring[:1]):
+        bm.faces.new((top[a], top[b], bot[b], bot[a]))
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)       # the pulled-in corners collapse
+    bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=1e-6)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    o = lib.from_bmesh('BathMat', bm, m, parent)
     _box_uv(o, 0.12)
+
+
+def tub_towel(parent):
+    """Sage terry towel slung over the tub's foot-end rim: a short tail inside, the long end down the outside."""
+    m = tex_mat('Terrysage', PAL['sage'], terry_tex('TerrysageTex', PAL['sage'], seed=7), 0.95)   # the shelf's sage terry
+    stripe = tex_mat('TowelStripe', '#F6D9CB', terry_tex('TerryStripe', '#F6D9CB', seed=9), 0.95)
+    zi, zo, yt, t = 0.55 + 0.76, 0.55 + 0.85, 0.55, 0.008               # rim inner/outer face, top; half thickness
+    prof = [(0.4, zi - t - 0.004), (0.5, zi - t)]
+    prof += [(yt + t - 0.012 * (1 - math.sin(a)), zi + (zo - zi) / 2 - math.cos(a) * ((zo - zi) / 2 + t))
+             for a in [math.pi * k / 10 for k in range(11)]]
+    prof += [(yt - 0.08 * k, zo + t + 0.003 * k) for k in range(1, 6)]
+    n = len(prof)
+    o = ribbon('TubTowel', prof, -1.33, -1.0, 0.014, [m, stripe], parent, nx=10, wave=0.004,
+               split=lambda i: 1 if i in (n - 3,) else 0)
+    _box_uv(o, 0.2)
 
 
 def basket(parent):
@@ -893,16 +952,19 @@ def p_faucet():
     rng = np.random.default_rng(8)
     outline = [(math.cos(a) * 0.45 * (1 + 0.12 * math.sin(4 * a) + 0.06 * rng.random()),
                 math.sin(a) * 0.4 * (1 + 0.1 * math.cos(3 * a))) for a in [2 * math.pi * k / 40 for k in range(40)]]
+    outline = [q for a_, b_ in zip(outline, outline[1:] + outline[:1])          # 80 points: follows the mat's rucks
+               for q in (a_, ((a_[0] + b_[0]) / 2, (a_[1] + b_[1]) / 2))]
     bm = bmesh.new()                                               # drapes over the bath mat (MAT_RECT)
     rings_ = []
-    for k in range(7):
-        t = k / 6
+    NR = 18
+    for k in range(NR + 1):
+        t = k / NR
         rings_.append([bm.verts.new(_drape(pc + Vector((x * t, 0, -y * t)))) for x, y in outline] if k else
                       [bm.verts.new(_drape(pc))])
     n = len(outline)
     for i in range(n):
         bm.faces.new((rings_[0][0], rings_[1][(i + 1) % n], rings_[1][i]))
-    for k in range(1, 6):
+    for k in range(1, NR):
         for i in range(n):
             bm.faces.new((rings_[k][i], rings_[k][(i + 1) % n], rings_[k + 1][(i + 1) % n], rings_[k + 1][i]))
     bm.normal_update()
@@ -919,8 +981,8 @@ def _drape(p):
     """Puddle height: a film on the floor, lifted onto the mat with a soft edge."""
     x0, x1, z0, z1 = MAT_RECT
     e = min(p.x - x0, x1 - p.x, p.z - z0, z1 - p.z)
-    lift = 0.0155 * max(0.0, min(1.0, (e + 0.06) / 0.04))          # full height 2 cm before the mat edge
-    return Vector((p.x, 0.0018 + lift, p.z))
+    k = max(0.0, min(1.0, (e + 0.06) / 0.04))                       # full height 2 cm before the mat edge
+    return Vector((p.x, 0.0018 + k * (0.0175 + mat_lift(p.x, p.z) * 1.15), p.z))
 
 
 def p_tub():
@@ -1095,6 +1157,7 @@ def main():
     tub(root)
     toilet(root)
     bath_mat(root)
+    tub_towel(root)
     basket(root)
     etagere(root)
     towel_bar(root)

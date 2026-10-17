@@ -159,16 +159,16 @@ def overshirt(parent):
     ell(b, (0, 1.22, 0.0), (c[0] - 0.008, c[1], c[2] - 0.008))          # light cotton, ~1 cm over the tee
     ell(b, (0, 1.04, v['belly_z'] * 0.6), (bl[0] - 0.012, bl[1], bl[2] - 0.014))
     ell(b, (0, 0.92, 0.0), (fl[0] - 0.018, 0.08, fl[2] - 0.016))
+    ell(b, (0, 0.86, 0.0), (fl[0] - 0.018, 0.08, fl[2] - 0.016))      # hangs straight past the cut: a flat hem
     cap(b, (-0.15, 1.34, 0.006), (0.15, 1.34, 0.006), v['shoulder'] - 0.008)
     ell(b, (0, 1.40, 0.04), (0.085, 0.05, 0.07))                       # the back of the neck under the collar
     fams = [b]
     for s_ in (-1, 1):
         sl = meta('OsSleeve%d' % s_, 0.008)
         sh, el, wr = m(s_, hb.SHOULDER), m(s_, hb.ELBOW), m(s_, hb.WRIST)
-        ball(sl, sh + Vector((-s_ * 0.006, -0.012, 0)), 0.061 * v['limb'])
-        cap(sl, sh, sh + (el - sh) * 0.5, 0.0615 * v['limb'])         # just over the tee's sleeve bands
-        cap(sl, sh + (el - sh) * 0.5, el, 0.055 * v['limb'])           # light cotton: tapers to the elbow
-        cap(sl, el, el + (wr - el) * ROLL, 0.05 * v['limb'])           # rolled up to mid-forearm (ends in the roll)
+        end = el + (wr - el) * ROLL                                    # rolled up to mid-forearm (ends in the roll)
+        chain(sl, [sh + Vector((-s_ * 0.006, -0.008, 0)), end], 0.0615 * v['limb'], 0.047 * v['limb'],
+              step=0.004)                                              # one straight taper, shoulder -> roll
         fams.append(sl)
     mat = lib.mat('Overshirt', OVERSHIRT, 0.9)
     o = solid('Overshirt', fams, 0.006, 9000, mat)
@@ -234,7 +234,7 @@ def overshirt(parent):
     for s_, side in ((-1, 'L'), (1, 'R')):                            # rolled sleeve: two soft turns, not a cuff
         el, wr = m(s_, hb.ELBOW), m(s_, hb.WRIST)
         end, d = el + (wr - el) * ROLL, (wr - el).normalized()
-        lr = 0.053 * v['limb']
+        lr = 0.05 * v['limb']
         hb.band('OsRoll' + side, hb.frame_along(end - d * 0.012, d), lr, lr, 0.03, 0.12, trim, parent)
         hb.band('OsRoll2' + side, hb.frame_along(end - d * 0.036, d), lr * 1.02, lr * 1.02, 0.022, 0.1, trim, parent)
     return shirt
@@ -1513,6 +1513,7 @@ def export_all(rig, head, hair, regions, hair_skinned=False):
 PAINT = {'CK2_Print': 'print', 'CK2_PrintInk': 'print_ink', 'CK2_Shirt' + SHIRT[0][1:]: 'top', 'CK2_Rib': 'rib', 'CK2_Skin': 'skin', 'CK2_Hair': 'hair', 'CK2_Brow': 'hair*0.82', 'CK2_Pupil': 'eyes', 'CK2_Blush': 'blush', 'CK2_BlushHot': 'blush*0.88'}
 PAINT['CK2_Overshirt'] = 'outer'
 PAINT['CK2_HairFade'] = 'skin*0.62'      # clipped fade on curly crops: a skin shadow, any skin tone
+PAINT['CK2_HairFade2'] = 'skin*0.8'      # its lighter outer step (a soft edge, no hard rim)
 PAINT['CK2_CgRib'] = 'outer'               # cardigan knit bands take the outer colour
 PAINT['CK2_HairGrey'] = 'hair_grey'        # grey streak bands (bob)
 PAINT['CK2_AgeLine'] = 'skin*0.8'         # smile lines on older faces

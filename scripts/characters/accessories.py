@@ -215,6 +215,10 @@ CURL_CLUMPS = [   # (azimuth phi: 0 front / pi back, elevation, radius, lift): ~
     (-0.75, 1.32, 0.035, 0.016), (0.18, 1.36, 0.038, 0.018), (0.92, 1.28, 0.032, 0.012),   # fuller top
     (-1.62, 0.78, 0.022, 0.0), (1.6, 0.8, 0.023, 0.001), (-2.2, 0.86, 0.026, 0.004), (2.25, 0.84, 0.027, 0.005),
     (-2.85, 0.92, 0.028, 0.006), (2.8, 0.95, 0.03, 0.007), (3.14, 1.2, 0.031, 0.01),      # back, smaller low down
+    (-2.4, 0.5, 0.025, 0.003), (2.45, 0.48, 0.026, 0.003), (-2.95, 0.55, 0.027, 0.004), (2.9, 0.5, 0.026, 0.004),
+    (-2.6, 0.12, 0.021, 0.0), (2.65, 0.1, 0.02, 0.0), (3.14, 0.2, 0.023, 0.001),          # down the back to the nape
+    (-2.85, -0.22, 0.019, 0.0), (2.8, -0.24, 0.019, 0.0), (-2.6, -0.1, 0.018, 0.0), (2.62, -0.08, 0.018, 0.0),
+    (3.14, -0.5, 0.019, 0.0), (-2.78, -0.58, 0.017, 0.0), (2.8, -0.56, 0.017, 0.0),   # inside the back mass
 ]
 
 
@@ -223,33 +227,47 @@ def hair_curly(skin, surf):
     fades at the sides and nape; fuller on top, uneven silhouette. Each clump = a main lump + 3 spiralling sub-lumps."""
     import bmesh
     from mathutils import Matrix
-    edge = lambda phi: hb.hairline(phi) + 0.01 + 0.025 * hb._ss((abs(phi) - 1.9) / 0.7)
-    high = lambda phi: edge(phi) + 0.028 * hb._ss((abs(phi) - 1.0) / 0.6)            # the mass stops above the fade
-    shell = hb.scalp_shell(skin, high, lift=0.002, thick=0.005)
-    fade = hb.scalp_shell(skin, edge, lift=0.0006, thick=0.0012)                    # clipped sides + nape: skin shadow
-    fade.name = 'HairFade'
-    fade.data.materials.clear()
-    fade.data.materials.append(lib.mat('HairFade', '#7A5440', 0.9))
+    # edges as scalp elevations (rad): the y-mapped crop at the front and sides, carried down the back of the big
+    # cartoon skull to just above the nape curve (probed: el -0.95 ~ y 1.46 on the built head; past ~-1.1 the rays
+    # reach the neck and the edge tears)
+    el = lambda y: math.asin(max(-0.95, min(0.95, (y - hb.CRANIUM.y) / 0.15)))
+    back = lambda phi: hb._ss((abs(phi) - 2.0) / 0.6)                              # 0 at the sides, 1 at the back
+    side = lambda phi: hb.hairline(phi) + 0.01 + 0.025 * hb._ss((abs(phi) - 1.9) / 0.7)
+    wav = lambda phi, k, a: a * math.sin(k * phi) * hb._ss((abs(phi) - 0.9) / 0.4)   # wavy, not a ruled line
+    high = lambda phi: (el(side(phi) + 0.028 * hb._ss((abs(phi) - 1.0) / 0.6)) * (1 - back(phi)) - 0.95 * back(phi))
+    edge = lambda phi: el(side(phi)) * (1 - back(phi)) - 1.02 * back(phi) + wav(phi, 7, 0.03)
+    low = lambda phi: edge(phi) - wav(phi, 11, 0.02) - 0.07 * hb._ss((abs(phi) - 0.9) / 0.4)
+    shell = hb.scalp_shell(skin, None, lift=0.002, thick=0.005, edge_el=high)
+    fades = []                                                  # clipped sides + nape: two skin-shadow steps, soft
+    for name, line, lift in (('HairFade', edge, 0.0009), ('HairFade2', low, 0.0005)):
+        f = hb.scalp_shell(skin, None, lift=lift, thick=0.0012, edge_el=line)
+        f.name = name
+        f.data.materials.clear()
+        f.data.materials.append(lib.mat(name, '#7A5440' if name == 'HairFade' else '#A3765C', 0.9))
+        fades.append(f)
     spheres = []
 
     def on_skull(phi, el):
         d = Vector((math.cos(el) * math.sin(phi), math.sin(el), -math.cos(el) * math.cos(phi)))
         return surf.hit(hb.CRANIUM + d * 0.4, -d)
-    for k, (phi, el, r, lift) in enumerate(CURL_CLUMPS):
-        loc, nrm = on_skull(phi, el)
+    for k, (phi, el_, r, lift) in enumerate(CURL_CLUMPS):
+        loc, nrm = on_skull(phi, el_)
         t1 = nrm.cross(Vector((0, 1, 0)) if abs(nrm.y) < 0.9 else Vector((1, 0, 0))).normalized()
         t2 = nrm.cross(t1)
-        r, lift = r * 0.82, lift * 0.6                         # short crop: chunky, not a pompadour
-        c = loc + nrm * (r * 0.3 + lift)
+        top = hb._ss((el_ - 0.9) / 0.3)                        # flatter on top (~10 % lower silhouette)
+        r, lift = r * 0.82 * (1 - 0.2 * top), lift * 0.6 * (1 - 0.95 * top)   # short crop: chunky, not a pompadour
+        c = loc + nrm * (r * (0.3 - 0.35 * top - 0.65 * hb._ss(-el_ / 0.4)) + lift)   # sunk on top + low down
         spheres.append((c, r))
         a0 = k * 2.1
         for i in range(3):                                     # sub-lumps spiral round and up: a C-curl
             a = a0 + i * 2.2
             rr = r * (0.62 - 0.08 * i)
-            spheres.append((c + (t1 * math.cos(a) + t2 * math.sin(a)) * r * 0.72 + nrm * r * (0.05 + 0.12 * i), rr))
+            rise = (0.05 + 0.12 * i) * (1 - 0.85 * top)
+            spheres.append((c + (t1 * math.cos(a) + t2 * math.sin(a)) * r * 0.72 + nrm * r * rise, rr))
     for phi in [i * 0.7 for i in range(-4, 5)] + [2.6, -2.6, 3.14]:   # sunk filler: base volume between the clumps
-        for el in (0.85, 1.2):
-            loc, nrm = on_skull(phi, el)
+        for el_ in ((0.85, 1.2) if abs(phi) < 2.0 else (0.85, 1.2, 0.45, 0.05) if abs(phi) < 2.5 else
+                    (0.85, 1.2, 0.45, 0.05, -0.35, -0.7)):                     # deep rows only where the mass is
+            loc, nrm = on_skull(phi, el_)
             spheres.append((loc - nrm * 0.016, 0.028))
     bm = bmesh.new()
     for c, r in spheres:
@@ -260,7 +278,7 @@ def hair_curly(skin, surf):
     hair = bpy.data.objects.new('HairCurly', me)
     bpy.context.scene.collection.objects.link(hair)
     hair.data.materials.append(lib.mat('Hair', hb.HAIR, 0.9))
-    return [hb.union_shell(hair, shell, 0.0025, 16000, smooth=2), fade]
+    return [hb.union_shell(hair, shell, 0.0025, 16000, smooth=2)] + fades
 
 
 def head_to_world(p):
