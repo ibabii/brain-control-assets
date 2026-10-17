@@ -4,10 +4,10 @@ ceb6c99afba42459ae62a33f5195c897ac93f4753aecdc43a8457bfb52bc3485  ./female_base/
 b6ada8beb349bd8a5f2a36ef16691ded4b4dedb2d90dbe95162c87bd87562940  ./female_base/art/female_base.tscn
 9fdd40b27b966c5dd605e869370ab6b5423b56a6e055820d92cf03842adc9184  ./female_base/art/female_base_rig.json
 15509f6158abbd99e8d1ce1d161d060ca648febc7135eaef7863e78246db975f  ./male_base/art/character.json
-e00e5c90d7ead8a394799329924c29d7fe1811ecb966e56431b6bc02b3659ce5  ./male_base/art/male_base.glb
+f19af061e21a29b2a6c6619ccb1ad595a4b5e086afcbced62df559f42becfda8  ./male_base/art/male_base.glb
 b64a7946b2f0f1c25980fe7c5dfb7b823001a3744964742e124a98ecf162cb85  ./male_base/art/male_base.glb.import
 7f4fa5be18464b315a82cf2662555a3a9d475ee4c0dad9402adb8bca08608ab9  ./male_base/art/male_base.tscn
-9a3909ea173253728569cbadc0b5c4cda7c8439bfbdcead7532b8f548f064d66  ./male_base/art/male_base_rig.json
+33fab14d41a7590a6438cf2ee7625b7789ad9051d278db4b62eb3419a4fc32c0  ./male_base/art/male_base_rig.json
 a7441cdde9730217cec6fa10699bdd71f88d4960e9c2d5d403a091514747e242  ./parts/beard_full_f/art/beard_full_f.glb
 7b24e99b0431c322eb7f2fe88768cf1e0c9c1f1e2607d8177a868c0107e41bbe  ./parts/beard_full_f/art/beard_full_f.glb.import
 9c7ff98a4661e773421c35612752bd5835d51ac7f42f80a44a90061d4b7b1ae2  ./parts/beard_full_f/art/beard_full_f.tscn
@@ -101,7 +101,7 @@ a3cb2a43e585660a7dc9bfc918e51be914b858a03ba1a2e6a3a4bdde25cc55e3  ./parts/jogger
 54af67d5c286299f8b966e2112a941b97639cbb56f700de911e466a08cc8d069  ./parts/overshirt_m/art/overshirt_m.tscn
 b78cd09bc7c4d9dad25149e62f2fe13deba8355c1d5abebe7b3a84c2d778f046  ./parts/overshirt_m/art/part.json
 7f2e471f3803d0f5e0f38147a3f2018ef193963bb4b938be4a71f90e8b85db7b  ./parts/slippers_m/art/part.json
-1789044ac5b8d651cf89b803f34f4a0acc5c79b309f87c3da5fdcfae273f350c  ./parts/slippers_m/art/slippers_m.glb
+b1b565f8c7c565752e84d3696abf29332a8885f013125298a6241d845acaefd1  ./parts/slippers_m/art/slippers_m.glb
 ed3c22031ee146aefd4108fe13ba3d4722b69c6518754988474550e2b5198d41  ./parts/slippers_m/art/slippers_m.glb.import
 63cc42e6361e0f187396070a622464f7d3c05523b30b382dc7d522adfc27e03a  ./parts/slippers_m/art/slippers_m.tscn
 7f2e471f3803d0f5e0f38147a3f2018ef193963bb4b938be4a71f90e8b85db7b  ./parts/sneakers_f/art/part.json
