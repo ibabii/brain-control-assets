@@ -472,6 +472,16 @@ def sit_chair():
     return [(0, k), (30, k)]
 
 
+def sit_table():
+    """sit_chair at a table (top 0.75 m, near edge ~0.15 m ahead of the Hips): a small lean in, both hands resting
+    on the tabletop near a plate/mug. A held pose."""
+    legs = {'LeftLeg': ((-0.13, ANK, -0.4), (-0.13, 0.6, -1.0)), 'RightLeg': ((0.13, ANK, -0.4), (0.13, 0.6, -1.0))}
+    hands = {'LeftArm': ((-0.17, 0.79, -0.3), (-0.5, 0.75, 0.1)), 'RightArm': ((0.15, 0.79, -0.33), (0.45, 0.8, -0.1))}
+    k = {'hips': ((0, 0.53, 0.04), (0, 0, 0)), 'ik': merge(legs, hands), 'world': FLAT,
+         'rot': {'Spine': (-2, 0, 0), 'Chest': (-2, 0, 0), 'Head': (3, 0, 0)}, 'local': _fingers()}
+    return [(0, k), (30, k)]
+
+
 TORSO = {'wave': wave, 'point': point, 'throw': throw, 'laugh': laugh, 'facepalm': facepalm,
          'concerned': concerned, 'talk': talk}
 LOOPS.append('talk')
@@ -480,5 +490,5 @@ MOCK = {'squat': squat}                 # character-system mock only (not in the
 
 
 FULL = {'faceplant': faceplant, 'sit_tub': sit_tub, 'get_up_back': get_up_back, 'get_up_front': get_up_front,
-        'sit_chair': sit_chair, **FULL_EXTRA}
+        'sit_chair': sit_chair, 'sit_table': sit_table, **FULL_EXTRA}
 BOXES = {'sit_tub': TUB, 'climb_out_tub': TUB}

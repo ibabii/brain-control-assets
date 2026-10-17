@@ -1342,6 +1342,52 @@
    },
    "length": 1.0
   },
+  "sit_table": {
+   "layer": "full",
+   "bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "UpperChest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "LeftToes",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot",
+    "RightToes"
+   ],
+   "start": {
+    "pos": [
+     0.0,
+     0.53,
+     0.04
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "end": {
+    "pos": [
+     0.0,
+     0.53,
+     0.04
+    ],
+    "pitch": -0.0,
+    "yaw": 0.0
+   },
+   "length": 1.0
+  },
   "stumble": {
    "layer": "full",
    "bones": [

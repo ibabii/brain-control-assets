@@ -5,7 +5,8 @@ extends Node3D
 ## Layout (hybrid, orchestrator 2026-10-16): mechanics' footprint (game locations/breakfast): Bernard at the origin
 ## facing -Z, room x -2..2 / z -1.15..2.55, counter on the back wall (front at z -0.5), hallway LEFT (x -2..-5, z
 ## 0.25..1.35) to the front door. AD rules on top: window on the RIGHT wall toward the front (never behind the props),
-## fridge at the counter's left end, table + roommate in the right-back corner, roommate facing Bernard.
+## fridge at the counter's left end; counter ends at x 0.75 so a round table fits the right-back corner, roommate at
+## it facing Bernard across the tabletop.
 
 const CREAM := '#F1E4CF'
 const TEAL := '#2D5C5B'
@@ -27,9 +28,11 @@ const SHOTS := [
 
 var cam: Camera3D
 var roommate: Node3D
-const TABLE := Vector3(1.6, 0, 0.2)
-const SEAT := Vector3(1.83, 0, -0.87)          # a backless stool fits the corner: eye distance >= 2 m, clear of both walls
-const SEAT_YAW := 118.0
+const TABLE := Vector3(1.41, 0, -0.60)          # round café table, r 0.38, top 0.75; between Bernard and the roommate
+const TABLE_R := 0.38
+const SEAT := Vector3(1.79, 0, -0.92)           # roommate's Hips, in the corner of an L breakfast-nook bench
+const SEAT_YAW := 130.0                         # faces Bernard (origin) within 14 deg; right elbow off the back wall
+const COUNTER_END := 0.75
 
 
 func _a(k: String, d: String) -> String:
@@ -137,15 +140,15 @@ func _room() -> void:
 
 
 func _counter() -> void:
-	box(Vector3(-0.2, 0.43, -0.85), Vector3(2.6, 0.86, 0.6), TEAL)                # deep teal lower cabinets
-	for x in [-1.05, -0.2, 0.65]:                                                 # door gaps read as panels
+	box(Vector3(-0.35, 0.43, -0.85), Vector3(2.2, 0.86, 0.6), TEAL)               # deep teal lower cabinets (to x 0.75)
+	for x in [-0.9, -0.2, 0.5]:                                                 # door gaps read as panels
 		box(Vector3(x, 0.45, -0.545), Vector3(0.012, 0.7, 0.01), '#244A49')
-	box(Vector3(-0.2, 0.9, -0.83), Vector3(2.66, 0.04, 0.66), '#F3E7D0', 0.7)     # warm cream worktop (brightest group)
-	for i in 13:                                                                  # peach tile backsplash
+	box(Vector3(-0.35, 0.9, -0.83), Vector3(2.26, 0.04, 0.66), '#F3E7D0', 0.7)     # warm cream worktop (brightest group)
+	for i in 11:                                                                  # peach tile backsplash
 		for j in 3:
 			box(Vector3(-1.4 + i * 0.2, 1.0 + j * 0.15, -1.145), Vector3(0.19, 0.14, 0.01), PEACH, 0.75)
-	box(Vector3(-0.2, 1.8, -0.97), Vector3(2.6, 0.7, 0.35), CREAM)               # cream uppers right above the tiles
-	for x in [-1.05, -0.2, 0.65]:
+	box(Vector3(-0.35, 1.8, -0.97), Vector3(2.2, 0.7, 0.35), CREAM)              # cream uppers right above the tiles
+	for x in [-0.9, -0.2, 0.5]:
 		box(Vector3(x, 1.8, -0.794), Vector3(0.012, 0.6, 0.01), '#D9CBB2')
 	box(Vector3(-1.75, 0.95, -0.8), Vector3(0.6, 1.9, 0.7), PORCELAIN, 0.7)       # fridge (counter's left end)
 	box(Vector3(-1.52, 1.35, -0.444), Vector3(0.04, 0.4, 0.02), GRAPHITE)
@@ -166,28 +169,36 @@ func _counter() -> void:
 
 
 func _table() -> void:
-	var c := TABLE                                                                # along the right wall, past the counter
-	box(c + Vector3(0, 0.74, 0), Vector3(0.75, 0.05, 1.0), HONEY)
-	for dx in [-0.32, 0.32]:
-		for dz in [-0.44, 0.44]:
-			box(c + Vector3(dx, 0.36, dz), Vector3(0.06, 0.72, 0.06), HONEY)
-	cyl(c + Vector3(-0.1, 0.8, 0.15), 0.12, 0.07, CREAM)                            # fruit bowl
-	for p in [Vector3(-0.14, 0.86, 0.17), Vector3(-0.06, 0.86, 0.13)]:
+	var c := TABLE                                                                # round, one pedestal: legs never meet his knees
+	cyl(c + Vector3(0, 0.735, 0), TABLE_R, 0.04, HONEY)
+	cyl(c + Vector3(0, 0.36, 0), 0.04, 0.72, HONEY)
+	cyl(c + Vector3(0, 0.015, 0), 0.16, 0.03, HONEY)
+	var f := Vector3(-sin(deg_to_rad(SEAT_YAW)), 0, -cos(deg_to_rad(SEAT_YAW)))     # roommate's facing
+	var l := Vector3(f.z, 0, -f.x)                                                 # his left
+	var plate := SEAT + f * 0.42 + l * 0.12
+	cyl(plate + Vector3(0, 0.76, 0), 0.11, 0.015, PORCELAIN)                       # his plate with toast
+	box(plate + Vector3(0, 0.775, 0), Vector3(0.09, 0.015, 0.09), '#D9A060')
+	var mug := SEAT + f * 0.4 - l * 0.2
+	cyl(mug + Vector3(0, 0.8, 0), 0.04, 0.09, CLAY)                                # his mug, by the right hand
+	cyl(c + Vector3(-0.12, 0.79, 0.16), 0.09, 0.07, CREAM)                         # fruit bowl, window side
+	for p in [Vector3(-0.15, 0.84, 0.18), Vector3(-0.08, 0.84, 0.14)]:
 		cyl(c + p, 0.035, 0.06, CLAY)
-	cyl(SEAT + Vector3(0, 0.445, 0), 0.17, 0.05, HONEY)                            # the roommate's stool: faces Bernard
-	for a in 4:
-		var d := Vector3(cos(a * PI / 2 + 0.6), 0, sin(a * PI / 2 + 0.6)) * 0.12
-		cyl(SEAT + d + Vector3(0, 0.21, 0), 0.02, 0.42, HONEY)
-	_chair(TABLE + Vector3(0, 0, 0.72), 180.0)                                     # the other at the far (front) end
+	# L nook bench (seat 0.46) in the corner: a chair back can't fit there at a 2 m eye distance
+	box(Vector3(1.79, 0.22, -0.94), Vector3(0.42, 0.44, 0.42), HONEY)              # corner block
+	box(Vector3(1.86, 0.22, -0.515), Vector3(0.28, 0.44, 0.43), HONEY)             # shallower run along the right wall (clears his knee)
+	box(Vector3(1.79, 0.45, -0.94), Vector3(0.42, 0.03, 0.42), PEACH, 0.9)         # seat cushions
+	box(Vector3(1.86, 0.45, -0.515), Vector3(0.28, 0.03, 0.43), PEACH, 0.9)
+	box(Vector3(1.97, 0.67, -0.73), Vector3(0.06, 0.4, 0.84), PEACH, 0.9)          # back cushions
+	box(Vector3(1.79, 0.67, -1.12), Vector3(0.42, 0.4, 0.06), PEACH, 0.9)
 
 
-func _chair(p: Vector3, yaw: float) -> void:
+func _chair(p: Vector3, yaw: float, w := 0.44) -> void:
 	var n := Node3D.new()
 	n.position = p
 	n.rotation_degrees.y = yaw
 	add_child(n)
-	var parts := [[Vector3(0, 0.45, 0), Vector3(0.44, 0.04, 0.42)], [Vector3(0, 0.75, 0.2), Vector3(0.44, 0.5, 0.04)]]
-	for dx in [-0.19, 0.19]:
+	var parts := [[Vector3(0, 0.45, 0), Vector3(w, 0.04, 0.42)], [Vector3(0, 0.75, 0.19), Vector3(w, 0.5, 0.04)]]
+	for dx in [-w / 2 + 0.03, w / 2 - 0.03]:
 		for dz in [-0.18, 0.18]:
 			parts.append([Vector3(dx, 0.22, dz), Vector3(0.04, 0.45, 0.04)])
 	for q in parts:
@@ -233,7 +244,7 @@ func _roommate() -> void:
 	add_child(r)
 	r.rotation_degrees.y = SEAT_YAW                  # faces Bernard
 	var ap: AnimationPlayer = r.get_node('Anim')
-	ap.play('sit_chair')                              # full-body chair sit; feet on the floor
+	ap.play('sit_table')                              # chair sit, hands resting on the tabletop
 	ap.seek(0.5, true)
 	ap.pause()
 	var sk: Skeleton3D = r.find_children('*', 'Skeleton3D', true, false)[0]
@@ -280,13 +291,15 @@ func _capture() -> void:
 				100.0 * (cam.unproject_position(chin).y - cam.unproject_position(top).y) / size.y,
 				100.0 * cam.unproject_position(eye).x / size.x])
 		if String(s[0]).begins_with('oblique') and roommate:
-			# 3D clearance: knees/feet/hands vs the counter run (x <= 1.1, z <= -0.55) and the table box
+			# 3D clearance: knees/feet/hands vs the counter run (x <= COUNTER_END, z <= -0.55), the round table, the walls
 			var sk: Skeleton3D = roommate.find_children('*', 'Skeleton3D', true, false)[0]
-			for b in ['LeftLowerLeg', 'RightLowerLeg', 'LeftFoot', 'RightFoot', 'LeftToes', 'RightToes', 'LeftHand', 'RightHand']:
+			for b in ['LeftLowerLeg', 'RightLowerLeg', 'LeftFoot', 'RightFoot', 'LeftToes', 'RightToes', 'LeftHand', 'RightHand', 'LeftLowerArm', 'RightLowerArm', 'Hips']:
 				var q := (sk.global_transform * sk.get_bone_global_pose(sk.find_bone(b))).origin
-				var dc := maxf(q.x - 1.1, q.z + 0.55)
-				var dt := maxf(maxf(1.225 - q.x, q.x - 1.975), maxf(TABLE.z - 0.5 - q.z, q.z - TABLE.z - 0.5))
-				print('CLEAR %s (%.2f, %.2f, %.2f) counter %.2f table %.2f walls %.2f' % [b, q.x, q.y, q.z, dc, dt, minf(2.0 - q.x, q.z + 1.15)])
+				var dc := maxf(q.x - COUNTER_END, q.z + 0.55)
+				var r := Vector2(q.x - TABLE.x, q.z - TABLE.z).length()
+				var dt := maxf(r - TABLE_R, maxf(q.y - 0.755, 0.715 - q.y))           # >0 outside the top slab
+				var nb := minf(maxf(1.58 - q.x, maxf(q.z + 0.73, q.y - 0.465)), maxf(1.72 - q.x, maxf(q.z + 0.3, q.y - 0.465)))  # >0 clear of the nook
+				print('CLEAR %s (%.2f, %.2f, %.2f) counter %.2f table %.2f walls %.2f nook %.2f' % [b, q.x, q.y, q.z, dc, dt, minf(2.0 - q.x, q.z + 1.15), nb])
 		tiles.append(get_viewport().get_texture().get_image())
 	var w := tiles[0].get_width()
 	var h := tiles[0].get_height()
